@@ -412,6 +412,7 @@ export default function App() {
         }} />}
         {page === "settings" && <SettingsPage {...{
           themeMode, toggleTheme,
+          onLogout: logout,
           onShowBackup: () => setShowBackup(true),
           onExportBackup: () => {
             const data = { transactions, categories, tags, accounts, budgets, rules };

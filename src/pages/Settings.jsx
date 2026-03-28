@@ -9,6 +9,7 @@ export default function SettingsPage({
   onExportBackup, 
   onImportBackup, 
   onClearData,
+  onLogout,
   theme 
 }) {
   const C = theme;
@@ -60,6 +61,11 @@ export default function SettingsPage({
                   }}/>
               </button>
            </div>
+        </div>
+
+        <div className="glass-card cyber-accent" style={{borderRadius:24, padding:24, display:"flex", flexDirection:"column", gap:18}}>
+           <div style={{color:C.primary, fontSize:10, fontWeight:900, textTransform:"uppercase", letterSpacing:".2em", fontFamily:"'JetBrains Mono',monospace"}}>// Account</div>
+           <Btn theme={C} v="ghost" full icon="logOut" onClick={onLogout}>Sign Out</Btn>
         </div>
 
         <div className="glass-card cyber-accent" style={{borderRadius:32, padding:32, textAlign:"center", position:"relative"}}>
