@@ -460,6 +460,7 @@ export default function App() {
   const [searchQ, setSearchQ] = useState("");
   const [newCat, setNewCat] = useState({name:"",type:"Expense",color:"#00dba8",budget:""});
   const [newTag, setNewTag] = useState({name:"",color:"#00dba8"});
+  const [editingTag, setEditingTag] = useState(null);
   const [newAcc, setNewAcc] = useState({name:"",type:"Bank",initialBalance:""});
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadAcc, setUploadAcc] = useState("");
@@ -1214,23 +1215,57 @@ export default function App() {
   // PAGE: TAGS
   // ════════════════════════════════════════════════════════════════════════════
   const Tags = (
-    <div className="page-enter" style={{padding:"16px 16px 100px 16px",display:"flex",flexDirection:"column",gap:12}}>
-      <Btn icon="plus" onClick={()=>setShowNewTag(true)}>Add Tag</Btn>
-      <p style={{color:C.sub,fontSize:13,margin:0,lineHeight:1.7}}>Tags track spending across events — vacations, trips, birthdays. Assign multiple tags per transaction.</p>
-      {tags.map(tg=>{
-        const txns=transactions.filter(t=>(t.tags||[]).includes(tg.id));
-        const total=txns.reduce((s,t)=>s+t.amount,0);
-        return (
-          <div key={tg.id} style={{background:C.card,borderWidth:1,borderStyle:"solid",borderColor:C.border,borderRadius:14,padding:"13px 14px",display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:36,height:36,borderRadius:10,background:tg.color+"22",border:`1px solid ${tg.color}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>🏷</div>
-            <div style={{flex:1}}>
-              <div style={{color:tg.color,fontSize:14,fontWeight:800}}>#{tg.name}</div>
-              <div style={{color:C.sub,fontSize:12,marginTop:2}}>{txns.length} txns · {fmtAmt(total)}</div>
-            </div>
-            <button onClick={()=>setTgs(prev=>prev.filter(t=>t.id!==tg.id))} style={{background:"none",border:"none",color:C.sub,cursor:"pointer",padding:4,display:"flex"}}><Ico n="trash" sz={16}/></button>
-          </div>
-        );
-      })}
+    <div className="page-enter" style={{padding:"20px 20px 100px 20px",display:"flex",flexDirection:"column",gap:24}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <h2 style={{margin:0,fontSize:22,fontWeight:900,color:C.text}}>Tags Hub</h2>
+          <p style={{margin:0,color:C.sub,fontSize:12}}>Track spending across custom events.</p>
+        </div>
+        <Btn icon="plus" sm onClick={()=>{setEditingTag(null);setNewTag({name:"",color:"#00dba8"});setShowNewTag(true);}}>New Tag</Btn>
+      </div>
+
+      {tags.length === 0 ? (
+        <div style={{background:C.card,borderWidth:1,borderStyle:"solid",borderColor:C.border,borderRadius:24,padding:"60px 24px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
+          <div style={{width:80,height:80,borderRadius:24,background:C.primaryDim,display:"flex",alignItems:"center",justifyContent:"center",fontSize:40}}>🏷</div>
+          <div style={{color:C.sub,fontSize:14,maxWidth:260}}>No tags yet. Add tags to organize transactions for vacations, birthdays, or projects.</div>
+        </div>
+      ) : (
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))",gap:16}}>
+          {tags.map(tg => {
+            const txns = transactions.filter(t => (t.tags || []).includes(tg.id));
+            const total = txns.reduce((s, t) => s + t.amount, 0);
+            return (
+              <div key={tg.id} style={{
+                background: C.card, border: `1px solid ${C.border}`, borderRadius: 24, padding: 16,
+                display: "flex", flexDirection: "column", gap: 12, transition: "all .3s ease",
+                backdropFilter: "blur(12px)", position: "relative", overflow: "hidden", minHeight: 140,
+                boxShadow: C.cardGlow || "none"
+              }} onMouseEnter={e => { e.currentTarget.style.borderColor = tg.color; e.currentTarget.style.transform = "translateY(-4px)"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "translateY(0)"; }}>
+                <div style={{ position: "absolute", top: -20, right: -20, width: 60, height: 60, background: tg.color, filter: "blur(40px)", opacity: 0.15 }} />
+                
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 12, background: tg.color + "22", border: `1px solid ${tg.color}40`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Ico n="tag" sz={16} c={tg.color} />
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => { setEditingTag(tg); setNewTag({ name: tg.name, color: tg.color }); setShowNewTag(true); }} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", transition: "color .2s" }} onMouseEnter={e => e.currentTarget.style.color = C.primary} onMouseLeave={e => e.currentTarget.style.color = C.sub}><Ico n="pen" sz={15} /></button>
+                    <button onClick={() => setTgs(prev => prev.filter(t => t.id !== tg.id))} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", transition: "color .2s" }} onMouseEnter={e => e.currentTarget.style.color = C.expense} onMouseLeave={e => e.currentTarget.style.color = C.sub}><Ico n="trash" sz={15} /></button>
+                  </div>
+                </div>
+
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <div style={{ color: C.text, fontSize: 16, fontWeight: 800 }}>#{tg.name}</div>
+                  <div style={{ color: C.sub, fontSize: 11, marginTop: 4, fontWeight: 600 }}>{txns.length} transactions</div>
+                </div>
+
+                <div style={{ color: tg.color, fontSize: 14, fontWeight: 900, fontFamily: "'JetBrains Mono',monospace", marginTop: 8, borderTop: `1px solid ${C.border}`, paddingTop: 10 }}>
+                  {fmtAmt(total)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
   
@@ -1996,12 +2031,44 @@ export default function App() {
         </div>
       </Modal>
 
-      {/* ── NEW TAG ───────────────────────────────────────────────────────── */}
-      <Modal open={showNewTag} onClose={()=>setShowNewTag(false)} title="New Tag">
-        <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          <div><FLabel>Name</FLabel><FInput value={newTag.name} onChange={e=>setNewTag({...newTag,name:e.target.value})} placeholder="e.g. Vacation, Trip…"/></div>
-          <div><FLabel>Color</FLabel><input type="color" value={newTag.color} onChange={e=>setNewTag({...newTag,color:e.target.value})} style={{width:50,height:38,border:"none",background:"none",cursor:"pointer",padding:0}}/></div>
-          <Btn full onClick={()=>{if(!newTag.name.trim())return;setTgs(p=>[...p,{id:uid(),...newTag}]);setNewTag({name:"",color:"#00dba8"});setShowNewTag(false);notify("✓ Tag added");}}>Add</Btn>
+      {/* ── NEW/EDIT TAG ───────────────────────────────────────────────────────── */}
+      <Modal open={showNewTag} onClose={()=>setShowNewTag(false)} title={editingTag ? "Edit Tag" : "New Tag"}>
+        <div style={{display:"flex",flexDirection:"column",gap:14, paddingBottom:10}}>
+          <div style={{background:C.input, padding:16, borderRadius:20, border:`1px solid ${C.border}`, display:"flex", alignItems:"center", gap:14, justifyContent:"center", marginBottom:10}}>
+             <div style={{width:50, height:50, borderRadius:16, background:newTag.color+"22", border:`1px solid ${newTag.color}50`, display:"flex", alignItems:"center", justifyContent:"center"}}>
+               <Ico n="tag" sz={22} c={newTag.color}/>
+             </div>
+             <span style={{color:newTag.color, fontSize:20, fontWeight:900, letterSpacing:"-.02em"}}>#{newTag.name || "tagname"}</span>
+          </div>
+
+          <div><FLabel>Tag Name</FLabel><FInput value={newTag.name} onChange={e=>setNewTag({...newTag,name:e.target.value})} placeholder="e.g. Vacation, Trip…"/></div>
+          
+          <div>
+            <FLabel>Theme Color</FLabel>
+            <div style={{display:"flex", gap:10, flexWrap:"wrap", marginBottom:10}}>
+              {["#00dba8","#00e5ff","#6366f1","#a855f7","#ec4899","#f97316","#eab308","#ef4444"].map(c => (
+                <button key={c} onClick={()=>setNewTag(p=>({...p, color:c}))} style={{width:32, height:32, borderRadius:8, background:c, border:`3px solid ${newTag.color===c?"#fff":"transparent"}`, cursor:"pointer", transition:"transform .2s"}} onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}/>
+              ))}
+              <input type="color" value={newTag.color} onChange={e=>setNewTag({...newTag,color:e.target.value})} style={{width:32,height:32,border:"none",background:"none",cursor:"pointer",padding:0, borderRadius:8}}/>
+            </div>
+          </div>
+
+          <div style={{display:"flex", gap:10, marginTop:10}}>
+             <Btn v="ghost" full onClick={()=>setShowNewTag(false)}>Cancel</Btn>
+             <Btn full onClick={()=>{
+               if(!newTag.name.trim()) return;
+               if(editingTag) {
+                 setTgs(prev => prev.map(t => t.id === editingTag.id ? {...t, ...newTag} : t));
+                 notify("✓ Tag updated");
+               } else {
+                 setTgs(p=>[...p,{id:uid(),...newTag}]);
+                 notify("✓ Tag added");
+               }
+               setNewTag({name:"",color:"#00dba8"});
+               setShowNewTag(false);
+               setEditingTag(null);
+             }}>{editingTag ? "Save Changes" : "Create Tag"}</Btn>
+          </div>
         </div>
       </Modal>
 
