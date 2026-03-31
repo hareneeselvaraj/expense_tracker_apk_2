@@ -77,7 +77,7 @@ export default function TransactionsPage({
   };
 
   return (
-    <div className="page-enter" style={{ padding: "16px 16px 100px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
+    <div className="page-enter" style={{ padding: "16px 16px 100px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
 
       {/* ── Search bar ─────────────────────────────────── */}
       <div style={{ display: "flex", gap: 8 }}>
@@ -103,7 +103,7 @@ export default function TransactionsPage({
 
       {/* ── Period navigator ───────────────────────────── */}
       {scope !== "all" && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginTop: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16 }}>
           <button onClick={() => setScopeDate(stepDate(scope, scopeDate, -1))} style={{
             background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 14,
             width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: C.sub, cursor: "pointer", transition: "transform .2s", boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
@@ -147,16 +147,15 @@ export default function TransactionsPage({
       {/* ── Period summary strip ───────────────────────── */}
       {scope !== "all" && (
         <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10
+          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8
         }}>
           {[
             { label: "Income", value: summary.inc, color: C.income },
-            { label: "Expense", value: summary.exp, color: C.expense },
-            { label: "Net", value: summary.net, color: summary.net >= 0 ? C.income : C.expense }
+            { label: "Expense", value: summary.exp, color: C.expense }
           ].map(s => (
             <div key={s.label} style={{
-              background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 20,
-              padding: "16px 12px", textAlign: "center", borderTop: `4px solid ${s.color}`, boxShadow: "0 4px 12px rgba(0,0,0,0.02)"
+              background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 16,
+              padding: "12px 10px", textAlign: "center", borderTop: `4px solid ${s.color}`, boxShadow: "0 4px 12px rgba(0,0,0,0.02)"
             }}>
               <div style={{ color: C.sub, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>{s.label}</div>
               <div style={{ color: s.color, fontSize: 16, fontWeight: 800 }}>
@@ -168,7 +167,7 @@ export default function TransactionsPage({
       )}
 
       {/* ── Quick CR/DR filter pills ───────────────────── */}
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+      <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" }}>
         {["", "Credit", "Debit", "Income", "Expense", "Investment"].map(opt => {
           const active = opt === "" ? (filters.cd === "" && filters.type === "") : (filters.cd === opt || filters.type === opt);
           const col = opt === "Credit" ? C.income : opt === "Debit" ? C.expense : opt === "Income" ? C.income : opt === "Expense" ? C.expense : opt === "Investment" ? C.invest : C.primary;
@@ -187,7 +186,7 @@ export default function TransactionsPage({
       </div>
 
       {/* ── Stats strip ────────────────────────────────── */}
-      <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 4, flexWrap: "wrap", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {timeTx.length > 0 && (
             <div onClick={() => {

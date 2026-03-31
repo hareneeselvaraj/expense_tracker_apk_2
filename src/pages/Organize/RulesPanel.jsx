@@ -1,44 +1,91 @@
-import React from "react";
+import React, { useState } from "react";
 import { Ico } from "../../components/ui/Ico.jsx";
 import { Btn } from "../../components/ui/Btn.jsx";
+import RuleCard from "../../components/rules/RuleCard.jsx";
+import CreateRuleModal from "../../components/rules/CreateRuleModal.jsx";
 
-export default function RulesPanel({ rules, categories, onAddRule, onEditRule, onDeleteRule, onMagicWand, theme }) {
+export default function RulesPanel({ rules, categories, tags, onAddRule, onEditRule, onDeleteRule, onMagicWand, theme }) {
   const C = theme;
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState(null);
+
+  const activeCount = rules.filter(r => r.enabled).length;
 
   return (
-    <div style={{display:"flex",flexDirection:"column",gap:16}}>
-      <div style={{background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:24, padding:16, display:"flex", alignItems:"center", gap:12, boxShadow:C.shadow}}>
-        <div style={{width:40, height:40, borderRadius:12, background:C.input, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, color:"#000", fontSize:18}}>🪄</div>
-        <div style={{flex:1}}>
-           <div style={{color:C.text, fontSize:14, fontWeight:800, letterSpacing:"-.01em"}}>Auto-Categorization</div>
-           <div style={{color:C.sub, fontSize:12, fontWeight:600, marginTop:2}}>Rules automatically set categories based on keywords.</div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      
+      {/* Header Stat */}
+      <div style={{
+        background: C.surface, border: `1px solid ${C.borderLight}`,
+        borderRadius: 24, padding: 16, display: "flex", alignItems: "center", gap: 12,
+        boxShadow: C.shadow
+      }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: 12, background: C.input,
+          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18
+        }}>
+          ⚡
         </div>
-        <Btn theme={C} sm icon="plus" onClick={onAddRule}>Add</Btn>
+        <div style={{ flex: 1 }}>
+           <div style={{ color: C.text, fontSize: 14, fontWeight: 800, letterSpacing: "-.01em" }}>Smart Rules</div>
+           <div style={{ color: C.sub, fontSize: 12, fontWeight: 600, marginTop: 2 }}>
+             {activeCount} active rule{activeCount !== 1 ? 's' : ''} out of {rules.length}
+           </div>
+        </div>
+        <Btn theme={C} sm icon="plus" onClick={() => { setEditingRule(null); setModalOpen(true); }}>Add</Btn>
       </div>
 
       {rules.length === 0 ? (
-        <div style={{padding:40, textAlign:"center", color:C.sub, fontSize:13}}>No rules defined yet.</div>
+        <div style={{ padding: "40px 20px", textAlign: "center", background: C.surface, borderRadius: 24, border: `1px dashed ${C.borderLight}` }}>
+           <div style={{ fontSize: 32, marginBottom: 12 }}>🤖</div>
+           <div style={{ color: C.text, fontSize: 16, fontWeight: 800 }}>No rules yet</div>
+           <div style={{ color: C.sub, fontSize: 13, marginTop: 4, maxWidth: 200, margin: "0 auto", lineHeight: 1.5 }}>
+             Create smart rules to automatically categorize, tag, and organize expenses.
+           </div>
+        </div>
       ) : (
-        <div style={{display:"flex", flexDirection:"column", gap:12}}>
-          {rules.map(rule => (
-            <div key={rule.id} style={{background:C.surface, borderRadius:24, padding:20, border:`1px solid ${C.borderLight}`, display:"flex", justifyContent:"space-between", alignItems:"center", boxShadow:C.shadow}}>
-               <div style={{display:"flex", flexDirection:"column", gap:6}}>
-                  <div style={{color:C.text, fontSize:14, fontWeight:700}}>If description contains <span style={{color:C.primary}}>"{rule.pattern}"</span></div>
-                  <div style={{display:"flex", alignItems:"center", gap:8}}>
-                     <div style={{width:8, height:8, borderRadius:"50%", background:categories.find(c=>c.id===rule.categoryId)?.color || C.primary}}/>
-                     <div style={{color:C.sub, fontSize:12, fontWeight:600}}>Set category to {categories.find(c=>c.id===rule.categoryId)?.name}</div>
-                  </div>
-               </div>
-               <div style={{display:"flex", gap:8}}>
-                  <button onClick={()=>onEditRule(rule)} style={{background:C.input, border:"none", color:C.sub, cursor:"pointer", width:32, height:32, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center"}}><Ico n="pen" sz={14}/></button>
-                  <button onClick={()=>onDeleteRule(rule.id)} style={{background:C.input, border:"none", color:C.expense, cursor:"pointer", width:32, height:32, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center"}}><Ico n="trash" sz={14}/></button>
-               </div>
-            </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ color: C.sub, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", paddingLeft: 8 }}>
+            Priority Order
+          </div>
+          {rules.map((rule, index) => (
+            <RuleCard
+              key={rule.id}
+              rule={rule}
+              priority={index + 1}
+              theme={C}
+              onToggle={() => onEditRule({ ...rule, enabled: !rule.enabled })}
+              onEdit={() => { setEditingRule(rule); setModalOpen(true); }}
+              onDelete={() => onDeleteRule(rule.id)}
+            />
           ))}
         </div>
       )}
 
-      <Btn theme={C} v="soft" full icon="stars" onClick={onMagicWand}>Magic Wand: Apply to All</Btn>
+      {/* Magic Wand */}
+      <div style={{ marginTop: 8 }}>
+        <Btn theme={C} v="soft" full icon="stars" onClick={onMagicWand}>
+          Re-run All Rules
+        </Btn>
+      </div>
+
+      {/* Modal */}
+      {modalOpen && (
+        <CreateRuleModal
+          rule={editingRule}
+          categories={categories}
+          tags={tags}
+          theme={C}
+          onClose={() => setModalOpen(false)}
+          onSave={(newRule) => {
+            if (editingRule) {
+              onEditRule(newRule);
+            } else {
+              onAddRule(newRule);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

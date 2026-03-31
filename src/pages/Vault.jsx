@@ -43,7 +43,7 @@ export default function VaultPage({
       </div>
 
       {vaultTab === "reports" ? (
-        <div style={{marginTop: -20}}>
+        <div style={{marginTop: 8}}>
           <ReportsPage {...{
             reportTab, setReportTab, reportsMode, setReportsMode, reportsSubTab, setReportsSubTab, reportDate, setReportDate,
             filtered, categories, tags, theme
@@ -52,11 +52,8 @@ export default function VaultPage({
       ) : (
         <>
           {/* Header */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div>
-              <h2 style={{margin:0,fontSize:24,fontWeight:900,color:C.text,letterSpacing:"-0.02em"}}>Vault</h2>
-              <p style={{margin:0,color:C.sub,fontSize:12,marginTop:2}}>{accounts.length} linked accounts</p>
-            </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center", marginBottom: 8}}>
+            <p style={{margin:0,color:C.sub,fontSize:13,fontWeight:600}}>{accounts.length} linked accounts</p>
             <Btn theme={C} icon="plus" sm onClick={onAddAcc}>Add</Btn>
           </div>
 

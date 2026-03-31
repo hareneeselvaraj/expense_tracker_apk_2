@@ -68,9 +68,7 @@ export default function ReportsPage({
   }, [reportTx, reportTab, reportsSubTab]);
 
   return (
-    <div className="page-enter" style={{padding:"20px 20px 100px 20px",display:"flex",flexDirection:"column",gap:24}}>
-      <div style={{height:10}} />
-
+    <div className="page-enter" style={{padding:"0 0 80px 0",display:"flex",flexDirection:"column",gap:16}}>
       {/* Tab Selector (Week/Month/Year) */}
       <div style={{display:"flex",background:C.input,borderRadius:24,padding:4}}>
         {["week","month","year"].map(t=>(
@@ -145,33 +143,41 @@ export default function ReportsPage({
       </div>
 
       <div style={{display:"flex",flexDirection:"column",gap:16}}>
-          {/* Compressed Net Flow Hero & Stats */}
+          {/* Re-structured Net Flow Hero & Stats */}
           <div style={{
-            display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 16,
-            borderRadius:32, padding: "24px", position:"relative", overflow:"hidden",
-            boxShadow: C.shadow,
-            border:`1px solid ${C.borderLight}`, alignItems:"center", background:C.surface
+            display: "flex", flexDirection: "column", gap: 20,
+            borderRadius: 32, padding: "24px", position: "relative", overflow: "hidden",
+            boxShadow: C.shadow, border: `1px solid ${C.borderLight}`, background: C.surface
           }}>
-            
-            {/* NET */}
-            <div style={{ borderRight: `1px solid ${C.borderLight}`, paddingRight: 16, position:"relative", zIndex:2 }}>
-              <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:".05em",marginBottom:8}}>Net Flow</div>
-              <div style={{color:stats.net>=0?C.income:C.expense,fontSize:28,fontWeight:900,letterSpacing:"-.02em"}}>
-                {stats.net>=0?"+":"−"}{fmtAmt(Math.abs(stats.net))}
+            {/* NET (Top Row) */}
+            <div style={{ 
+              paddingBottom: 20, borderBottom: `1px solid ${C.borderLight}`, display: "flex", 
+              justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 2 
+            }}>
+              <div>
+                <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:".05em",marginBottom:6}}>Net Flow</div>
+                <div style={{color:stats.net>=0?C.income:C.expense,fontSize:36,fontWeight:900,letterSpacing:"-.02em"}}>
+                  {stats.net>=0?"+":"−"}{fmtAmt(Math.abs(stats.net))}
+                </div>
               </div>
-              <div style={{color:C.sub,fontSize:12,marginTop:6,fontWeight:600}}>{reportTx.length} items {stats.inc > 0 ? `• ${savingsRate}% saved` : ""}</div>
+              <div style={{textAlign: "right"}}>
+                <div style={{color:C.text,fontSize:14,fontWeight:800}}>{reportTx.length} items</div>
+                {stats.inc > 0 && <div style={{color:C.sub,fontSize:12,marginTop:2,fontWeight:600}}>{savingsRate}% saved</div>}
+              </div>
             </div>
 
-            {/* INC */}
-            <div style={{ paddingLeft: 8, position:"relative", zIndex:2 }}>
-              <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",marginBottom:6, letterSpacing:".05em"}}>Income</div>
-              <div style={{color:C.income,fontSize:20,fontWeight:800}}>{fmtAmt(stats.inc)}</div>
-            </div>
-
-            {/* EXP */}
-            <div style={{ position:"relative", zIndex:2 }}>
-              <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",marginBottom:6, letterSpacing:".05em"}}>Expense</div>
-              <div style={{color:C.expense,fontSize:20,fontWeight:800}}>{fmtAmt(stats.exp)}</div>
+            {/* INC & EXP (Bottom Grid) */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, position: "relative", zIndex: 2 }}>
+              {/* INC */}
+              <div>
+                <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",marginBottom:4, letterSpacing:".05em"}}>Income</div>
+                <div style={{color:C.income,fontSize:22,fontWeight:800}}>{fmtAmt(stats.inc)}</div>
+              </div>
+              {/* EXP */}
+              <div>
+                <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",marginBottom:4, letterSpacing:".05em"}}>Expense</div>
+                <div style={{color:C.expense,fontSize:22,fontWeight:800}}>{fmtAmt(stats.exp)}</div>
+              </div>
             </div>
           </div>
 

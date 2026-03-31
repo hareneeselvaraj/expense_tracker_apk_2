@@ -1,16 +1,9 @@
 import { categorizeTransaction as smartCategorize } from "../../statement-engine.js";
 
-// This is the ONLY function that assigns categories. Period.
-// Every code path that creates a transaction calls this.
-export function categorizeTransaction(tx, userRules, categories) {
+// This function now only handles Smart Engine and fallback defaults.
+// User rules are applied later in App.jsx via useRuleEngine.
+export function categorizeTransaction(tx, categories) {
   const desc = (tx.description || "").toLowerCase();
-  
-  // Priority 1: User-defined rules (from rules[] state)
-  for (const rule of userRules) {
-    if (desc.includes((rule.pattern || "").toLowerCase())) {
-      return { ...tx, category: rule.categoryId };
-    }
-  }
   
   // Priority 2: Smart engine (from statement-engine.js)
   const smartMatch = smartCategorize(desc, tx.amount, tx.creditDebit === "Credit");

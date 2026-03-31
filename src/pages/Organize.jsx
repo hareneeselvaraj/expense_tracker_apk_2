@@ -75,7 +75,7 @@ export default function OrganizePage({
       {organizeTab === "categories" && <CategoriesPanel {...{categories, transactions: filteredTransactions, DEF_CATS, onAddCat, onEditCat, onDeleteCat, theme}} />}
       {organizeTab === "tags" && <TagsPanel {...{tags, transactions: filteredTransactions, onAddTag, onEditTag, onDeleteTag, theme}} />}
       {organizeTab === "budgets" && <BudgetsPanel {...{categories, tags, budgets, transactions: filteredTransactions, onAddBudget, onEditBudget, onDeleteBudget, theme}} />}
-      {organizeTab === "rules" && <RulesPanel {...{rules, categories, onAddRule, onEditRule, onDeleteRule, onMagicWand, theme}} />}
+      {organizeTab === "rules" && <RulesPanel {...{rules, categories, tags, onAddRule, onEditRule, onDeleteRule, onMagicWand, theme}} />}
     </div>
   );
 }

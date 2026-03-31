@@ -17,9 +17,9 @@ import { categorizeTransaction } from "./services/categorizationPipeline.js";
 import { checkAndSendYearEndEmail, sendYearEndEmailManual } from "./services/yearEndService.js";
 import { processBudgetAlerts } from "./services/budgetEmailSender.js";
 
-// Hooks
 import { useOffline } from "./hooks/useOffline.js";
 import { useInstallPrompt } from "./hooks/useInstallPrompt.js";
+import { useRuleEngine } from "./hooks/useRuleEngine.js";
 
 // Utils
 import { uid } from "./utils/id.js";
@@ -101,6 +101,7 @@ export default function App() {
   // Phase 1C: Offline detection
   const { isOffline, pendingOps, queueOp, clearQueue } = useOffline();
   const { canInstall, install } = useInstallPrompt();
+  const { runAllRules, applyRulesToTx } = useRuleEngine(rules, setTransactions);
 
   // Phase 3D: Insights
   const insights = useMemo(
@@ -300,8 +301,13 @@ export default function App() {
     setTransactions(prev => {
       let next = [...prev];
       txs.forEach(t => {
-        // Run through unification pipeline with user rules!
-        const categorizedTx = categorizeTransaction({ ...t, amount: parseFloat(t.amount) || 0 }, rules, categories);
+        // Run through unification pipeline (smart engine and defaults)
+        let categorizedTx = categorizeTransaction({ ...t, amount: parseFloat(t.amount) || 0 }, categories);
+        
+        // Then apply user rules
+        const rulesPatch = applyRulesToTx(categorizedTx);
+        if (rulesPatch) categorizedTx = { ...categorizedTx, ...rulesPatch };
+        
         const sanitized = stampUpdated(categorizedTx);
         
         const idx = next.findIndex(x => x.id === sanitized.id);
@@ -546,10 +552,16 @@ export default function App() {
             setBudgets(p => p.filter(b => b.id !== budgetId));
             notify("Budget deleted successfully", "error");
           },
-          onAddRule: (r) => setRules(p => [r, ...p]),
+          onAddRule: (r) => setRules(p => {
+             const maxP = p.length ? Math.max(...p.map(x=>x.priority)) : 0;
+             return [{...r, priority: maxP + 1}, ...p]
+          }),
           onEditRule: (r) => setRules(p => p.map(x => x.id === r.id ? r : x)),
           onDeleteRule: (id) => setRules(p => p.filter(x => x.id !== id)),
-          onMagicWand: () => notify("Auto-categorization applied"),
+          onMagicWand: () => {
+             const count = runAllRules(transactions);
+             notify(`Magic Wand applied rules to transactions`);
+          },
           theme: C
         }} />}
         {page === "vault" && <VaultPage {...{
