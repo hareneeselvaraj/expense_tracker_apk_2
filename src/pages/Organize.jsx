@@ -60,14 +60,14 @@ export default function OrganizePage({
       </div>
 
       {/* Sub-tab switcher */}
-      <div style={{display:"flex",background:C.input,borderRadius:16,padding:4,border:`1px solid ${C.border}`, backdropFilter:"blur(12px)"}}>
+      <div style={{display:"flex",background:C.input,borderRadius:24,padding:4}}>
         {[{id:"categories",label:"Categories"},{id:"tags",label:"Tags"},{id:"budgets",label:"Budgets"},{id:"rules",label:"Rules"}].map(t=>(
           <button key={t.id} onClick={()=>setOrganizeTab(t.id)} style={{
-            flex:1,padding:"10px",borderRadius:12,border:"none",cursor:"pointer",fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:".05em",
-            background:organizeTab===t.id?`linear-gradient(135deg, ${C.primary}, ${C.secondary})`:"transparent",
-            color:organizeTab===t.id?"#000":C.sub,
-            boxShadow:organizeTab===t.id?`0 4px 12px ${C.primaryDim}`:"none",
-            transition:"all .3s"
+            flex:1,padding:"10px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,textTransform:"capitalize",
+            background:organizeTab===t.id?C.primary:"transparent",
+            color:organizeTab===t.id?"#fff":C.sub,
+            boxShadow:organizeTab===t.id?`0 4px 12px ${C.primary}40`:"none",
+            transition:"all .2s ease"
           }}>{t.label}</button>
         ))}
       </div>

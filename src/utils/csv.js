@@ -1,7 +1,7 @@
 import { uid } from "./id.js";
-import { autoCategory } from "./autoCategory.js";
+import { categorizeTransaction } from "../services/categorizationPipeline.js";
 
-export const parseCSV = (file, accountId, cats) => new Promise(resolve => {
+export const parseCSV = (file, accountId, cats, rules) => new Promise(resolve => {
   window.Papa.parse(file, { header:true, skipEmptyLines:true, complete:({data:rows,meta}) => {
     const F = keys => meta.fields?.find(f=>keys.some(k=>f.toLowerCase().replace(/[^a-z]/g,"").includes(k)));
     const dateCol=F(["date"]),descCol=F(["description","narration","particular","detail","remark","txn"])||meta.fields?.[1];
@@ -23,10 +23,14 @@ export const parseCSV = (file, accountId, cats) => new Promise(resolve => {
       const desc=(row[descCol]||"Transaction").trim();
       let dateStr=(row[dateCol]||new Date().toISOString()).trim();
       try{dateStr=new Date(dateStr).toISOString().split("T")[0];}catch{}
-      const category=autoCategory(desc,cats);
-      const catType=cats.find(c=>c.id===category)?.type;
-      const txType=catType==="Investment"?"Investment":catType==="Income"?"Income":creditDebit==="Credit"?"Income":"Expense";
-      return {id:uid(),date:dateStr,description:desc,amount,creditDebit,txType,category,tags:[],accountId:accountId||"",notes:""};
+      
+      const draftTx = {id:uid(),date:dateStr,description:desc,amount,creditDebit,txType:"Expense",category:"c13",tags:[],accountId:accountId||"",notes:""};
+      const categorizedTx = categorizeTransaction(draftTx, rules, cats);
+      
+      const catType=cats.find(c=>c.id===categorizedTx.category)?.type;
+      categorizedTx.txType=catType==="Investment"?"Investment":catType==="Income"?"Income":creditDebit==="Credit"?"Income":"Expense";
+      
+      return categorizedTx;
     }).filter(Boolean);
     resolve(txns);
   }, error:()=>resolve([]) });

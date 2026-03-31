@@ -4,8 +4,9 @@ import { Ico } from "../ui/Ico.jsx";
 import { Btn } from "../ui/Btn.jsx";
 import { parseExcelFile, autoDetectColumns, processTransactions } from "../../../statement-engine.js";
 import { uid } from "../../utils/id.js";
+import { categorizeTransaction } from "../../services/categorizationPipeline.js";
 
-export const UploadModal = ({ open, onClose, onImport, theme, categories = [] }) => {
+export const UploadModal = ({ open, onClose, onImport, theme, categories = [], rules = [] }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -33,15 +34,15 @@ export const UploadModal = ({ open, onClose, onImport, theme, categories = [] })
 
       const rawTxns = processTransactions(rows, colMap);
       const finalTxns = rawTxns.map(t => {
-        // AI returns t.category as {name, color, type}. Find local ID by name.
-        const matchedCat = categories.find(c => c.name === t.category?.name);
-        return {
+        // Run it through the unified pipeline which checks user rules FIRST
+        const draftTx = {
           ...t,
           id: uid(),
-          category: matchedCat ? matchedCat.id : "c13", // Fallback to "Others"
           tags: [],
           accountId: ""
         };
+        const catTx = categorizeTransaction(draftTx, rules, categories);
+        return { ...draftTx, category: catTx.category };
       });
 
       onImport(finalTxns);

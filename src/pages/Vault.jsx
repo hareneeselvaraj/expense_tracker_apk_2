@@ -23,14 +23,12 @@ export default function VaultPage({ accounts, transactions, onAddAcc, onEditAcc,
       {/* Total Balance Summary */}
       {accounts.length > 0 && (
         <div style={{
-          background:`linear-gradient(135deg, ${C.card}, ${C.surface})`, 
-          borderWidth:1,borderStyle:"solid",borderColor:C.border,borderRadius:28,padding:24,
-          backdropFilter:"blur(20px) saturate(150%)",boxShadow:`0 20px 40px ${C.primaryDim}`,
-          position:"relative", overflow:"hidden"
+          background: C.surface, 
+          border:`1px solid ${C.borderLight}`, borderRadius:32, padding:24,
+          boxShadow:C.shadow, position:"relative", overflow:"hidden"
         }}>
-          <div style={{position:"absolute",top:-30,right:-30,width:100,height:100,background:C.primary,filter:"blur(50px)",opacity:0.2,borderRadius:"50%",animation:"pulse-neon 4s infinite",pointerEvents:"none"}}/>
-          <div style={{color:C.sub,fontSize:11,fontWeight:800,textTransform:"uppercase",letterSpacing:".15em",marginBottom:8}}>Total Net Worth</div>
-          <div style={{color:C.text,fontSize:32,fontWeight:900,fontFamily:"'JetBrains Mono',monospace", letterSpacing:"-0.05em"}}>
+          <div style={{color:C.sub,fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Total Net Worth</div>
+          <div style={{color:C.text,fontSize:32,fontWeight:800,letterSpacing:"-.02em"}}>
             {fmtAmt(netWorth)}
           </div>
         </div>
@@ -38,15 +36,14 @@ export default function VaultPage({ accounts, transactions, onAddAcc, onEditAcc,
 
       {accounts.length===0 ? (
         <div style={{
-          background:`linear-gradient(145deg, ${C.card}, ${C.surface})`,borderWidth:1,borderStyle:"solid",borderColor:C.border,
-          borderRadius:28,padding:"60px 24px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:20,
-          boxShadow:`inset 0 0 40px ${C.primaryDim}`, position:"relative", overflow:"hidden"
+          background:C.surface, border:`1px solid ${C.borderLight}`,
+          borderRadius:32,padding:"60px 24px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:20,
+          boxShadow:C.shadow, position:"relative", overflow:"hidden"
         }}>
-          <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:150,height:150,background:C.primary,filter:"blur(80px)",opacity:0.1,borderRadius:"50%",animation:"pulse-neon 3s infinite",pointerEvents:"none"}}/>
-          <div style={{width:80,height:80,borderRadius:24,background:C.primary+"1a",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40, border:`1px solid ${C.primary}33`, zIndex:1, backdropFilter:"blur(10px)"}}>🏦</div>
+          <div style={{width:80,height:80,borderRadius:24,background:C.input,display:"flex",alignItems:"center",justifyContent:"center",fontSize:40, border:`1px solid ${C.borderLight}`, zIndex:1}}>🏦</div>
           <div style={{zIndex:1}}>
-            <div style={{color:C.text,fontSize:20,fontWeight:900,marginBottom:8, letterSpacing:"-0.02em"}}>No Accounts Yet</div>
-            <div style={{color:C.sub,fontSize:14,lineHeight:1.6,maxWidth:280, margin:"0 auto"}}>Add your bank accounts, wallets, and cards to track balances across all your finances.</div>
+            <div style={{color:C.text,fontSize:20,fontWeight:800,marginBottom:8, letterSpacing:"-0.02em"}}>No Accounts Yet</div>
+            <div style={{color:C.sub,fontSize:14,lineHeight:1.6,maxWidth:280, margin:"0 auto"}}>Add your bank accounts, wallets, and cards to track balances.</div>
           </div>
           <div style={{zIndex:1, marginTop:8}}>
              <Btn theme={C} icon="plus" onClick={onAddAcc}>Add First Account</Btn>
@@ -60,26 +57,25 @@ export default function VaultPage({ accounts, transactions, onAddAcc, onEditAcc,
             const isConfirming = confirmDeleteId === acc.id;
             return (
               <div key={acc.id} style={{
-                background:C.card, border:`1px solid ${C.border}`, borderRadius:24, padding:20,
-                display:"flex", flexDirection:"column", gap:14, transition:"all .4s cubic-bezier(0.16, 1, 0.3, 1)",
-                backdropFilter:"blur(12px)", position:"relative", overflow:"hidden", boxShadow: C.cardGlow || "none",
+                background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:24, padding:20,
+                display:"flex", flexDirection:"column", gap:14, transition:"all .2s ease",
+                position:"relative", overflow:"hidden", boxShadow: C.shadow,
                 animation: `fadeInUp 0.4s ease forwards`, animationDelay: `${i * 0.05}s`, opacity:0, transform:"translateY(10px)"
-              }} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.primary;e.currentTarget.style.transform="translateY(-4px)";e.currentTarget.style.boxShadow=`0 15px 30px ${C.primaryDim}`;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow=C.cardGlow||"none";}}>
-                <div style={{position:"absolute", top:-20, right:-20, width:80, height:80, background:C.primary, filter:"blur(40px)", opacity:0.1, transition:"opacity .3s", pointerEvents:"none"}} className="glow-target"/>
+              }} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.transform="translateY(-2px)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.borderLight;e.currentTarget.style.transform="translateY(0)";}}>
                 
                 <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
                    <div style={{display:"flex", alignItems:"center", gap:12}}>
-                     <div style={{width:44, height:44, borderRadius:14, background:`linear-gradient(135deg, ${C.primaryDim}, ${C.primary}11)`, display:"flex", alignItems:"center", justifyContent:"center", border:`1px solid ${C.primary}33`}}>
+                     <div style={{width:44, height:44, borderRadius:14, background:C.input, display:"flex", alignItems:"center", justifyContent:"center"}}>
                        <Ico n={acc.type==="Credit Card"?"list":acc.type==="Wallet"?"archive":"bank"} sz={20} c={C.primary}/>
                      </div>
                      <div>
-                       <div style={{color:C.text, fontSize:16, fontWeight:800, letterSpacing:"-0.01em"}}>{acc.name}</div>
-                       <div style={{color:C.sub, fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em", marginTop:2}}>{acc.type}</div>
+                       <div style={{color:C.text, fontSize:15, fontWeight:800, letterSpacing:"-0.01em"}}>{acc.name}</div>
+                       <div style={{color:C.sub, fontSize:12, fontWeight:600, marginTop:2}}>{acc.type}</div>
                      </div>
                    </div>
                    <div style={{display:"flex", gap:10, position:"relative", zIndex:9999}}>
                      {/* Edit button */}
-                     <div onClick={(e)=>{e.stopPropagation(); onEditAcc(acc);}} style={{background:C.primaryDim, border:`1px solid ${C.primary}33`, color:C.primary, cursor:"pointer", width:36, height:36, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", transition:"all .2s", pointerEvents:"auto"}} onMouseEnter={e=>{e.currentTarget.style.background=C.primary; e.currentTarget.style.color="#000";}} onMouseLeave={e=>{e.currentTarget.style.background=C.primaryDim; e.currentTarget.style.color=C.primary;}}>
+                     <div onClick={(e)=>{e.stopPropagation(); onEditAcc(acc);}} style={{background:C.input, color:C.sub, cursor:"pointer", width:36, height:36, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", transition:"all .2s", pointerEvents:"auto"}} onMouseEnter={e=>{e.currentTarget.style.background=C.primary; e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.background=C.input; e.currentTarget.style.color=C.sub;}}>
                        <Ico n="edit" sz={16}/>
                      </div>
                      {/* Delete button */}
@@ -89,9 +85,9 @@ export default function VaultPage({ accounts, transactions, onAddAcc, onEditAcc,
                          console.log("Vault: Trash icon explicitly clicked for:", acc.id);
                          setConfirmDeleteId(acc.id);
                        }} 
-                       style={{background:C.expense+"1a", border:`1px solid ${C.expense}33`, color:C.expense, cursor:"pointer", width:36, height:36, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", transition:"all .2s", pointerEvents:"auto"}} 
+                       style={{background:C.input, color:C.expense, cursor:"pointer", width:36, height:36, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", transition:"all .2s", pointerEvents:"auto"}} 
                        onMouseEnter={e=>{e.currentTarget.style.background=C.expense; e.currentTarget.style.color="#fff";}} 
-                       onMouseLeave={e=>{e.currentTarget.style.background=C.expense+"1a"; e.currentTarget.style.color=C.expense;}}
+                       onMouseLeave={e=>{e.currentTarget.style.background=C.input; e.currentTarget.style.color=C.expense;}}
                      >
                        <Ico n="trash" sz={16}/>
                      </div>
@@ -102,28 +98,27 @@ export default function VaultPage({ accounts, transactions, onAddAcc, onEditAcc,
                 {isConfirming && (
                   <div style={{
                     display:"flex", alignItems:"center", justifyContent:"space-between",
-                    background:C.expense+"11", border:`1px solid ${C.expense}33`, borderRadius:14, padding:"10px 14px",
+                    background:C.input, borderRadius:14, padding:"12px",
                     animation:"fadeIn 0.2s ease"
                   }}>
-                    <span style={{color:C.expense, fontSize:12, fontWeight:900, textTransform:"uppercase"}}>Delete this account?</span>
+                    <span style={{color:C.expense, fontSize:12, fontWeight:700}}>Delete this account?</span>
                     <div style={{display:"flex", gap:8}}>
                       <button 
                         onClick={(e)=>{
                           e.stopPropagation();
-                          console.log("Confirmed delete for:", acc.id);
                           onDeleteAcc(acc.id); 
                           setConfirmDeleteId(null);
                         }} 
-                        style={{background:C.expense, border:"none", borderRadius:10, padding:"6px 14px", color:"#fff", fontSize:11, fontWeight:800, cursor:"pointer"}}
+                        style={{background:C.expense, border:"none", borderRadius:10, padding:"6px 14px", color:"#fff", fontSize:12, fontWeight:700, cursor:"pointer"}}
                       >
-                        Yes, Delete
+                        Yes
                       </button>
                       <button 
                         onClick={(e)=>{
                           e.stopPropagation();
                           setConfirmDeleteId(null);
                         }} 
-                        style={{background:"none", border:`1px solid ${C.border}`, borderRadius:10, padding:"6px 14px", color:C.sub, fontSize:11, fontWeight:700, cursor:"pointer"}}
+                        style={{background:"none", border:`1px solid ${C.borderLight}`, borderRadius:10, padding:"6px 14px", color:C.text, fontSize:12, fontWeight:600, cursor:"pointer"}}
                       >
                         Cancel
                       </button>
@@ -131,11 +126,11 @@ export default function VaultPage({ accounts, transactions, onAddAcc, onEditAcc,
                   </div>
                 )}
 
-                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginTop:4, borderTop:`1px dashed ${C.border}`, paddingTop:16}}>
-                   <div style={{color:C.sub, fontSize:11, fontWeight:700, display:"flex", alignItems:"center", gap:6}}><Ico n="swap" sz={12}/> {txnsCount} entries</div>
+                <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginTop:4, borderTop:`1px dashed ${C.borderLight}`, paddingTop:16}}>
+                   <div style={{color:C.sub, fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:6}}><Ico n="swap" sz={14}/> {txnsCount} entries</div>
                    <div style={{textAlign:"right"}}>
-                     <div style={{color:C.sub, fontSize:10, fontWeight:800, textTransform:"uppercase", letterSpacing:".1em", marginBottom:4}}>Balance</div>
-                     <div style={{color:bal>=0?C.text:C.expense, fontSize:24, fontWeight:900, fontFamily:"'JetBrains Mono',monospace", letterSpacing:"-0.03em"}}>{fmtAmt(bal)}</div>
+                     <div style={{color:C.sub, fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em", marginBottom:4}}>Balance</div>
+                     <div style={{color:bal>=0?C.text:C.expense, fontSize:22, fontWeight:800, letterSpacing:"-.02em"}}>{fmtAmt(bal)}</div>
                    </div>
                 </div>
               </div>

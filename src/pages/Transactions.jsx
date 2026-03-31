@@ -81,34 +81,34 @@ export default function TransactionsPage({
 
       {/* ── Search bar ─────────────────────────────────── */}
       <div style={{ display: "flex", gap: 8 }}>
-        <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search description…" style={{ flex: 1, background: C.input, borderWidth: 1, borderStyle: "solid", borderColor: C.border, borderRadius: 10, padding: "9px 13px", color: C.text, fontSize: 14, outline: "none", fontFamily: "inherit" }} />
-        <button onClick={onShowFilters} style={{ background: hasFilter ? C.primary + "22" : "transparent", border: `1px solid ${hasFilter ? C.primary : C.border}`, borderRadius: 10, padding: "9px 11px", color: hasFilter ? C.primary : C.sub, cursor: "pointer", display: "flex", alignItems: "center" }}>
-          <Ico n="filter" sz={18} />
+        <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search transactions…" style={{ flex: 1, background: C.surface, borderWidth: 1, borderStyle: "solid", borderColor: C.borderLight, borderRadius: 16, padding: "12px 16px", color: C.text, fontSize: 15, outline: "none", fontFamily: "inherit", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }} />
+        <button onClick={onShowFilters} style={{ background: hasFilter ? C.primary : C.surface, border: `1px solid ${hasFilter ? C.primary : C.borderLight}`, borderRadius: 16, padding: "0 16px", color: hasFilter ? "#fff" : C.sub, cursor: "pointer", display: "flex", alignItems: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", transition: "all .2s" }}>
+          <Ico n="filter" sz={20} />
         </button>
       </div>
 
       {/* ── Time scope tabs ────────────────────────────── */}
-      <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", borderRadius: 20, padding: 4, border: `1px solid ${C.border}`, backdropFilter: "blur(24px)" }}>
+      <div style={{ display: "flex", background: C.input, borderRadius: 24, padding: 4 }}>
         {["all", "week", "month", "year"].map(t => (
           <button key={t} onClick={() => { setScope(t); if (t !== "all") setScopeDate(new Date()); }} style={{
-            flex: 1, padding: "10px", borderRadius: 16, border: "none", cursor: "pointer",
-            fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: ".08em",
+            flex: 1, padding: "10px", borderRadius: 20, border: "none", cursor: "pointer",
+            fontSize: 12, fontWeight: 700, textTransform: "capitalize",
             background: scope === t ? C.primary : "transparent",
-            color: scope === t ? "#000" : C.sub,
-            boxShadow: scope === t ? `0 0 20px ${C.primary}66` : "none",
-            transition: "all .4s cubic-bezier(0.16, 1, 0.3, 1)"
-          }}>{t === "all" ? "All" : t}</button>
+            color: scope === t ? "#fff" : C.sub,
+            boxShadow: scope === t ? "0 4px 12px rgba(124, 92, 252, 0.2)" : "none",
+            transition: "all .3s ease"
+          }}>{t === "all" ? "All Time" : t}</button>
         ))}
       </div>
 
       {/* ── Period navigator ───────────────────────────── */}
       {scope !== "all" && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginTop: 2 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginTop: 4 }}>
           <button onClick={() => setScopeDate(stepDate(scope, scopeDate, -1))} style={{
-            background: C.primaryDim, border: `1px solid ${C.primary}33`, borderRadius: "50%",
-            padding: 8, color: C.primary, cursor: "pointer", display: "flex", transition: "transform .2s"
-          }} onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-            <Ico n="chevronLeft" sz={16} />
+            background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 14,
+            width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: C.sub, cursor: "pointer", transition: "transform .2s", boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
+          }} onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+            <Ico n="chevronLeft" sz={18} />
           </button>
 
           <span 
@@ -116,9 +116,8 @@ export default function TransactionsPage({
               try { dateRef.current?.showPicker(); } catch (e) {}
             }}
             style={{
-              fontSize: 14, color: C.text, fontWeight: 800, minWidth: 180, textAlign: "center",
-              letterSpacing: "-.02em", fontFamily: "'JetBrains Mono',monospace", position: "relative",
-              display: "inline-block"
+              fontSize: 16, color: C.text, fontWeight: 800, minWidth: 160, textAlign: "center", position: "relative",
+              display: "inline-block", cursor: "pointer"
             }}
           >
             {periodLabel(scope, scopeDate)}
@@ -137,10 +136,10 @@ export default function TransactionsPage({
           </span>
 
           <button onClick={() => setScopeDate(stepDate(scope, scopeDate, 1))} style={{
-            background: C.primaryDim, border: `1px solid ${C.primary}33`, borderRadius: "50%",
-            padding: 8, color: C.primary, cursor: "pointer", display: "flex", transition: "transform .2s"
-          }} onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-            <Ico n="chevronRight" sz={16} />
+            background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 14,
+            width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: C.sub, cursor: "pointer", transition: "transform .2s", boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
+          }} onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+            <Ico n="chevronRight" sz={18} />
           </button>
         </div>
       )}
@@ -148,7 +147,7 @@ export default function TransactionsPage({
       {/* ── Period summary strip ───────────────────────── */}
       {scope !== "all" && (
         <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8
+          display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10
         }}>
           {[
             { label: "Income", value: summary.inc, color: C.income },
@@ -156,11 +155,11 @@ export default function TransactionsPage({
             { label: "Net", value: summary.net, color: summary.net >= 0 ? C.income : C.expense }
           ].map(s => (
             <div key={s.label} style={{
-              background: s.color + "0a", border: `1px solid ${s.color}22`, borderRadius: 16,
-              padding: "10px 12px", textAlign: "center"
+              background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 20,
+              padding: "16px 12px", textAlign: "center", borderTop: `4px solid ${s.color}`, boxShadow: "0 4px 12px rgba(0,0,0,0.02)"
             }}>
-              <div style={{ color: C.sub, fontSize: 9, fontWeight: 900, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 4 }}>{s.label}</div>
-              <div style={{ color: s.color, fontSize: 14, fontWeight: 800, fontFamily: "'JetBrains Mono',monospace" }}>
+              <div style={{ color: C.sub, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>{s.label}</div>
+              <div style={{ color: s.color, fontSize: 16, fontWeight: 800 }}>
                 {s.label === "Net" && s.value >= 0 ? "+" : s.label === "Net" && s.value < 0 ? "−" : ""}{fmtAmt(Math.abs(s.value))}
               </div>
             </div>
@@ -169,7 +168,7 @@ export default function TransactionsPage({
       )}
 
       {/* ── Quick CR/DR filter pills ───────────────────── */}
-      <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingBottom: 2 }}>
+      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
         {["", "Credit", "Debit", "Income", "Expense", "Investment"].map(opt => {
           const active = opt === "" ? (filters.cd === "" && filters.type === "") : (filters.cd === opt || filters.type === opt);
           const col = opt === "Credit" ? C.income : opt === "Debit" ? C.expense : opt === "Income" ? C.income : opt === "Expense" ? C.expense : opt === "Investment" ? C.invest : C.primary;
@@ -179,8 +178,9 @@ export default function TransactionsPage({
               else if (opt === "Credit" || opt === "Debit") setFilters(p => ({ ...p, cd: p.cd === opt ? "" : opt, type: "" }));
               else setFilters(p => ({ ...p, type: p.type === opt ? "" : opt, cd: "" }));
             }} style={{
-              background: active ? col + "22" : "transparent", border: `1px solid ${active ? col : C.border}`, borderRadius: 99,
-              padding: "5px 13px", color: active ? col : C.sub, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0
+              background: active ? col : C.surface, border: `1px solid ${active ? col : C.borderLight}`, borderRadius: 14,
+              padding: "6px 16px", color: active ? "#fff" : C.sub, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
+              boxShadow: active ? `0 4px 12px ${col}40` : "0 2px 6px rgba(0,0,0,0.02)", transition: "all .2s"
             }}>{opt || "All"}</button>
           );
         })}
@@ -213,12 +213,12 @@ export default function TransactionsPage({
           <Btn theme={C} v="ghost" sm icon="stars" onClick={onExportPDF}>PDF</Btn>
           <Btn theme={C} v="ghost" sm icon="upload" onClick={onShowUpload}>Import</Btn>
           <button onClick={onAdd} style={{
-            background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
-            border: "none", borderRadius: 10, padding: "6px 14px", color: "#000", fontSize: 12, fontWeight: 800,
-            cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontFamily: "inherit",
-            boxShadow: `0 4px 12px ${C.primaryDim}`, transition: "transform .2s"
-          }} onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-            <Ico n="plus" sz={14} c="#000" /> Add
+            background: C.primary,
+            border: "none", borderRadius: 12, padding: "8px 16px", color: "#fff", fontSize: 13, fontWeight: 700,
+            cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "inherit",
+            boxShadow: `0 4px 12px ${C.primary}40`, transition: "transform .2s"
+          }} onMouseDown={e => e.currentTarget.style.transform = "scale(0.95)"} onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}>
+            <Ico n="plus" sz={16} /> Add
           </button>
         </div>
       </div>
@@ -232,13 +232,12 @@ export default function TransactionsPage({
         ) : grouped.map(([date, txs]) => (
           <div key={date}>
             <div style={{
-              fontSize: 11, fontWeight: 800, color: C.sub, textTransform: "uppercase",
-              letterSpacing: ".08em", padding: "12px 4px 6px", display: "flex", alignItems: "center", gap: 8
+              fontSize: 12, fontWeight: 700, color: C.sub, padding: "12px 4px 8px", display: "flex", alignItems: "center", gap: 10
             }}>
-              <div style={{ width: 4, height: 4, borderRadius: "50%", background: C.primary }} />
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.border }} />
               {fmtGroupDate(date)}
-              <div style={{ flex: 1, height: 1, background: C.border, marginLeft: 4 }} />
-              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 10, color: C.sub }}>
+              <div style={{ flex: 1, height: 1, background: C.borderLight, marginLeft: 4 }} />
+              <span style={{ fontSize: 12, color: C.sub, fontWeight: 600 }}>
                 {fmtAmt(txs.reduce((s, t) => s + (t.creditDebit === "Credit" ? t.amount : -t.amount), 0))}
               </span>
             </div>
@@ -265,27 +264,27 @@ export default function TransactionsPage({
       {selectedTxIds.length > 0 && (
         <div style={{
           position: "fixed", bottom: 100, left: "50%", transform: "translateX(-50%)", width: "calc(100% - 40px)", maxWidth: 500,
-          background: C.primary, color: "#000", borderRadius: 20, padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
-          boxShadow: "0 12px 40px rgba(0,0,0,0.5)", zIndex: 400, animation: "fadeIn 0.3s ease"
+          background: C.surface, color: C.text, borderRadius: 24, padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          boxShadow: C.shadow, zIndex: 400, border: `1px solid ${C.borderLight}`
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ background: "#000", color: C.primary, width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 900, fontFamily: "'JetBrains Mono',monospace" }}>
+            <div style={{ background: C.primaryDim, color: C.primary, width: 32, height: 32, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800 }}>
               {selectedTxIds.length}
             </div>
-            <span style={{ fontSize: 14, fontWeight: 800 }}>Selected</span>
+            <span style={{ fontSize: 14, fontWeight: 700 }}>Selected</span>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             {confirmBulkDelete ? (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 11, fontWeight: 900, textTransform: "uppercase", color: "#000" }}>DELETE?</span>
-                <button onClick={() => { onDeleteBulk(); setConfirmBulkDelete(false); }} style={{ background: "#000", border: "none", borderRadius: 10, padding: "8px 16px", color: C.expense, fontSize: 12, fontWeight: 800, cursor: "pointer", transition: "transform .2s" }}>YES</button>
-                <button onClick={() => setConfirmBulkDelete(false)} style={{ background: "rgba(0,0,0,0.1)", border: "none", borderRadius: 10, padding: "8px 16px", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>NO</button>
+                <span style={{ fontSize: 12, fontWeight: 700, color: C.expense }}>Delete?</span>
+                <button onClick={() => { onDeleteBulk(); setConfirmBulkDelete(false); }} style={{ background: C.expense, border: "none", borderRadius: 12, padding: "8px 16px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Yes</button>
+                <button onClick={() => setConfirmBulkDelete(false)} style={{ background: C.input, border: "none", borderRadius: 12, padding: "8px 16px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>No</button>
               </div>
             ) : (
               <>
-                <button onClick={() => setSelectedTxIds([])} style={{ background: "rgba(0,0,0,0.1)", border: "none", borderRadius: 10, padding: "8px 14px", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Clear</button>
-                <button onClick={() => setConfirmBulkDelete(true)} style={{ background: "#000", border: "none", borderRadius: 10, padding: "8px 14px", color: C.expense, fontSize: 12, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, transition: "transform .2s" }} onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-                  <Ico n="trash" sz={14} c={C.expense} /> Delete
+                <button onClick={() => setSelectedTxIds([])} style={{ background: C.input, border: "none", borderRadius: 12, padding: "8px 16px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Clear</button>
+                <button onClick={() => setConfirmBulkDelete(true)} style={{ background: C.expense + "22", border: `1px solid ${C.expense}40`, borderRadius: 12, padding: "8px 16px", color: C.expense, fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                  <Ico n="trash" sz={14} c={C.expense} /> Let's Delete
                 </button>
               </>
             )}

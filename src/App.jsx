@@ -8,7 +8,17 @@ import { CLIENT_ID } from "./constants/config.js";
 
 // Services
 import { dbGet, dbSet } from "./services/localDb.js";
-import { driveService } from "./services/driveService.js";
+import { googleService } from "./services/googleService.js";
+import { stampUpdated, ensureTimestamps, filterDeleted } from "./services/mergeEngine.js";
+import { checkBudgets, getActiveAlerts } from "./services/budgetChecker.js";
+import { processRecurring, getUpcoming } from "./services/recurringEngine.js";
+import { generateInsights } from "./services/insightsEngine.js";
+import { categorizeTransaction } from "./services/categorizationPipeline.js";
+import { checkAndSendYearEndEmail, sendYearEndEmailManual } from "./services/yearEndService.js";
+import { processBudgetAlerts } from "./services/budgetEmailSender.js";
+
+// Hooks
+import { useOffline } from "./hooks/useOffline.js";
 
 // Utils
 import { uid } from "./utils/id.js";
@@ -44,9 +54,17 @@ import { UploadModal } from "./components/forms/UploadModal.jsx";
 import { FilterModal } from "./components/forms/FilterModal.jsx";
 
 const globalStyles = `
-  @keyframes pulse-neon {
-    0%, 100% { transform: scale(1); opacity: 0.1; }
-    50% { transform: scale(1.1); opacity: 0.15; }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
   }
   @keyframes fadeInUp {
     to { opacity: 1; transform: translateY(0); }
@@ -65,7 +83,7 @@ export default function App() {
   // ── STATE ──────────────────────────────────────────────────────────────────
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState(null);
-  const [themeMode, setThemeMode] = useState(localStorage.getItem("theme") || "dark");
+  const [themeMode, setThemeMode] = useState(localStorage.getItem("theme") || "light");
   const [page, setPage] = useState("dashboard");
   const [toast, setToast] = useState(null);
 
@@ -76,6 +94,29 @@ export default function App() {
   const [accounts, setAccounts] = useState([]);
   const [budgets, setBudgets] = useState([]);
   const [rules, setRules] = useState([]);
+  const [recurring, setRecurring] = useState([]);
+  const [emailPrefs, setEmailPrefs] = useState({ budgetAlerts: true, yearEndSummary: true });
+
+  // Phase 1C: Offline detection
+  const { isOffline, pendingOps, queueOp, clearQueue } = useOffline();
+
+  // Phase 3D: Insights
+  const insights = useMemo(
+    () => generateInsights(transactions, categories),
+    [transactions, categories]
+  );
+
+  // Phase 3B: Budget alerts
+  const budgetAlerts = useMemo(
+    () => getActiveAlerts(transactions, budgets, categories, tags),
+    [transactions, budgets, categories, tags]
+  );
+
+  // Phase 3A: Upcoming recurring
+  const upcomingRecurring = useMemo(
+    () => getUpcoming(recurring, 7),
+    [recurring]
+  );
 
   // UI State
   const [viewDate, setViewDate] = useState(new Date());
@@ -107,6 +148,7 @@ export default function App() {
 
   const isModalOpen = !!(addTx || editTx || showBackup || showFilters || addCat || editCat || addTag || editTag || editBudget || addAcc || editAcc || showUpload);
   const driveTokenRef = useRef(null);
+  const budgetCheckPending = useRef(false);
   const [driveFiles, setDriveFiles] = useState([]);
   const [driveStep, setDriveStep] = useState(null);
   const gInitRef = useRef(false);
@@ -118,13 +160,16 @@ export default function App() {
     const load = async () => {
       const d = await dbGet("data");
       if (d) {
-        if (d.transactions) setTransactions(d.transactions.map(t => ({ ...t, amount: parseFloat(t.amount) || 0 })));
-        if (d.categories) setCategories(d.categories);
-        if (d.tags) setTags(d.tags);
-        if (d.accounts) setAccounts(d.accounts);
-        if (d.budgets) setBudgets(d.budgets);
-        if (d.rules) setRules(d.rules);
+        if (d.transactions) setTransactions(ensureTimestamps(d.transactions.map(t => ({ ...t, amount: parseFloat(t.amount) || 0 }))));
+        if (d.categories) setCategories(ensureTimestamps(d.categories));
+        if (d.tags) setTags(ensureTimestamps(d.tags));
+        if (d.accounts) setAccounts(ensureTimestamps(d.accounts));
+        if (d.budgets) setBudgets(ensureTimestamps(d.budgets));
+        if (d.rules) setRules(ensureTimestamps(d.rules));
+        if (d.recurring) setRecurring(ensureTimestamps(d.recurring));
+        if (d.emailPrefs) setEmailPrefs(d.emailPrefs);
       }
+
       setReady(true);
     };
     load();
@@ -132,11 +177,60 @@ export default function App() {
 
   useEffect(() => {
     if (!ready) return;
-    dbSet("data", { transactions, categories, tags, accounts, budgets, rules });
+    dbSet("data", { transactions, categories, tags, accounts, budgets, rules, recurring, emailPrefs });
     setSyncStatus("pending");
     const t = setTimeout(() => setSyncStatus("synced"), 1000);
     return () => clearTimeout(t);
-  }, [transactions, categories, tags, accounts, budgets, rules, ready]);
+  }, [transactions, categories, tags, accounts, budgets, rules, recurring, emailPrefs, ready]);
+
+  // Process recurring transactions on load
+  useEffect(() => {
+    if (!ready || !recurring.length) return;
+    const { newTransactions, updatedTemplates } = processRecurring(recurring);
+    if (newTransactions.length > 0) {
+      setTransactions(prev => [...newTransactions, ...prev]);
+      notify(`${newTransactions.length} recurring transaction${newTransactions.length > 1 ? 's' : ''} posted`);
+    }
+    if (JSON.stringify(updatedTemplates) !== JSON.stringify(recurring)) {
+      setRecurring(updatedTemplates);
+    }
+  }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Budget alert check after every transaction save
+  useEffect(() => {
+    if (!ready || !budgets.length) return;
+    const alerts = getActiveAlerts(transactions, budgets, categories, tags);
+    const danger = alerts.filter(a => a.level === 'danger');
+    const warns = alerts.filter(a => a.level === 'warning');
+    if (danger.length > 0) {
+      notify(`⚠ Budget exceeded: ${danger.map(a => a.name).join(', ')}`, 'error');
+    } else if (warns.length > 0) {
+      notify(`Budget warning: ${warns.map(a => a.name).join(', ')} nearing limit`, 'warning');
+    }
+  }, [transactions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Budget email orchestrator
+  useEffect(() => {
+    if (!budgetCheckPending.current || !ready || !emailPrefs.budgetAlerts) return;
+    budgetCheckPending.current = false;
+    
+    const getToken = () => googleService.getToken(CLIENT_ID, driveTokenRef);
+    processBudgetAlerts(transactions, budgets, categories, tags, user, getToken)
+      .catch(err => console.error("Process budget alerts failed", err));
+  }, [transactions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Year-end email auto-trigger
+  useEffect(() => {
+    if (!ready || !user || !emailPrefs.yearEndSummary) return;
+    
+    const getToken = () => googleService.getToken(CLIENT_ID, driveTokenRef);
+    
+    checkAndSendYearEndEmail(transactions, categories, tags, accounts, user, getToken)
+      .then(sent => {
+        if (sent) notify("📊 Your year-end financial summary has been emailed to you!");
+      })
+      .catch(err => console.error("Year-end email check failed:", err));
+  }, [ready, user]); // Only run once on app load when user is available
 
   // Repair categories (Inject missing emojis from DEF_CATS)
   useEffect(() => {
@@ -203,7 +297,10 @@ export default function App() {
     setTransactions(prev => {
       let next = [...prev];
       txs.forEach(t => {
-        const sanitized = { ...t, amount: parseFloat(t.amount) || 0 };
+        // Run through unification pipeline with user rules!
+        const categorizedTx = categorizeTransaction({ ...t, amount: parseFloat(t.amount) || 0 }, rules, categories);
+        const sanitized = stampUpdated(categorizedTx);
+        
         const idx = next.findIndex(x => x.id === sanitized.id);
         if (idx > -1) next[idx] = sanitized;
         else next = [sanitized, ...next];
@@ -212,6 +309,7 @@ export default function App() {
     });
     setAddTx(false);
     setEditTx(null);
+    budgetCheckPending.current = true;
     notify("Transaction saved successfully");
   };
 
@@ -231,7 +329,7 @@ export default function App() {
   const saveToDrive = async () => {
     setDriveStep("saving");
     try {
-      const file = await driveService.saveToDrive(CLIENT_ID, driveTokenRef, { transactions, categories, tags, accounts, budgets, rules });
+      const file = await googleService.saveToDrive(CLIENT_ID, driveTokenRef, { transactions, categories, tags, accounts, budgets, rules });
       if (file && file.modifiedTime) {
         localStorage.setItem("expense_last_sync", new Date(file.modifiedTime).getTime().toString());
       }
@@ -245,7 +343,7 @@ export default function App() {
   const listDriveBackups = async () => {
     setDriveStep("fetching");
     try {
-      const files = await driveService.listBackups(CLIENT_ID, driveTokenRef);
+      const files = await googleService.listBackups(CLIENT_ID, driveTokenRef);
       setDriveFiles(files);
       setDriveStep("list");
     } catch (err) {
@@ -257,7 +355,7 @@ export default function App() {
   const restoreFromDrive = async (file) => {
     setDriveStep("restoring");
     try {
-      const data = await driveService.restoreFromDrive(CLIENT_ID, driveTokenRef, file.id);
+      const data = await googleService.restoreFromDrive(CLIENT_ID, driveTokenRef, file.id);
       if (data.transactions) setTransactions(data.transactions);
       if (data.categories) setCategories(data.categories);
       if (data.tags) setTags(data.tags);
@@ -275,44 +373,43 @@ export default function App() {
 
   const handleSmartSync = async () => {
     if (!user) { notify("Please sign in first", "error"); return; }
+    if (isOffline) { notify("You're offline — sync will resume when connected", "error"); return; }
     setSyncStatus("pending");
     try {
-      const files = await driveService.listBackups(CLIENT_ID, driveTokenRef);
-      const remoteFile = files[0];
-      const lastSyncedTime = parseInt(localStorage.getItem("expense_last_sync") || "0");
-      
-      let shouldPull = false;
-      if (remoteFile) {
-        const remoteTime = new Date(remoteFile.modifiedTime).getTime();
-        // Strict timestamp check without local clock skew
-        if (remoteTime > lastSyncedTime) {
-           shouldPull = true;
-        }
+      const localData = { transactions, categories, tags, accounts, budgets, rules, recurring };
+      const result = await googleService.smartSync(CLIENT_ID, driveTokenRef, localData);
+      const { merged, action } = result;
+
+      // Apply merged data
+      if (merged.transactions) setTransactions(merged.transactions);
+      if (merged.categories) setCategories(merged.categories);
+      if (merged.tags) setTags(merged.tags);
+      if (merged.accounts) setAccounts(merged.accounts);
+      if (merged.budgets) setBudgets(merged.budgets);
+      if (merged.rules) setRules(merged.rules);
+      if (merged.recurring) setRecurring(merged.recurring);
+
+      if (result.file?.modifiedTime) {
+        localStorage.setItem("expense_last_sync", new Date(result.file.modifiedTime).getTime().toString());
       }
 
-      if (shouldPull) {
-        const data = await driveService.restoreFromDrive(CLIENT_ID, driveTokenRef, remoteFile.id);
-        if (data.transactions) setTransactions(data.transactions);
-        if (data.categories) setCategories(data.categories);
-        if (data.tags) setTags(data.tags);
-        if (data.accounts) setAccounts(data.accounts);
-        if (data.budgets) setBudgets(data.budgets);
-        if (data.rules) setRules(data.rules);
-        localStorage.setItem("expense_last_sync", new Date(remoteFile.modifiedTime).getTime().toString());
-        notify("Synced from Cloud ☁️");
-      } else {
-        const file = await driveService.saveToDrive(CLIENT_ID, driveTokenRef, { transactions, categories, tags, accounts, budgets, rules });
-        if (file && file.modifiedTime) {
-          localStorage.setItem("expense_last_sync", new Date(file.modifiedTime).getTime().toString());
-        }
-        notify("Saved to Cloud ☁️");
-      }
+      // Clear offline queue
+      clearQueue();
+
+      notify(action === "merged" ? "Smart Merged & Synced ☁️" : "Saved to Cloud ☁️");
       setSyncStatus("synced");
     } catch(err) {
       notify(err.message, "error");
       setSyncStatus("error");
     }
   };
+
+  // Auto-sync when coming back online (flush pending queue)
+  useEffect(() => {
+    if (!isOffline && ready && user && pendingOps.length > 0) {
+      handleSmartSync();
+    }
+  }, [isOffline]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── ANALYTICS ─────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
@@ -382,7 +479,9 @@ export default function App() {
         onOpenSettings={() => setPage("settings")}
         syncStatus={syncStatus}
         onOpenSync={() => setShowBackup(true)}
+        isOffline={isOffline}
       />
+
 
       <main>
         {page === "dashboard" && <Dashboard {...{ user, transactions, categories, tags, accounts, stats, netWorth: nw, getDayFlow: (days) => getDayFlow(transactions, days), viewDate, setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", theme: C }} />}
@@ -457,6 +556,15 @@ export default function App() {
           theme: C
         }} />}
         {page === "settings" && <SettingsPage {...{
+          user,
+          transactions,
+          emailPrefs,
+          onSetEmailPrefs: setEmailPrefs,
+          onSendYearSummary: async (year) => {
+            const getToken = () => googleService.getToken(CLIENT_ID, driveTokenRef);
+            await sendYearEndEmailManual(transactions, categories, tags, accounts, user, getToken, year);
+            notify(`📊 ${year} financial summary sent to ${user.email}`);
+          },
           themeMode, toggleTheme,
           onLogout: logout,
           onShowBackup: () => setShowBackup(true),
@@ -621,6 +729,7 @@ export default function App() {
         }} 
         theme={C} 
         categories={categories}
+        rules={rules}
       />
 
       <Modal theme={C} open={showFilters} onClose={() => setShowFilters(false)} title="Filter Transactions">

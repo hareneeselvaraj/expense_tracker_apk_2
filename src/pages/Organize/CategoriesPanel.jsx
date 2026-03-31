@@ -11,7 +11,7 @@ export default function CategoriesPanel({ categories, transactions, DEF_CATS, on
     <div className="page-enter" style={{display:"flex",flexDirection:"column",gap:24}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
-          <h2 style={{margin:0,fontSize:22,fontWeight:900,color:C.text}}>Specs Hub</h2>
+          <h2 style={{margin:0,fontSize:22,fontWeight:800,color:C.text,letterSpacing:"-.02em"}}>Categories</h2>
           <p style={{margin:0,color:C.sub,fontSize:12}}>{categories.length} categories active</p>
         </div>
         <Btn theme={C} icon="plus" sm onClick={onAddCat}>Add</Btn>
@@ -21,8 +21,8 @@ export default function CategoriesPanel({ categories, transactions, DEF_CATS, on
         const cats=categories.filter(c=>c.type===type); if(!cats.length) return null;
         return (
           <div key={type}>
-            <div style={{color:C.sub,fontSize:10,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase",marginBottom:16,paddingLeft:4,display:"flex",alignItems:"center",gap:10}}>
-              {type} <div style={{flex:1,height:1,background:C.border}}/>
+            <div style={{color:C.sub,fontSize:12,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase",marginBottom:16,paddingLeft:4,display:"flex",alignItems:"center",gap:10}}>
+              {type} <div style={{flex:1,height:1,background:C.borderLight}}/>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(140px, 1fr))",gap:12}}>
               {cats.map(cat=>{
@@ -55,13 +55,13 @@ export default function CategoriesPanel({ categories, transactions, DEF_CATS, on
                         )}
                       </div>
 
-                    <div style={{flex:1, display:"flex", flexDirection:"column", justifyContent:"center"}}>
-                      <div style={{color:C.text,fontSize:15,fontWeight:800, lineHeight:1.2}}>{cat.name}</div>
-                      <div style={{color:C.sub,fontSize:10,marginTop:4,fontWeight:700, textTransform:"uppercase", letterSpacing:".05em"}}>{count} txns</div>
+                    <div style={{flex:1, display:"flex", flexDirection:"column", justifyContent:"center", marginTop:4}}>
+                      <div style={{color:C.text,fontSize:15,fontWeight:800, lineHeight:1.2, letterSpacing:"-.01em"}}>{cat.name}</div>
+                      <div style={{color:C.sub,fontSize:12,marginTop:4,fontWeight:600}}>{count} entries</div>
                     </div>
 
                     {count > 0 && (
-                      <div style={{color:cat.color,fontSize:14,fontWeight:800,fontFamily:"'JetBrains Mono',monospace",marginTop:8, borderTop:`1px solid ${C.border}`, paddingTop:8}}>
+                      <div style={{color:C.text,fontSize:16,fontWeight:800,marginTop:8, borderTop:`1px solid ${C.borderLight}`, paddingTop:12}}>
                         {fmtAmt(total)}
                       </div>
                     )}

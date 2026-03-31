@@ -72,42 +72,44 @@ export default function ReportsPage({
       <div style={{height:10}} />
 
       {/* Tab Selector (Week/Month/Year) */}
-      <div style={{display:"flex",background:"rgba(255,255,255,0.03)",borderRadius:20,padding:4,border:`1px solid ${C.border}`, backdropFilter:"blur(24px)"}}>
+      <div style={{display:"flex",background:C.input,borderRadius:24,padding:4}}>
         {["week","month","year"].map(t=>(
           <button key={t} onClick={()=>setReportTab(t)} style={{
-            flex:1,padding:"12px",borderRadius:16,borderWidth:0,cursor:"pointer",fontSize:11,fontWeight:900,textTransform:"uppercase",letterSpacing:".1em",
+            flex:1,padding:"10px",borderRadius:20,border:"none",cursor:"pointer",fontSize:13,fontWeight:700,textTransform:"capitalize",
             background:reportTab===t?C.primary:"transparent", 
-            color:reportTab===t? "#000" : C.sub,
-            boxShadow:reportTab===t?`0 0 20px ${C.primary}66`:"none",
-            transition:"all .4s cubic-bezier(0.16, 1, 0.3, 1)"
+            color:reportTab===t? "#fff" : C.sub,
+            boxShadow:reportTab===t?`0 4px 12px ${C.primary}40`:"none",
+            transition:"all .2s ease"
           }}>{t}</button>
         ))}
       </div>
 
       {/* Mode & Sub-Tab Switchers */}
       <div style={{display:"flex", gap:12, alignItems:"center"}}>
-        <div style={{display:"flex", background:"rgba(255,255,255,0.02)", borderRadius:16, padding:4, border:`1px solid ${C.border}`, flex:1, backdropFilter:"blur(10px)"}}>
-          {[{id:"category",icon:"grid",label:"Cat"},{id:"tag",icon:"tag",label:"Tag"}].map(m => (
+        <div style={{display:"flex", background:C.input, borderRadius:20, padding:4, flex:1}}>
+          {[{id:"category",icon:"grid",label:"Category"},{id:"tag",icon:"tag",label:"Tag"}].map(m => (
             <button key={m.id} onClick={()=>setReportsMode(m.id)} style={{
-              flex:1, padding:"8px", borderRadius:12, border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-              background:reportsMode===m.id?C.primaryDim:"transparent",
-              color:reportsMode===m.id?C.primary:C.sub, transition:"all .3s"
+              flex:1, padding:"8px", borderRadius:16, border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+              background:reportsMode===m.id?C.surface:"transparent",
+              color:reportsMode===m.id?C.primary:C.sub, transition:"all .2s",
+              boxShadow:reportsMode===m.id?"0 2px 8px rgba(0,0,0,0.02)":"none"
             }}>
-              <Ico n={m.icon} sz={14} c={reportsMode===m.id?C.primary:C.sub}/>
-              <span style={{fontSize:10, fontWeight:900, textTransform:"uppercase"}}>{m.label}</span>
+              <Ico n={m.icon} sz={16} c={reportsMode===m.id?C.primary:C.sub}/>
+              <span style={{fontSize:12, fontWeight:700, textTransform:"capitalize"}}>{m.label}</span>
             </button>
           ))}
         </div>
         
-        <div style={{display:"flex", background:"rgba(255,255,255,0.02)", borderRadius:16, padding:4, border:`1px solid ${C.border}`, flex:1.5, backdropFilter:"blur(10px)"}}>
+        <div style={{display:"flex", background:C.input, borderRadius:20, padding:4, flex:1.2}}>
           {[{id:"breakdown",icon:"analyze",label:"Breakdown"},{id:"trend",icon:"trendUp",label:"Trend"}].map(s => (
             <button key={s.id} onClick={()=>setReportsSubTab(s.id)} style={{
-              flex:1, padding:"8px", borderRadius:12, border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-              background:reportsSubTab===s.id?C.primaryDim:"transparent",
-              color:reportsSubTab===s.id?C.primary:C.sub, transition:"all .3s"
+              flex:1, padding:"8px", borderRadius:16, border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+              background:reportsSubTab===s.id?C.surface:"transparent",
+              color:reportsSubTab===s.id?C.primary:C.sub, transition:"all .2s",
+              boxShadow:reportsSubTab===s.id?"0 2px 8px rgba(0,0,0,0.02)":"none"
             }}>
-              <Ico n={s.icon} sz={14} c={reportsSubTab===s.id?C.primary:C.sub}/>
-              <span style={{fontSize:10, fontWeight:900, textTransform:"uppercase"}}>{s.label}</span>
+              <Ico n={s.icon} sz={16} c={reportsSubTab===s.id?C.primary:C.sub}/>
+              <span style={{fontSize:12, fontWeight:700, textTransform:"capitalize"}}>{s.label}</span>
             </button>
           ))}
         </div>
@@ -153,76 +155,73 @@ export default function ReportsPage({
 
       <div style={{display:"flex",flexDirection:"column",gap:16}}>
           {/* Compressed Net Flow Hero & Stats */}
-          <div className="glass-card cyber-accent" style={{
+          <div style={{
             display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 16,
-            borderRadius:24, padding: "20px 24px", position:"relative", overflow:"hidden",
-            boxShadow: `0 0 30px ${stats.net>=0?C.income:C.expense}1a`,
-            border:`1px solid ${stats.net>=0?C.income:C.expense}33`, alignItems:"center"
+            borderRadius:32, padding: "24px", position:"relative", overflow:"hidden",
+            boxShadow: C.shadow,
+            border:`1px solid ${C.borderLight}`, alignItems:"center", background:C.surface
           }}>
-            <div className="scan-line" style={{background:`linear-gradient(to right, transparent, ${stats.net>=0?C.income:C.expense}44, transparent)`}} />
-            <div style={{position:"absolute",top:-30,left:-30,width:100,height:100,background:stats.net>=0?C.income:C.expense,filter:"blur(50px)",opacity:0.1,borderRadius:"50%"}}/>
             
             {/* NET */}
-            <div style={{ borderRight: `1px solid ${C.border}`, paddingRight: 16, position:"relative", zIndex:2 }}>
-              <div style={{color:stats.net>=0?C.income:C.expense,fontSize:9,fontWeight:900,textTransform:"uppercase",letterSpacing:".15em",marginBottom:4, fontFamily:"'JetBrains Mono',monospace"}}>Net Flow Vector</div>
-              <div style={{color:stats.net>=0?C.income:C.expense,fontSize:28,fontWeight:900,fontFamily:"'JetBrains Mono',monospace",letterSpacing:"-.04em", textShadow:`0 0 20px ${stats.net>=0?C.income:C.expense}44`}}>
+            <div style={{ borderRight: `1px solid ${C.borderLight}`, paddingRight: 16, position:"relative", zIndex:2 }}>
+              <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:".05em",marginBottom:8}}>Net Flow</div>
+              <div style={{color:stats.net>=0?C.income:C.expense,fontSize:28,fontWeight:900,letterSpacing:"-.02em"}}>
                 {stats.net>=0?"+":"−"}{fmtAmt(Math.abs(stats.net))}
               </div>
-              <div style={{color:C.sub,fontSize:10,marginTop:6,fontWeight:700, textTransform:"uppercase"}}>{reportTx.length} TXNS {stats.inc > 0 ? `• ${savingsRate}% SAVED` : ""}</div>
+              <div style={{color:C.sub,fontSize:12,marginTop:6,fontWeight:600}}>{reportTx.length} items {stats.inc > 0 ? `• ${savingsRate}% saved` : ""}</div>
             </div>
 
             {/* INC */}
             <div style={{ paddingLeft: 8, position:"relative", zIndex:2 }}>
-              <div style={{color:C.sub,fontSize:9,fontWeight:900,textTransform:"uppercase",marginBottom:4, letterSpacing:".1em"}}>Gross Income</div>
-              <div style={{color:C.income,fontSize:20,fontWeight:900,fontFamily:"'JetBrains Mono',monospace"}}>{fmtAmt(stats.inc)}</div>
+              <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",marginBottom:6, letterSpacing:".05em"}}>Income</div>
+              <div style={{color:C.income,fontSize:20,fontWeight:800}}>{fmtAmt(stats.inc)}</div>
             </div>
 
             {/* EXP */}
             <div style={{ position:"relative", zIndex:2 }}>
-              <div style={{color:C.sub,fontSize:9,fontWeight:900,textTransform:"uppercase",marginBottom:4, letterSpacing:".1em"}}>Total Expense</div>
-              <div style={{color:C.expense,fontSize:20,fontWeight:900,fontFamily:"'JetBrains Mono',monospace"}}>{fmtAmt(stats.exp)}</div>
+              <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",marginBottom:6, letterSpacing:".05em"}}>Expense</div>
+              <div style={{color:C.expense,fontSize:20,fontWeight:800}}>{fmtAmt(stats.exp)}</div>
             </div>
           </div>
 
           {/* Content Area (Breakdown vs Trend) */}
-          <div className="glass-card cyber-accent" style={{borderRadius:32,padding:24, border:`1px solid ${C.primary}22`}}>
-            <div style={{color:C.text,fontSize:16,fontWeight:900,marginBottom:28,display:"flex",alignItems:"center",gap:10, letterSpacing:"-.02em"}}>
-              <Ico n={reportsSubTab==="trend"?"trendUp":"chart"} sz={20} c={C.primary}/> 
+          <div style={{background:C.surface, borderRadius:32,padding:24, border:`1px solid ${C.borderLight}`, boxShadow:C.shadow}}>
+            <div style={{color:C.text,fontSize:18,fontWeight:800,marginBottom:28,display:"flex",alignItems:"center",gap:10, letterSpacing:"-.02em"}}>
+              <Ico n={reportsSubTab==="trend"?"trendUp":"chart"} sz={22} c={C.primary}/> 
               {reportsSubTab==="trend" ? "Expense Trend" : `${reportsMode==="category"?"Category":"Tag"} Allocation`}
             </div>
 
             {reportsSubTab === "trend" ? (
-              <div style={{display:"flex", alignItems:"flex-end", gap:8, height:200, paddingBottom:20, overflowX:"auto"}}>
+              <div style={{display:"flex", alignItems:"flex-end", gap:12, height:200, paddingBottom:20, overflowX:"auto", scrollbarWidth:"none"}}>
                 {trendData.length === 0 ? (
-                  <div style={{width:"100%", padding:40, textAlign:"center", color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase"}}>No expense data for trend</div>
+                  <div style={{width:"100%", padding:40, textAlign:"center", color:C.sub, fontSize:13, fontWeight:600}}>No expense data for trend</div>
                 ) : trendData.map((d, i) => (
-                  <div key={i} style={{flex:1, minWidth:24, display:"flex", flexDirection:"column", alignItems:"center", gap:8, height:"100%"}}>
+                  <div key={i} style={{flex:1, minWidth:32, display:"flex", flexDirection:"column", alignItems:"center", gap:8, height:"100%"}}>
                     <div style={{flex:1, display:"flex", alignItems:"flex-end", width:"100%", justifyContent:"center"}}>
                       <div style={{
-                        width:"100%", maxWidth:30, height:`${Math.max(d.pct, 2)}%`, borderRadius:6,
-                        background:`linear-gradient(to top, ${C.expense}22, ${C.expense})`,
-                        boxShadow:`0 0 10px ${C.expense}44`, transition:"height 1s cubic-bezier(0.16, 1, 0.3, 1)"
+                        width:"100%", maxWidth:32, height:`${Math.max(d.pct, 4)}%`, borderRadius:8,
+                        background:C.primary,
+                        transition:"height 0.4s ease"
                       }} />
                     </div>
-                    <div style={{color:C.sub, fontSize:9, fontWeight:800, fontFamily:"'JetBrains Mono',monospace"}} title={fmtAmt(d.val)}>{d.label}</div>
+                    <div style={{color:C.sub, fontSize:11, fontWeight:700}} title={fmtAmt(d.val)}>{d.label}</div>
                   </div>
                 ))}
               </div>
             ) : (
               <div style={{display:"flex",flexDirection:"column",gap:20}}>
                 {aggrData.length === 0 ? (
-                  <div style={{padding:40, textAlign:"center", color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase"}}>No data available for display</div>
+                  <div style={{padding:40, textAlign:"center", color:C.sub, fontSize:13, fontWeight:600}}>No data available for display</div>
                 ) : aggrData.map(([name,val],idx)=>(
                   <div key={idx}>
-                    <div style={{display:"flex",justifyContent:"space-between",fontSize:13,fontWeight:800,marginBottom:8}}>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:14,fontWeight:700,marginBottom:10}}>
                       <span style={{color:C.text, letterSpacing:"-.01em"}}>{name}</span>
-                      <span style={{color:C.primary,fontFamily:"'JetBrains Mono',monospace"}}>{fmtAmt(val)}</span>
+                      <span style={{color:C.text,fontWeight:800}}>{fmtAmt(val)}</span>
                     </div>
-                    <div style={{height:10,background:C.muted,borderRadius:5,overflow:"hidden", border:`1px solid ${C.border}`}}>
+                    <div style={{height:12,background:C.input,borderRadius:6,overflow:"hidden"}}>
                       <div style={{
-                        height:"100%",width:`${(val/maxVal)*100}%`,borderRadius:5,
-                        background:`linear-gradient(90deg, ${C.primary}, ${C.secondary})`,
-                        boxShadow:`0 0 10px ${C.primary}44`
+                        height:"100%",width:`${(val/maxVal)*100}%`,borderRadius:6,
+                        background:C.primary
                       }}/>
                     </div>
                   </div>

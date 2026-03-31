@@ -30,10 +30,10 @@ export default function BudgetsPanel({ categories, tags, budgets, transactions, 
     <div className="page-enter" style={{display:"flex",flexDirection:"column",gap:20}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
-          <h2 style={{margin:0,fontSize:20,fontWeight:900,color:C.text}}>Monthly Limits</h2>
-          <p style={{margin:0,color:C.sub,fontSize:11}}>Control your spending velocity.</p>
+          <h2 style={{margin:0,fontSize:20,fontWeight:800,color:C.text,letterSpacing:"-.01em"}}>Monthly Limits</h2>
+          <p style={{margin:0,color:C.sub,fontSize:12}}>Control your spending velocity.</p>
         </div>
-        <Btn theme={C} icon="plus" sm onClick={() => onAddBudget(subTab)}>Add Budget</Btn>
+        <Btn theme={C} icon="plus" sm onClick={() => onAddBudget(subTab)}>Add</Btn>
       </div>
 
       {/* Sub-tab Switcher */}
@@ -52,9 +52,9 @@ export default function BudgetsPanel({ categories, tags, budgets, transactions, 
 
       <div style={{display:"flex",flexDirection:"column",gap:16}}>
         {budgetedItems.length === 0 ? (
-          <div style={{background:C.card, borderWidth:1, borderStyle:"solid", borderColor:C.border, borderRadius:24, padding:"50px 24px", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:14}}>
-            <div style={{width:70,height:70,borderRadius:20,background:C.primaryDim,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34}}>📊</div>
-            <div style={{color:C.sub, fontSize:13, maxWidth:260}}>No {isCat ? "category" : "tag"} budgets set yet. Tap <strong>+ Add Budget</strong> above to start tracking.</div>
+          <div style={{background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:32, padding:"50px 24px", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:14, boxShadow:C.shadow}}>
+            <div style={{width:70,height:70,borderRadius:20,background:C.input,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34}}>📊</div>
+            <div style={{color:C.sub, fontSize:13, maxWidth:260}}>No {isCat ? "category" : "tag"} budgets set yet. Tap <strong>+ Add</strong> above to start tracking.</div>
           </div>
         ) : budgetedItems.map(item => {
           const b = item.budget;
@@ -68,22 +68,21 @@ export default function BudgetsPanel({ categories, tags, budgets, transactions, 
 
           return (
             <div key={item.id} style={{
-              background:C.card, borderRadius:24, padding:20, border:`1px solid ${isConfirming ? C.expense+'66' : isOver ? C.expense+'44' : C.border}`,
+              background:C.surface, borderRadius:24, padding:20, border:`1px solid ${isConfirming ? C.expense+'66' : isOver ? C.expense+'44' : C.borderLight}`,
               display:"flex", flexDirection:"column", gap:14, position:"relative", overflow:"hidden",
-              boxShadow: isConfirming ? `0 0 20px ${C.expense}25` : isOver ? `0 0 20px ${C.expense}15` : "none", transition:"all .3s"
+              boxShadow: isConfirming ? `0 0 20px ${C.expense}25` : isOver ? `0 0 20px ${C.expense}15` : C.shadow, transition:"all .2s ease"
             }}>
               <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
                 <div style={{display:"flex", alignItems:"center", gap:12}}>
                   <div style={{
-                    width:44, height:44, borderRadius:14, background:`linear-gradient(135deg, ${item.color}25, ${item.color}11)`,
-                    display:"flex", alignItems:"center", justifyContent:"center", fontSize:22,
-                    border:`1px solid ${item.color}33`, boxShadow:`0 4px 10px ${item.color}15`
+                    width:44, height:44, borderRadius:14, background:`${item.color}1a`,
+                    display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, color:item.color
                   }}>
                     {isCat ? (item.emoji || "📦") : "#"}
                   </div>
                   <div>
                     <div style={{color:C.text, fontSize:15, fontWeight:800}}>{isCat ? item.name : `#${item.name}`}</div>
-                    <div style={{color:C.sub, fontSize:11, fontWeight:700}}>{fmtAmt(spent)} of {fmtAmt(b.amount)}</div>
+                    <div style={{color:C.sub, fontSize:12, fontWeight:600}}>{fmtAmt(spent)} of {fmtAmt(b.amount)}</div>
                   </div>
                 </div>
 
@@ -101,12 +100,11 @@ export default function BudgetsPanel({ categories, tags, budgets, transactions, 
                 )}
               </div>
 
-              <div style={{height:10, background:C.input, borderRadius:5, overflow:"hidden", border:`1px solid ${C.border}`}}>
+              <div style={{height:12, background:C.input, borderRadius:6, overflow:"hidden"}}>
                 <div style={{
                   height:"100%", width:`${pct}%`,
-                  background: isOver ? `linear-gradient(90deg, ${C.expense}, #f87171)` : `linear-gradient(90deg, ${C.primary}, ${C.secondary})`,
-                  borderRadius:5, transition:"width .5s cubic-bezier(0.4, 0, 0.2, 1)",
-                  boxShadow: isOver ? `0 0 10px ${C.expense}44` : `0 0 10px ${C.primary}33`
+                  background: isOver ? C.expense : C.primary,
+                  borderRadius:6, transition:"width .5s ease"
                 }}/>
               </div>
 

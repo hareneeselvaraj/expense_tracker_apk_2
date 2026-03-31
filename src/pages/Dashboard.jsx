@@ -33,15 +33,15 @@ const QuickAdd = ({ categories, onSave, theme }) => {
   };
 
   return (
-    <div style={{background:C.card, border:`1px solid ${C.border}`, borderRadius:24, padding:14, display:"flex", alignItems:"center", gap:10, backdropFilter:"blur(12px)"}}>
+    <div style={{background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:24, padding:12, display:"flex", alignItems:"center", gap:10, boxShadow:C.shadow}}>
       <div style={{flex:1, position:"relative"}}>
-        <span style={{position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:C.sub, fontSize:12, fontWeight:800}}>₹</span>
-        <input type="number" value={amt} onChange={e=>setAmt(e.target.value)} placeholder="0.00" style={{width:"100%", background:C.input, border:"none", borderRadius:14, padding:"10px 10px 10px 24px", color:C.text, fontSize:15, fontWeight:800, fontFamily:"'JetBrains Mono',monospace"}} />
+        <span style={{position:"absolute", left:16, top:"50%", transform:"translateY(-50%)", color:C.sub, fontSize:14, fontWeight:800}}>₹</span>
+        <input type="number" value={amt} onChange={e=>setAmt(e.target.value)} placeholder="0.00" style={{width:"100%", background:C.input, border:"none", borderRadius:16, padding:"12px 12px 12px 28px", color:C.text, fontSize:16, fontWeight:800, fontFamily:"inherit"}} />
       </div>
-      <select value={cat} onChange={e=>setCat(e.target.value)} style={{background:C.input, border:"none", borderRadius:14, padding:"10px", color:C.text, fontSize:13, fontWeight:700, outline:"none"}}>
-        {categories.slice(0, 8).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+      <select value={cat} onChange={e=>setCat(e.target.value)} style={{background:C.input, border:"none", borderRadius:16, padding:"12px", color:C.text, fontSize:14, fontWeight:700, outline:"none", cursor:"pointer"}}>
+        {categories.slice(0, 8).map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
       </select>
-      <button onClick={submit} style={{width:42, height:42, borderRadius:14, background:`linear-gradient(135deg, ${C.primary}, ${C.secondary})`, border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center"}} onMouseOver={e=>e.currentTarget.style.transform="scale(1.05)"} onMouseOut={e=>e.currentTarget.style.transform="scale(1)"}><Ico n="plus" sz={18} c="#000"/></button>
+      <button onClick={submit} style={{width:44, height:44, borderRadius:16, background:C.primary, color:"#fff", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", transition:"transform .15s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.95)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}><Ico n="plus" sz={20}/></button>
     </div>
   );
 };
@@ -105,21 +105,21 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
 
       {/* Net Worth Hero Card */}
       <div style={{
-        background: `linear-gradient(135deg, ${C.card}, ${C.bg})`, border: `1px solid ${C.border}`, borderRadius:32, padding:24,
+        background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 32, padding: 24,
         position: "relative", overflow: "hidden", boxShadow: C.shadow
       }}>
-        <div style={{position:"absolute", top:-50, right:-50, width:150, height:150, background:C.primary, filter:"blur(80px)", opacity:0.1}}/>
-        <div style={{color:C.sub, fontSize:12, fontWeight:800, textTransform:"uppercase", letterSpacing:".1em"}}>Current Net Worth</div>
-        <div style={{color:C.text, fontSize:36, fontWeight:900, margin:"8px 0", fontFamily:"'JetBrains Mono',monospace", letterSpacing:"-0.03em"}}>{fmtAmt(netWorth)}</div>
-        <div style={{display:"flex", alignItems:"center", gap:12, marginTop:16, borderTop: `1px solid ${C.border}`, paddingTop: 16}}>
+        <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em"}}>Current Net Worth</div>
+        <div style={{color:C.text, fontSize:36, fontWeight:800, margin:"8px 0", letterSpacing:"-0.03em"}}>{fmtAmt(netWorth)}</div>
+        
+        <div style={{display:"flex", alignItems:"center", gap:12, marginTop:20, borderTop: `1px dashed ${C.border}`, paddingTop: 20}}>
           <div style={{flex:1}}>
-            <div style={{color:C.sub, fontSize:10, fontWeight:700, marginBottom:4}}>30D CASH FLOW</div>
-            <Sparkline data={getDayFlow(30)} color={C.primary} height={40} />
+            <div style={{color:C.sub, fontSize:10, fontWeight:700, marginBottom:8}}>30D FLOW</div>
+            <Sparkline data={getDayFlow(30)} color={C.primary} height={36} />
           </div>
-          <div style={{width:1, height:40, background:C.border}}/>
+          <div style={{width:1, height:40, background:C.borderLight}}/>
           <div style={{textAlign:"right"}}>
-            <div style={{color:C.income, fontSize:14, fontWeight:900}}>+{fmtAmt(transactions.filter(t=>t.creditDebit==="Credit" && t.date.startsWith(new Date().toISOString().slice(0,7))).reduce((s,t)=>s+t.amount,0))}</div>
-            <div style={{color:C.sub, fontSize:10, fontWeight:700}}>THIS MONTH</div>
+            <div style={{color:C.income, fontSize:16, fontWeight:800}}>+{fmtAmt(transactions.filter(t=>t.creditDebit==="Credit" && t.date.startsWith(new Date().toISOString().slice(0,7))).reduce((s,t)=>s+t.amount,0))}</div>
+            <div style={{color:C.sub, fontSize:10, fontWeight:700, marginTop:4}}>THIS MONTH</div>
           </div>
         </div>
       </div>
@@ -132,66 +132,84 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
           {l:"Growth",a:stats.invest,co:C.invest,ic:"stars"}
         ].map((s,i)=>(
           <div key={i} style={{
-            background:C.card, borderWidth:1, borderStyle:"solid", borderColor:C.border, borderRadius:24, padding:16,
-            backdropFilter:"blur(16px) saturate(200%)", display:"flex", flexDirection:"column", gap:10, transition:"all .4s cubic-bezier(0.16, 1, 0.3, 1)",
-            boxShadow:C.cardGlow||"none"
-          }} onMouseEnter={e=>{e.currentTarget.style.borderColor=s.co;e.currentTarget.style.boxShadow=`0 0 24px ${s.co}22`;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.boxShadow=C.cardGlow||"none";}}>
-            <div style={{width:32,height:32,borderRadius:10,background:s.co+"15",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${s.co}20`}}>
+            background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:24, padding:16,
+            display:"flex", flexDirection:"column", gap:12, transition:"transform .2s", boxShadow:"0 4px 12px rgba(0,0,0,0.02)"
+          }}>
+            <div style={{width:32,height:32,borderRadius:12,background:s.co+"15",display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${s.co}10`}}>
               <Ico n={s.ic} sz={16} c={s.co}/>
             </div>
             <div>
-              <div style={{color:C.sub,fontSize:9,fontWeight:800,textTransform:"uppercase",letterSpacing:".08em"}}>{s.l}</div>
-              <div style={{color:s.co,fontSize:14,fontWeight:800,fontFamily:"'JetBrains Mono',monospace",marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{fmtAmt(s.a)}</div>
+              <div style={{color:C.sub,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".05em"}}>{s.l}</div>
+              <div style={{color:C.text,fontSize:14,fontWeight:800,marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{fmtAmt(s.a)}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Allocation Hub */}
+      {/* Top Expenses (Pastel Grid) */}
       {Object.keys(stats.catMap).length>0 && (
-        <div style={{background:C.card,borderWidth:1,borderStyle:"solid",borderColor:C.border,borderRadius:32,padding:24, backdropFilter:"blur(12px)"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
-            <div style={{color:C.text,fontSize:16,fontWeight:800, display:"flex", alignItems:"center", gap:8}}><Ico n="grid" sz={18} c={C.primary}/> Allocation</div>
+        <div style={{background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:32, padding:24, boxShadow:C.shadow}}>
+          
+          <div style={{textAlign:"center", marginBottom:24}}>
+            <h2 style={{color:C.text, fontSize:18, fontWeight:800, margin:0, letterSpacing:"-.02em"}}>Top Expenses</h2>
+            <div style={{color:C.sub, fontSize:12, fontWeight:600, marginTop:4}}>{viewDate.toLocaleString("en",{month:"long",year:"numeric"})}</div>
           </div>
           
-          {Object.entries(stats.catMap).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name,amt],idx)=>{
-            const cat=categories.find(c=>c.name===name), max=Math.max(...Object.values(stats.catMap)), pct=Math.round((amt/max)*100);
-            const hasBudget = cat?.budget && cat.budget > 0;
-            const budgetPct = hasBudget ? Math.min(Math.round((amt / cat.budget) * 100), 100) : 0;
-            const overBudget = hasBudget && amt > cat.budget;
-            return (
-              <div key={name} style={{marginBottom:idx===Object.entries(stats.catMap).slice(0,4).length-1?0:20}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:8,alignItems:"flex-end"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <div style={{width:10,height:10,borderRadius:"30%",background:cat?.color||C.sub}}/>
-                    <span style={{color:C.text,fontSize:14,fontWeight:700}}>{name}</span>
-                  </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{color:C.text,fontSize:13,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>{fmtAmt(amt)}{hasBudget && <span style={{color:C.sub,fontSize:10}}> / {fmtAmt(cat.budget)}</span>}</div>
-                    {hasBudget ? (
-                      <div style={{color:overBudget?C.expense:budgetPct>80?"#f59e0b":C.income,fontSize:10,fontWeight:700}}>{overBudget?"⚠ Over budget!":`${budgetPct}% used`}</div>
-                    ) : (
-                      <div style={{color:C.sub,fontSize:10,fontWeight:700}}>{pct}% focus</div>
-                    )}
-                  </div>
+          <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:24}}>
+            {Object.entries(stats.catMap).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name,amt],idx)=>{
+              const cat = categories.find(c=>c.name===name);
+              const max = Math.max(...Object.values(stats.catMap)); 
+              const pct = Math.round((amt/max)*100);
+              const bgStr = C.pastel?.[idx % C.pastel.length] || C.muted;
+              
+              return (
+                <div key={name} style={{
+                  background: bgStr, borderRadius:24, padding:16, display:"flex", flexDirection:"column", alignItems:"center", textAlign:"center", gap:8
+                }}>
+                   <div style={{width:36, height:36, borderRadius:12, background:"rgba(255,255,255,0.4)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18}}>
+                     {cat?.emoji || "📦"}
+                   </div>
+                   <div style={{color:C.text, fontSize:13, fontWeight:700}}>{name}</div>
+                   <div style={{background:"rgba(255,255,255,0.6)", borderRadius:12, padding:"6px 10px", fontSize:12, fontWeight:800, color:C.text, display:"inline-flex", alignItems:"center", gap:6, width:"100%", justifyContent:"center"}}>
+                     {fmtAmt(amt)} 
+                     <span style={{fontSize:10, fontWeight:700, opacity:0.6}}>{pct}%</span>
+                   </div>
                 </div>
-                <div style={{height:8,background:C.muted,borderRadius:4, overflow:"hidden"}}>
-                  <div style={{height:"100%",width:hasBudget?`${budgetPct}%`:`${pct}%`,background:overBudget?`linear-gradient(90deg, ${C.expense}, ${C.expense}dd)`:`linear-gradient(90deg, ${cat?.color||C.primary}, ${cat?.color||C.secondary}dd)`,borderRadius:4, transition:"width 1.5s cubic-bezier(0.16, 1, 0.3, 1)"}}/>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", background:C.input, borderRadius:20, padding:"12px 16px", marginBottom:20}}>
+            <div>
+              <div style={{color:C.sub, fontSize:11, fontWeight:600}}>Total Expense</div>
+              <div style={{color:C.text, fontSize:18, fontWeight:800}}>{fmtAmt(stats.expense)}</div>
+            </div>
+            <div style={{width:1, height:30, background:C.borderLight}}/>
+            <div style={{textAlign:"right"}}>
+              <div style={{color:C.sub, fontSize:11, fontWeight:600}}>Remaining Budget</div>
+              <div style={{color:C.income, fontSize:18, fontWeight:800}}>{stats.expense < 50000 ? fmtAmt(50000 - stats.expense) : "Overridden"}</div>
+            </div>
+          </div>
+          
+          <button style={{width:"100%", background:`linear-gradient(135deg, ${C.primary}, ${C.secondary})`, color:"#fff", border:"none", borderRadius:20, padding:16, fontSize:14, fontWeight:800, letterSpacing:".05em", cursor:"pointer", transition:"transform .2s"}} onMouseDown={e=>e.currentTarget.style.transform="scale(0.98)"} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>
+            VIEW ALL
+          </button>
         </div>
       )}
 
       {/* Recent Activity */}
-      <div style={{background:C.card,borderWidth:1,borderStyle:"solid",borderColor:C.border,borderRadius:28,padding:20}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16, padding:"0 4px"}}>
-          <div style={{color:C.text,fontSize:16,fontWeight:800}}>Recent Activity</div>
+      <div style={{background:C.surface,border:`1px solid ${C.borderLight}`,borderRadius:32,padding:24, boxShadow:C.shadow}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+          <div style={{color:C.text,fontSize:18,fontWeight:800, letterSpacing:"-.02em"}}>Recent Activity</div>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {getRecentTx(transactions, 5).map(t=>(
-            <TxRow key={t.id} t={t} categories={categories} tags={tags} accounts={accounts} onClick={()=>onEditTx(t)} theme={C}/>
+        <div style={{display:"flex",flexDirection:"column"}}>
+          {getRecentTx(transactions, 5).map((t, idx, arr)=>(
+            <React.Fragment key={t.id}>
+              <div style={{padding:"8px 0"}}>
+                <TxRow t={t} categories={categories} tags={tags} accounts={accounts} onClick={()=>onEditTx(t)} theme={C}/>
+              </div>
+              {idx < arr.length - 1 && <div style={{height:1, background:C.borderLight, margin:"4px 0"}} />}
+            </React.Fragment>
           ))}
         </div>
       </div>
