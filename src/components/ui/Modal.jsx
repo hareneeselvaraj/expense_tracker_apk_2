@@ -8,7 +8,7 @@ export const Modal = ({open,onClose,title,children,theme}) => {
   if(!open) return null;
   const isMobile = window.innerWidth < 600;
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",zIndex:600,display:"flex",alignItems:isMobile?"flex-end":"center",justifyContent:"center",transition:"opacity .3s ease",opacity:active?1:0, padding:isMobile?0:20}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:5000,display:"flex",alignItems:isMobile?"flex-end":"center",justifyContent:"center",transition:"opacity .3s ease",opacity:active?1:0, padding:isMobile?0:20}}>
       <div className="premium-scroll" onClick={e=>e.stopPropagation()} style={{
         background:C.surface, borderRadius:isMobile?"32px 32px 0 0":"24px", width:"100%", maxWidth:600, maxHeight:isMobile?"92vh":"85vh", overflow:"auto",
         boxShadow:C.shadow, transform:active?"translateY(0)":"translateY(100%)", transition:"transform .4s cubic-bezier(0.16, 1, 0.3, 1)"
