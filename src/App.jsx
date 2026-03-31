@@ -134,6 +134,7 @@ export default function App() {
   const [reportDate, setReportDate] = useState(new Date());
   const [orgDate, setOrgDate] = useState(new Date());
   const [orgPeriodTab, setOrgPeriodTab] = useState("month");
+  const [vaultTab, setVaultTab] = useState("accounts");
 
   const [syncStatus, setSyncStatus] = useState("synced");
   const [showBackup, setShowBackup] = useState(false);
@@ -502,13 +503,7 @@ export default function App() {
           onAdd: () => setAddTx(true),
           theme: C
         }} />}
-        {page === "reports" && <ReportsPage {...{
-          reportTab, setReportTab, reportsMode, setReportsMode, reportsSubTab, setReportsSubTab, reportDate, setReportDate,
-          filtered: filteredTx,
-          categories,
-          tags,
-          theme: C
-        }} />}
+
         {page === "organize" && <OrganizePage {...{
           organizeTab, setOrganizeTab, 
           orgDate, setOrgDate, orgPeriodTab, setOrgPeriodTab,
@@ -553,6 +548,10 @@ export default function App() {
             });
             notify("Account deleted successfully", "error");
           },
+          vaultTab, setVaultTab,
+          reportTab, setReportTab, reportsMode, setReportsMode, reportsSubTab, setReportsSubTab, reportDate, setReportDate,
+          filtered: filteredTx,
+          categories, tags,
           theme: C
         }} />}
         {page === "settings" && <SettingsPage {...{
@@ -611,7 +610,12 @@ export default function App() {
         }} />}
       </main>
 
-      <BottomNav page={page} setPage={setPage} theme={C} />
+      <BottomNav 
+        page={page} 
+        setPage={setPage} 
+        onAddTx={() => setAddTx(true)} 
+        theme={C} 
+      />
 
       <Modal theme={C} open={addTx} onClose={() => setAddTx(false)} title="Add Transaction">
         <TxForm categories={categories} tags={tags} accounts={accounts} onSave={handleSaveTx} onClose={() => setAddTx(false)} theme={C} />

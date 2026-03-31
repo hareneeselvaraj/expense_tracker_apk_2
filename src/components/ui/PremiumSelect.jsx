@@ -56,8 +56,8 @@ export const PremiumSelect = ({ label, value, options, onChange, placeholder = "
     <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
       {label && <FLabel theme={C}>{label}</FLabel>}
       <div onClick={() => setIsOpen(!isOpen)} style={{
-        background: C.input, border: `1px solid ${isOpen ? C.primary : C.border}`, borderRadius: 16, padding: "12px 16px", cursor: "pointer", 
-        display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all .3s cubic-bezier(0.4, 0, 0.2, 1)", minHeight: 48,
+        background: C.input, border: `1px solid ${isOpen ? C.primary : C.border}`, borderRadius: 16, padding: "4px 14px", cursor: "pointer", 
+        display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all .3s cubic-bezier(0.4, 0, 0.2, 1)", minHeight: 32,
         boxShadow: isOpen ? `0 0 20px ${C.primaryDim}` : "none"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap:12 }}>
@@ -84,36 +84,36 @@ export const PremiumSelect = ({ label, value, options, onChange, placeholder = "
           backdropFilter: "blur(40px) saturate(200%)", animation: "scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
         }}>
           {searchable && options.length > 5 && (
-            <div style={{padding:12, borderBottom:`1px solid ${C.border}`, background:C.muted+"30"}}>
+            <div style={{padding:8, borderBottom:`1px solid ${C.border}`, background:C.muted+"30"}}>
                <input 
                  autoFocus
                  placeholder="Search…" 
                  value={search} 
                  onChange={e => setSearch(e.target.value)}
-                 style={{width:"100%", background:C.input, border:`1px solid ${C.border}`, borderRadius:12, padding:"8px 12px", color:C.text, fontSize:13, outline:"none", fontFamily:"inherit"}}
+                 style={{width:"100%", background:C.input, border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 10px", color:C.text, fontSize:12, outline:"none", fontFamily:"inherit"}}
                />
             </div>
           )}
-          <div style={{maxHeight:searchable && options.length > 5 ? 260 : 320, overflowY:"auto", padding:6}}>
+          <div style={{maxHeight:searchable && options.length > 5 ? 220 : 280, overflowY:"auto", padding:4}}>
             {filtered.length === 0 ? (
-              <div style={{padding:20, textAlign:"center", color:C.sub, fontSize:12}}>No matches found</div>
+              <div style={{padding:16, textAlign:"center", color:C.sub, fontSize:11}}>No matches found</div>
             ) : filtered.map(opt => {
               const sel = isSel(opt);
               return (
                 <div key={opt.id || opt.name} onClick={() => handleSelect(opt)} style={{
-                  padding: "12px 14px", borderRadius:16, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, transition: "all .2s",
-                  background: sel ? C.primary + "15" : "transparent", marginBottom: 2
+                  padding: "8px 10px", borderRadius:12, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, transition: "all .2s",
+                  background: sel ? C.primary + "15" : "transparent", marginBottom: 1
                 }} onMouseEnter={e => e.currentTarget.style.background = C.muted} onMouseLeave={e => e.currentTarget.style.background = sel ? C.primary + "15" : "transparent"}>
                   {opt.color ? (
-                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: opt.color, boxShadow: `0 0 8px ${opt.color}33` }} />
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: opt.color, boxShadow: `0 0 8px ${opt.color}33` }} />
                   ) : opt.emoji ? (
-                    <span style={{ fontSize: 16 }}>{opt.emoji}</span>
+                    <span style={{ fontSize: 14 }}>{opt.emoji}</span>
                   ) : null}
                   <div style={{flex:1}}>
-                    <div style={{ color: sel ? C.primary : C.text, fontSize: 13, fontWeight: 700 }}>{opt.name || opt.label}</div>
-                    {opt.type && <div style={{fontSize:9, color:C.sub, fontWeight:800, textTransform:"uppercase"}}>{opt.type}</div>}
+                    <div style={{ color: sel ? C.primary : C.text, fontSize: 12, fontWeight: 700 }}>{opt.name || opt.label}</div>
+                    {opt.type && <div style={{fontSize:8, color:C.sub, fontWeight:800, textTransform:"uppercase"}}>{opt.type}</div>}
                   </div>
-                  {sel && <Ico n="check" sz={14} c={C.primary}/>}
+                  {sel && <Ico n="check" sz={12} c={C.primary}/>}
                 </div>
               );
             })}
