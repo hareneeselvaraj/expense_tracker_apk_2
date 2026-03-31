@@ -72,14 +72,14 @@ export default function SettingsPage({
               <button 
                 onClick={toggleTheme} 
                 style={{
-                  width:56, height:30, borderRadius:15, background:themeMode==="dark"?C.primary:"#e0e0e0", border:"none", 
+                  width:56, height:30, borderRadius:15, background:themeMode==="dark"?C.primary:C.muted, border:"none", 
                   position:"relative", cursor:"pointer", transition:"all .3s"
                 }}
               >
                   <div style={{
                     position:"absolute", left:themeMode==="dark"?"calc(100% - 26px)":"4px", top:4, width:22, height:22, borderRadius:"50%", 
-                    background:"#fff", transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                    background:C.surface, transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
                   }}/>
               </button>
            </div>
@@ -99,14 +99,14 @@ export default function SettingsPage({
             <button 
               onClick={() => onSetEmailPrefs && onSetEmailPrefs(p => ({...p, budgetAlerts: !p.budgetAlerts}))}
               style={{
-                width:50, height:28, borderRadius:14, background:emailPrefs?.budgetAlerts ? C.primary : "#e0e0e0", border:"none", 
+                width:50, height:28, borderRadius:14, background:emailPrefs?.budgetAlerts ? C.primary : C.muted, border:"none", 
                 position:"relative", cursor:"pointer", transition:"all .3s"
               }}
             >
               <div style={{
                 position:"absolute", left:emailPrefs?.budgetAlerts ? "calc(100% - 24px)" : "4px", top:4, width:20, height:20, borderRadius:"50%", 
-                background:"#fff", transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                background:C.surface, transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
               }}/>
             </button>
           </div>
@@ -120,14 +120,14 @@ export default function SettingsPage({
             <button 
               onClick={() => onSetEmailPrefs && onSetEmailPrefs(p => ({...p, yearEndSummary: !p.yearEndSummary}))}
               style={{
-                width:50, height:28, borderRadius:14, background:emailPrefs?.yearEndSummary ? C.primary : "#e0e0e0", border:"none", 
+                width:50, height:28, borderRadius:14, background:emailPrefs?.yearEndSummary ? C.primary : C.muted, border:"none", 
                 position:"relative", cursor:"pointer", transition:"all .3s"
               }}
             >
               <div style={{
                 position:"absolute", left:emailPrefs?.yearEndSummary ? "calc(100% - 24px)" : "4px", top:4, width:20, height:20, borderRadius:"50%", 
-                background:"#fff", transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                background:C.surface, transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
               }}/>
             </button>
           </div>

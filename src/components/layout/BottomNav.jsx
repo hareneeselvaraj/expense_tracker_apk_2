@@ -24,7 +24,7 @@ export const BottomNav = ({ page, setPage, onAddTx, theme }) => {
       alignItems: "center",
       justifyContent: "space-between",
       padding: "10px 12px",
-      background: theme.mode === "dark" ? "rgba(15, 15, 20, 0.85)" : "rgba(255, 255, 255, 0.9)",
+      background: C.navBg,
       backdropFilter: "blur(24px) saturate(180%)",
       WebkitBackdropFilter: "blur(24px) saturate(180%)",
       borderRadius: 32,

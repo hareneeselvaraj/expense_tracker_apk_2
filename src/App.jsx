@@ -19,6 +19,7 @@ import { processBudgetAlerts } from "./services/budgetEmailSender.js";
 
 // Hooks
 import { useOffline } from "./hooks/useOffline.js";
+import { useInstallPrompt } from "./hooks/useInstallPrompt.js";
 
 // Utils
 import { uid } from "./utils/id.js";
@@ -99,6 +100,7 @@ export default function App() {
 
   // Phase 1C: Offline detection
   const { isOffline, pendingOps, queueOp, clearQueue } = useOffline();
+  const { canInstall, install } = useInstallPrompt();
 
   // Phase 3D: Insights
   const insights = useMemo(
@@ -456,6 +458,21 @@ export default function App() {
         <h1 style={{ fontSize: 32, fontWeight: 900, color: C.text }}>Expense tracker</h1>
         <p style={{ color: C.sub, marginBottom: 32 }}>Your private financial command center.</p>
         <div id="googleBtn"></div>
+        {canInstall && (
+          <button
+            onClick={install}
+            style={{
+              marginTop: 20, width: "100%", background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
+              color: "#fff", border: "none", borderRadius: 16, padding: "14px 24px",
+              fontSize: 14, fontWeight: 800, cursor: "pointer", transition: "transform .15s",
+              letterSpacing: ".03em"
+            }}
+            onMouseDown={e => e.currentTarget.style.transform = "scale(0.97)"}
+            onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
+          >
+            📲 Install App
+          </button>
+        )}
       </div>
     </div>
   );

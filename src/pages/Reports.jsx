@@ -85,33 +85,24 @@ export default function ReportsPage({
       </div>
 
       {/* Mode & Sub-Tab Switchers */}
-      <div style={{display:"flex", gap:12, alignItems:"center"}}>
-        <div style={{display:"flex", background:C.input, borderRadius:20, padding:4, flex:1}}>
-          {[{id:"category",icon:"grid",label:"Category"},{id:"tag",icon:"tag",label:"Tag"}].map(m => (
-            <button key={m.id} onClick={()=>setReportsMode(m.id)} style={{
-              flex:1, padding:"8px", borderRadius:16, border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-              background:reportsMode===m.id?C.surface:"transparent",
-              color:reportsMode===m.id?C.primary:C.sub, transition:"all .2s",
-              boxShadow:reportsMode===m.id?"0 2px 8px rgba(0,0,0,0.02)":"none"
-            }}>
-              <Ico n={m.icon} sz={16} c={reportsMode===m.id?C.primary:C.sub}/>
-              <span style={{fontSize:12, fontWeight:700, textTransform:"capitalize"}}>{m.label}</span>
-            </button>
-          ))}
-        </div>
-        
-        <div style={{display:"flex", background:C.input, borderRadius:20, padding:4, flex:1.2}}>
-          {[{id:"breakdown",icon:"analyze",label:"Breakdown"},{id:"trend",icon:"trendUp",label:"Trend"}].map(s => (
-            <button key={s.id} onClick={()=>setReportsSubTab(s.id)} style={{
-              flex:1, padding:"8px", borderRadius:16, border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-              background:reportsSubTab===s.id?C.surface:"transparent",
-              color:reportsSubTab===s.id?C.primary:C.sub, transition:"all .2s",
-              boxShadow:reportsSubTab===s.id?"0 2px 8px rgba(0,0,0,0.02)":"none"
-            }}>
-              <Ico n={s.icon} sz={16} c={reportsSubTab===s.id?C.primary:C.sub}/>
-              <span style={{fontSize:12, fontWeight:700, textTransform:"capitalize"}}>{s.label}</span>
-            </button>
-          ))}
+      <div style={{display:"flex", flexDirection:"column", gap:8}}>
+        <div style={{display:"flex", background:C.input, borderRadius:20, padding:4}}>
+          {[{id:"category",icon:"grid",label:"Category"},{id:"tag",icon:"tag",label:"Tag"},{id:"breakdown",icon:"analyze",label:"Breakdown"},{id:"trend",icon:"trendUp",label:"Trend"}].map(m => {
+            const isMode = m.id === "category" || m.id === "tag";
+            const isActive = isMode ? reportsMode === m.id : reportsSubTab === m.id;
+            const onClick = isMode ? () => setReportsMode(m.id) : () => setReportsSubTab(m.id);
+            return (
+              <button key={m.id} onClick={onClick} style={{
+                flex:1, padding:"8px 6px", borderRadius:16, border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:5,
+                background:isActive?C.surface:"transparent",
+                color:isActive?C.primary:C.sub, transition:"all .2s",
+                boxShadow:isActive?"0 2px 8px rgba(0,0,0,0.02)":"none"
+              }}>
+                <Ico n={m.icon} sz={14} c={isActive?C.primary:C.sub}/>
+                <span style={{fontSize:11, fontWeight:700}}>{m.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

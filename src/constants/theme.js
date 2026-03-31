@@ -19,7 +19,7 @@ export const THEMES = {
     pastel: ["#E8DEFC", "#FFDFD6", "#D4F0E8", "#FFD6E8", "#D6EBFF", "#FFF0D6"] // lavender, peach, mint, rose, sky, amber
   },
   dark: {
-    bg: "#0F0D23", // deep navy
+    bg: "#0d0f1e", // deep navy
     surface: "rgba(26, 26, 46, 0.95)", 
     card: "rgba(26, 26, 46, 0.8)", 
     border: "rgba(255, 255, 255, 0.06)",
