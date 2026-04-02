@@ -36,8 +36,8 @@ export function processRecurring(templates = []) {
   templates.forEach(tmpl => {
     let current = { ...tmpl };
     
-    // Skip if no nextDue or if it's ended
-    if (!current.nextDue) {
+    // Skip if no nextDue or if it's ended or paused
+    if (!current.nextDue || current.paused) {
       updatedTemplates.push(current);
       return;
     }

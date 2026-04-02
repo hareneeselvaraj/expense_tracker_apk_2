@@ -808,10 +808,18 @@ export default function App() {
             notify("Recurring payment deleted", "error");
           }}
           onSave={(tmpl) => {
+            let finalTmpl = { ...tmpl, updatedAt: new Date().toISOString() };
+            // Process immediately if due
+            const { newTransactions, updatedTemplates } = processRecurring([finalTmpl]);
+            if (newTransactions.length > 0) {
+              setTransactions(prev => [...newTransactions, ...prev]);
+              if (updatedTemplates.length > 0) finalTmpl = updatedTemplates[0];
+            }
+
             setRecurring(p => {
-              const idx = p.findIndex(x => x.id === tmpl.id);
-              if (idx > -1) return p.map(x => x.id === tmpl.id ? { ...tmpl, updatedAt: new Date().toISOString() } : x);
-              return [{ ...tmpl, updatedAt: new Date().toISOString() }, ...p];
+              const idx = p.findIndex(x => x.id === finalTmpl.id);
+              if (idx > -1) return p.map(x => x.id === finalTmpl.id ? finalTmpl : x);
+              return [finalTmpl, ...p];
             });
             setAddRecurring(false);
             setEditRecurring(null);
