@@ -51,6 +51,7 @@ import { CatForm } from "./components/forms/CatForm.jsx";
 import { TagForm } from "./components/forms/TagForm.jsx";
 import { BudgetForm } from "./components/forms/BudgetForm.jsx";
 import { AccForm } from "./components/forms/AccForm.jsx";
+import { RecurringForm } from "./components/forms/RecurringForm.jsx";
 import { UploadModal } from "./components/forms/UploadModal.jsx";
 import { FilterModal } from "./components/forms/FilterModal.jsx";
 
@@ -149,8 +150,10 @@ export default function App() {
   const [addAcc, setAddAcc] = useState(false);
   const [editAcc, setEditAcc] = useState(null);
   const [showUpload, setShowUpload] = useState(false);
+  const [addRecurring, setAddRecurring] = useState(false);
+  const [editRecurring, setEditRecurring] = useState(null);
 
-  const isModalOpen = !!(addTx || editTx || showBackup || showFilters || addCat || editCat || addTag || editTag || editBudget || addAcc || editAcc || showUpload);
+  const isModalOpen = !!(addTx || editTx || showBackup || showFilters || addCat || editCat || addTag || editTag || editBudget || addAcc || editAcc || showUpload || addRecurring || editRecurring);
   const driveTokenRef = useRef(null);
   const budgetCheckPending = useRef(false);
   const [driveFiles, setDriveFiles] = useState([]);
@@ -600,6 +603,19 @@ export default function App() {
             notify("Account deleted successfully", "error");
           },
           vaultTab, setVaultTab,
+          // Recurring
+          recurring,
+          onAddRecurring: () => setAddRecurring(true),
+          onEditRecurring: (tmpl) => setEditRecurring(tmpl),
+          onDeleteRecurring: (id) => {
+            setRecurring(p => p.filter(r => r.id !== id));
+            notify("Recurring payment deleted", "error");
+          },
+          onTogglePauseRecurring: (id) => {
+            setRecurring(p => p.map(r => r.id === id ? { ...r, paused: !r.paused, updatedAt: new Date().toISOString() } : r));
+            const tmpl = recurring.find(r => r.id === id);
+            notify(tmpl?.paused ? "Recurring payment resumed" : "Recurring payment paused");
+          },
           reportTab, setReportTab, reportsMode, setReportsMode, reportsSubTab, setReportsSubTab, reportDate, setReportDate,
           filtered: filteredTx,
           categories, tags,
@@ -775,6 +791,31 @@ export default function App() {
             setAddAcc(false);
             setEditAcc(null);
             notify(editAcc ? "✓ Account Updated" : "✓ Account Created");
+          }}
+        />
+      </Modal>
+
+      <Modal open={!!(addRecurring || editRecurring)} title={editRecurring ? "Edit Recurring Payment" : "New Recurring Payment"} onClose={() => { setAddRecurring(false); setEditRecurring(null); }} theme={C}>
+        <RecurringForm
+          init={editRecurring}
+          categories={categories}
+          accounts={accounts}
+          theme={C}
+          onClose={() => { setAddRecurring(false); setEditRecurring(null); }}
+          onDelete={(id) => {
+            setRecurring(p => p.filter(r => r.id !== id));
+            setEditRecurring(null);
+            notify("Recurring payment deleted", "error");
+          }}
+          onSave={(tmpl) => {
+            setRecurring(p => {
+              const idx = p.findIndex(x => x.id === tmpl.id);
+              if (idx > -1) return p.map(x => x.id === tmpl.id ? { ...tmpl, updatedAt: new Date().toISOString() } : x);
+              return [{ ...tmpl, updatedAt: new Date().toISOString() }, ...p];
+            });
+            setAddRecurring(false);
+            setEditRecurring(null);
+            notify(editRecurring ? "✓ Recurring Updated" : "✓ Recurring Created");
           }}
         />
       </Modal>

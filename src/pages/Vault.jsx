@@ -4,10 +4,13 @@ import { Btn } from "../components/ui/Btn.jsx";
 import { fmtAmt } from "../utils/format.js";
 import { getAccBal, getNetWorth } from "../utils/analytics.js";
 import ReportsPage from "./Reports.jsx";
+import RecurringPanel from "./RecurringPanel.jsx";
 
 export default function VaultPage({ 
   accounts, transactions, onAddAcc, onEditAcc, onDeleteAcc, theme,
   vaultTab, setVaultTab,
+  // Recurring Props
+  recurring, onAddRecurring, onEditRecurring, onDeleteRecurring, onTogglePauseRecurring,
   // Reports Props
   reportTab, setReportTab,
   reportsMode, setReportsMode,
@@ -26,6 +29,7 @@ export default function VaultPage({
       <div style={{display:"flex", background:C.input, borderRadius:24, padding:4, marginBottom: 8}}>
         {[
           { id: "accounts", label: "Accounts", icon: "bank" },
+          { id: "recurring", label: "Recurring", icon: "repeat" },
           { id: "reports", label: "Analytics", icon: "chart" }
         ].map(t => (
           <button key={t.id} onClick={() => setVaultTab(t.id)} style={{
@@ -49,6 +53,17 @@ export default function VaultPage({
             filtered, categories, tags, theme
           }} />
         </div>
+      ) : vaultTab === "recurring" ? (
+        <RecurringPanel
+          recurring={recurring}
+          categories={categories}
+          accounts={accounts}
+          onAdd={onAddRecurring}
+          onEdit={onEditRecurring}
+          onTogglePause={onTogglePauseRecurring}
+          onDelete={onDeleteRecurring}
+          theme={theme}
+        />
       ) : (
         <>
           {/* Header */}
