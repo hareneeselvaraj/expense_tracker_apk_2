@@ -59,13 +59,13 @@ export default function VaultPage({
 
           {/* Total Balance Summary */}
           {accounts.length > 0 && (
-            <div style={{
+            <div className="hero-card" style={{
               background: C.surface, 
               border:`1px solid ${C.borderLight}`, borderRadius:32, padding:24,
               boxShadow:C.shadow, position:"relative", overflow:"hidden"
             }}>
-              <div style={{color:C.sub,fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Total Net Worth</div>
-              <div style={{color:C.text,fontSize:32,fontWeight:800,letterSpacing:"-.02em"}}>
+              <div className="hero-label" style={{color:C.sub,fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Total Net Worth</div>
+              <div className="hero-amount" style={{color:C.text,fontSize:32,fontWeight:800,letterSpacing:"-.02em"}}>
                 {fmtAmt(netWorth)}
               </div>
             </div>
@@ -87,13 +87,13 @@ export default function VaultPage({
               </div>
             </div>
           ) : (
-            <div style={{display:"flex", flexDirection:"column", gap:14}}>
+            <div className="acc-list" style={{display:"flex", flexDirection:"column", gap:14}}>
               {accounts.map((acc, i) => {
                 const bal = getAccBal(accounts, transactions, acc.id);
                 const txnsCount = transactions.filter(t => t.accountId === acc.id).length;
                 const isConfirming = confirmDeleteId === acc.id;
                 return (
-                  <div key={acc.id} style={{
+                  <div key={acc.id} className="acc-card" style={{
                     background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:24, padding:20,
                     display:"flex", flexDirection:"column", gap:14, transition:"all .2s ease",
                     position:"relative", overflow:"hidden", boxShadow: C.shadow,
@@ -102,15 +102,15 @@ export default function VaultPage({
                     
                     <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
                        <div style={{display:"flex", alignItems:"center", gap:12}}>
-                         <div style={{width:44, height:44, borderRadius:14, background:C.input, display:"flex", alignItems:"center", justifyContent:"center"}}>
+                         <div className="acc-icon" style={{width:44, height:44, borderRadius:14, background:C.input, display:"flex", alignItems:"center", justifyContent:"center"}}>
                            <Ico n={acc.type==="Credit Card"?"list":acc.type==="Wallet"?"archive":"bank"} sz={20} c={C.primary}/>
                          </div>
                          <div>
-                           <div style={{color:C.text, fontSize:15, fontWeight:800, letterSpacing:"-0.01em"}}>{acc.name}</div>
-                           <div style={{color:C.sub, fontSize:12, fontWeight:600, marginTop:2}}>{acc.type}</div>
+                           <div className="acc-name" style={{color:C.text, fontSize:15, fontWeight:800, letterSpacing:"-0.01em"}}>{acc.name}</div>
+                           <div className="acc-type" style={{color:C.sub, fontSize:12, fontWeight:600, marginTop:2}}>{acc.type}</div>
                          </div>
                        </div>
-                       <div style={{display:"flex", gap:10, position:"relative", zIndex:9999}}>
+                       <div className="acc-actions" style={{display:"flex", gap:10, position:"relative", zIndex:9999}}>
                          {/* Edit button */}
                          <div onClick={(e)=>{e.stopPropagation(); onEditAcc(acc);}} style={{background:C.input, color:C.sub, cursor:"pointer", width:36, height:36, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", transition:"all .2s", pointerEvents:"auto"}} onMouseEnter={e=>{e.currentTarget.style.background=C.primary; e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.background=C.input; e.currentTarget.style.color=C.sub;}}>
                            <Ico n="edit" sz={16}/>
@@ -162,11 +162,11 @@ export default function VaultPage({
                       </div>
                     )}
 
-                    <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginTop:4, borderTop:`1px dashed ${C.borderLight}`, paddingTop:16}}>
-                       <div style={{color:C.sub, fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:6}}><Ico n="swap" sz={14}/> {txnsCount} entries</div>
+                    <div className="acc-footer" style={{display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginTop:4, borderTop:`1px dashed ${C.borderLight}`, paddingTop:16}}>
+                       <div className="acc-entries" style={{color:C.sub, fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:6}}><Ico n="swap" sz={14}/> {txnsCount} entries</div>
                        <div style={{textAlign:"right"}}>
-                         <div style={{color:C.sub, fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em", marginBottom:4}}>Balance</div>
-                         <div style={{color:bal>=0?C.text:C.expense, fontSize:22, fontWeight:800, letterSpacing:"-.02em"}}>{fmtAmt(bal)}</div>
+                         <div className="acc-bal-label" style={{color:C.sub, fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em", marginBottom:4}}>Balance</div>
+                         <div className="acc-bal" style={{color:bal>=0?C.text:C.expense, fontSize:22, fontWeight:800, letterSpacing:"-.02em"}}>{fmtAmt(bal)}</div>
                        </div>
                     </div>
                   </div>

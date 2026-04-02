@@ -54,20 +54,20 @@ export function buildBudgetAlertEmail(alert, userName) {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Spent</td>
-                <td style="padding: 8px 0; text-align: right; color: ${accentColor}; font-size: 18px; font-weight: 800; font-family: 'JetBrains Mono', monospace;">₹${fmtAmt(alert.spent)}</td>
+                <td style="padding: 8px 0; text-align: right; color: ${accentColor}; font-size: 18px; font-weight: 800; font-family: 'JetBrains Mono', monospace;">${fmtAmt(alert.spent)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Budget Limit</td>
-                <td style="padding: 8px 0; text-align: right; color: #e2e8f0; font-size: 18px; font-weight: 800; font-family: 'JetBrains Mono', monospace;">₹${fmtAmt(alert.limit)}</td>
+                <td style="padding: 8px 0; text-align: right; color: #e2e8f0; font-size: 18px; font-weight: 800; font-family: 'JetBrains Mono', monospace;">${fmtAmt(alert.limit)}</td>
               </tr>
               ${isExceeded ? `
               <tr>
                 <td style="padding: 8px 0; border-top: 1px solid #1e293b; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Over By</td>
-                <td style="padding: 8px 0; border-top: 1px solid #1e293b; text-align: right; color: #ff5252; font-size: 22px; font-weight: 900; font-family: 'JetBrains Mono', monospace;">₹${fmtAmt(alert.overshoot)}</td>
+                <td style="padding: 8px 0; border-top: 1px solid #1e293b; text-align: right; color: #ff5252; font-size: 22px; font-weight: 900; font-family: 'JetBrains Mono', monospace;">${fmtAmt(alert.overshoot)}</td>
               </tr>` : `
               <tr>
                 <td style="padding: 8px 0; border-top: 1px solid #1e293b; color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Remaining</td>
-                <td style="padding: 8px 0; border-top: 1px solid #1e293b; text-align: right; color: #00e676; font-size: 22px; font-weight: 900; font-family: 'JetBrains Mono', monospace;">₹${fmtAmt(alert.remaining)}</td>
+                <td style="padding: 8px 0; border-top: 1px solid #1e293b; text-align: right; color: #00e676; font-size: 22px; font-weight: 900; font-family: 'JetBrains Mono', monospace;">${fmtAmt(alert.remaining)}</td>
               </tr>`}
             </table>
           </div>
@@ -113,7 +113,7 @@ export function buildYearEndSummaryEmail(summary, userName, year) {
           <div style="background: #ff525233; border-radius: 4px; height: 8px; width: ${expWidth}%;"></div>
         </td>
         <td style="padding: 4px 0 4px 8px; text-align: right; font-size: 11px; color: ${m.income - m.expense >= 0 ? '#00e676' : '#ff5252'}; font-weight: 700; font-family: monospace; width: 70px;">
-          ${m.income - m.expense >= 0 ? '+' : ''}₹${fmtAmt(m.income - m.expense)}
+          ${m.income - m.expense >= 0 ? '+' : ''}${fmtAmt(m.income - m.expense)}
         </td>
       </tr>
     `;
@@ -125,7 +125,7 @@ export function buildYearEndSummaryEmail(summary, userName, year) {
         <div style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${cat.color}; margin-right: 8px; vertical-align: middle;"></div>
         <span style="color: #e2e8f0; font-size: 13px; font-weight: 600;">${cat.name}</span>
       </td>
-      <td style="padding: 6px 0; text-align: right; color: #94a3b8; font-size: 13px; font-weight: 700; font-family: monospace;">₹${fmtAmt(cat.amount)}</td>
+      <td style="padding: 6px 0; text-align: right; color: #94a3b8; font-size: 13px; font-weight: 700; font-family: monospace;">${fmtAmt(cat.amount)}</td>
       <td style="padding: 6px 0; text-align: right; color: #64748b; font-size: 11px; font-weight: 600; width: 50px;">${cat.percentage}%</td>
     </tr>
   `).join("");
@@ -149,11 +149,11 @@ export function buildYearEndSummaryEmail(summary, userName, year) {
             <tr>
               <td style="background: #111827; border-radius: 16px 0 0 16px; padding: 20px; text-align: center; border: 1px solid #1e293b; border-right: none; width: 50%;">
                 <div style="color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Total Income</div>
-                <div style="color: #00e676; font-size: 22px; font-weight: 900; font-family: 'JetBrains Mono', monospace;">₹${fmtAmt(summary.totalIncome)}</div>
+                <div style="color: #00e676; font-size: 22px; font-weight: 900; font-family: 'JetBrains Mono', monospace;">${fmtAmt(summary.totalIncome)}</div>
               </td>
               <td style="background: #111827; border-radius: 0 16px 16px 0; padding: 20px; text-align: center; border: 1px solid #1e293b; border-left: none; width: 50%;">
                 <div style="color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Total Expenses</div>
-                <div style="color: #ff5252; font-size: 22px; font-weight: 900; font-family: 'JetBrains Mono', monospace;">₹${fmtAmt(summary.totalExpense)}</div>
+                <div style="color: #ff5252; font-size: 22px; font-weight: 900; font-family: 'JetBrains Mono', monospace;">${fmtAmt(summary.totalExpense)}</div>
               </td>
             </tr>
           </table>
@@ -162,7 +162,7 @@ export function buildYearEndSummaryEmail(summary, userName, year) {
           <div style="background: #111827; border: 1px solid #00e5ff22; border-radius: 16px; padding: 24px; margin-bottom: 24px; text-align: center;">
             <div style="color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">Net Savings</div>
             <div style="color: ${summary.netSavings >= 0 ? '#00e676' : '#ff5252'}; font-size: 36px; font-weight: 900; font-family: 'JetBrains Mono', monospace; letter-spacing: -1px;">
-              ${summary.netSavings >= 0 ? '+' : ''}₹${fmtAmt(Math.abs(summary.netSavings))}
+              ${summary.netSavings >= 0 ? '+' : ''}${fmtAmt(Math.abs(summary.netSavings))}
             </div>
             <div style="color: #00e5ff; font-size: 14px; font-weight: 700; margin-top: 8px;">
               ${summary.savingsRate}% savings rate
@@ -175,7 +175,7 @@ export function buildYearEndSummaryEmail(summary, userName, year) {
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <div style="color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">Total Invested</div>
-                <div style="color: #b388ff; font-size: 20px; font-weight: 900; font-family: monospace; margin-top: 4px;">₹${fmtAmt(summary.totalInvest)}</div>
+                <div style="color: #b388ff; font-size: 20px; font-weight: 900; font-family: monospace; margin-top: 4px;">${fmtAmt(summary.totalInvest)}</div>
               </div>
               <div style="font-size: 32px;">💎</div>
             </div>

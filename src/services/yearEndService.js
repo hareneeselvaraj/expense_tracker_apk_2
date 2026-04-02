@@ -107,7 +107,7 @@ export function buildYearCSV(transactions, categories, tags, accounts, year) {
     // CSV escape: wrap in quotes if contains comma, quote, or newline
     const esc = (val) => {
       const str = String(val || "").replace(/"/g, '""');
-      return str.includes(",") || str.includes('"') || str.includes("\\n") ? `"${str}"` : str;
+      return str.includes(",") || str.includes('"') || str.includes("\n") ? `"${str}"` : str;
     };
     
     return [
@@ -123,7 +123,7 @@ export function buildYearCSV(transactions, categories, tags, accounts, year) {
     ].join(",");
   });
 
-  return [header, ...rows].join("\\n");
+  return [header, ...rows].join("\n");
 }
 
 // Check and send year-end email

@@ -643,6 +643,9 @@ export default function App() {
         page={page} 
         setPage={setPage} 
         onAddTx={() => setAddTx(true)} 
+        onAddAcc={() => setAddAcc(true)}
+        onAddCat={() => setAddCat(true)}
+        onAddTag={() => setAddTag(true)}
         theme={C} 
       />
 

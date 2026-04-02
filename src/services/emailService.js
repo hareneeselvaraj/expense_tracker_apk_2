@@ -18,28 +18,47 @@
  * - gmail.send scope cannot read inbox — privacy preserved
  */
 
+// Convert a UTF-8 string to standard base64
+function utf8ToBase64(str) {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(str);
+  let binary = "";
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary);
+}
+
 // Convert string to base64url (Gmail API requirement)
 function base64url(str) {
-  return btoa(unescape(encodeURIComponent(str)))
+  return utf8ToBase64(str)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 }
 
+// RFC 2047 encode subject for non-ASCII characters (emojis, ₹, etc.)
+function encodeSubject(subject) {
+  // Check if subject contains non-ASCII characters
+  if (/[^\x00-\x7F]/.test(subject)) {
+    return `=?UTF-8?B?${utf8ToBase64(subject)}?=`;
+  }
+  return subject;
+}
+
 // Build RFC 2822 email with HTML body
 function buildMimeMessage({ to, subject, htmlBody }) {
   const boundary = "boundary_" + Date.now();
+  const htmlBase64 = utf8ToBase64(htmlBody);
   const lines = [
     `To: ${to}`,
-    `Subject: ${subject}`,
+    `Subject: ${encodeSubject(subject)}`,
     `MIME-Version: 1.0`,
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
     ``,
     `--${boundary}`,
     `Content-Type: text/html; charset="UTF-8"`,
-    `Content-Transfer-Encoding: 7bit`,
+    `Content-Transfer-Encoding: base64`,
     ``,
-    htmlBody,
+    htmlBase64,
     `--${boundary}--`
   ];
   return lines.join("\r\n");
@@ -48,19 +67,20 @@ function buildMimeMessage({ to, subject, htmlBody }) {
 // Build RFC 2822 email with HTML body + CSV attachment
 function buildMimeMessageWithAttachment({ to, subject, htmlBody, csvContent, csvFilename }) {
   const boundary = "boundary_" + Date.now();
-  const csvBase64 = btoa(unescape(encodeURIComponent(csvContent)));
+  const htmlBase64 = utf8ToBase64(htmlBody);
+  const csvBase64 = utf8ToBase64(csvContent);
   
   const lines = [
     `To: ${to}`,
-    `Subject: ${subject}`,
+    `Subject: ${encodeSubject(subject)}`,
     `MIME-Version: 1.0`,
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
     ``,
     `--${boundary}`,
     `Content-Type: text/html; charset="UTF-8"`,
-    `Content-Transfer-Encoding: 7bit`,
+    `Content-Transfer-Encoding: base64`,
     ``,
-    htmlBody,
+    htmlBase64,
     ``,
     `--${boundary}`,
     `Content-Type: text/csv; name="${csvFilename}"`,

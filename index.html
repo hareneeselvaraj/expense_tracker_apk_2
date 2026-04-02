@@ -41,6 +41,128 @@
         -webkit-text-fill-color: white !important;
         transition: background-color 5000s ease-in-out 0s;
       }
+
+      /* ── Mobile Compact UI ── */
+      @media (max-width: 480px) {
+        /* Page-level padding & gap reduction */
+        .page-enter {
+          padding: 10px 10px 90px 10px !important;
+          gap: 12px !important;
+        }
+
+        /* Hero / summary cards */
+        .hero-card {
+          padding: 16px !important;
+          border-radius: 20px !important;
+        }
+        .hero-card .hero-amount {
+          font-size: 26px !important;
+        }
+        .hero-card .hero-label {
+          font-size: 11px !important;
+          margin-bottom: 4px !important;
+        }
+
+        /* Account cards */
+        .acc-card {
+          padding: 12px !important;
+          border-radius: 16px !important;
+          gap: 8px !important;
+        }
+        .acc-card .acc-icon {
+          width: 36px !important;
+          height: 36px !important;
+          border-radius: 10px !important;
+        }
+        .acc-card .acc-name {
+          font-size: 13px !important;
+        }
+        .acc-card .acc-type {
+          font-size: 10px !important;
+        }
+        .acc-card .acc-actions > div {
+          width: 30px !important;
+          height: 30px !important;
+          border-radius: 9px !important;
+        }
+        .acc-card .acc-footer {
+          padding-top: 10px !important;
+          margin-top: 2px !important;
+        }
+        .acc-card .acc-bal {
+          font-size: 18px !important;
+        }
+        .acc-card .acc-bal-label {
+          font-size: 9px !important;
+          margin-bottom: 2px !important;
+        }
+        .acc-card .acc-entries {
+          font-size: 10px !important;
+        }
+
+        /* Accounts list gap */
+        .acc-list {
+          gap: 10px !important;
+        }
+
+        /* Dashboard vitals grid */
+        .vitals-grid {
+          gap: 8px !important;
+        }
+        .vital-card {
+          padding: 12px !important;
+          border-radius: 16px !important;
+          gap: 8px !important;
+        }
+        .vital-card .vital-icon {
+          width: 28px !important;
+          height: 28px !important;
+          border-radius: 10px !important;
+        }
+        .vital-card .vital-amount {
+          font-size: 13px !important;
+        }
+
+        /* Top Expenses section */
+        .section-card {
+          padding: 16px !important;
+          border-radius: 24px !important;
+        }
+        .section-card h2 {
+          font-size: 16px !important;
+        }
+
+        /* Expense category grid */
+        .cat-grid {
+          gap: 8px !important;
+          margin-bottom: 16px !important;
+        }
+        .cat-tile {
+          padding: 12px !important;
+          border-radius: 16px !important;
+          gap: 6px !important;
+        }
+
+        /* Budget summary bar */
+        .budget-bar {
+          padding: 10px 12px !important;
+          border-radius: 14px !important;
+          margin-bottom: 14px !important;
+        }
+        .budget-bar .budget-amount {
+          font-size: 16px !important;
+        }
+
+        /* Net worth hero on dashboard */
+        .net-hero {
+          padding: 16px !important;
+          border-radius: 24px !important;
+        }
+        .net-hero .net-amount {
+          font-size: 28px !important;
+          margin: 4px 0 !important;
+        }
+      }
     </style>
   </head>
   <body>

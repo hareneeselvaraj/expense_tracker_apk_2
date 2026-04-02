@@ -9,11 +9,6 @@ export const Header = ({ title, theme, themeMode, toggleTheme, onOpenSettings, s
       <div style={{display:"flex", alignItems:"center", gap:10}}>
         <div style={{width: 8, height: 8, borderRadius: "50%", background: C.primary}} />
         <span style={{fontSize:20,fontWeight:800,letterSpacing:"-.02em", color:C.text}}>{title}</span>
-        
-        <div onClick={onOpenSync} style={{display:"flex", alignItems:"center", gap:6, background:C.input, padding:"4px 10px", borderRadius:14, cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background=C.muted} onMouseLeave={e=>e.currentTarget.style.background=C.input}>
-           <div style={{width:6, height:6, borderRadius:"50%", background:isOffline?"#ff5252":syncStatus==="synced"?C.income:syncStatus==="pending"?"#f59e0b":syncStatus==="error"?C.expense:C.sub }}/>
-           <span style={{fontSize:10, fontWeight:700, color:isOffline?"#ff5252":C.text, textTransform:"capitalize"}}>{isOffline ? "Offline" : syncStatus}</span>
-        </div>
       </div>
 
       <div style={{display:"flex",gap:8}}>
