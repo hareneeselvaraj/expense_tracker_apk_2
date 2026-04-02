@@ -835,10 +835,33 @@ export default function App() {
           }}
           onSave={(tmpl) => {
             let finalTmpl = { ...tmpl, updatedAt: new Date().toISOString() };
+            // If it's an edit, delete any previously auto-posted transactions for this recurringId that are strictly earlier than the new startDate.
+            if (editRecurring && finalTmpl.startDate !== editRecurring.startDate) {
+              setTransactions(prev => prev.map(t => 
+                (t.recurringId === finalTmpl.id && t.date < finalTmpl.startDate)
+                  ? { ...t, deleted: true, updatedAt: new Date().toISOString() }
+                  : t
+              ));
+            }
+
             // Process immediately if due
             const { newTransactions, updatedTemplates } = processRecurring([finalTmpl]);
             if (newTransactions.length > 0) {
-              setTransactions(prev => [...newTransactions, ...prev]);
+              setTransactions(prev => {
+                const toAdd = newTransactions.filter(nt =>
+                  !prev.some(existing => existing.recurringId === nt.recurringId && existing.date === nt.date && !existing.deleted)
+                );
+                if (toAdd.length === 0) return prev;
+
+                const processed = toAdd.map(tx => {
+                  let cat = categorizeTransaction(tx, categories);
+                  const patch = applyRulesToTx(cat);
+                  if (patch) cat = { ...cat, ...patch };
+                  return stampUpdated(cat);
+                });
+
+                return [...processed, ...prev];
+              });
               if (updatedTemplates.length > 0) finalTmpl = updatedTemplates[0];
             }
 

@@ -257,7 +257,7 @@ export const RecurringForm = ({ init, categories, accounts, onSave, onDelete, on
                 ...form.templateTx,
                 amount: parseFloat(form.templateTx.amount) || 0,
               },
-              nextDue: isEdit ? form.nextDue : form.startDate,
+              nextDue: (isEdit && form.startDate !== init.startDate) ? form.startDate : (isEdit ? form.nextDue : form.startDate),
               endDate: form.endDate || null,
             });
           }}
