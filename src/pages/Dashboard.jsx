@@ -46,7 +46,7 @@ const QuickAdd = ({ categories, onSave, theme }) => {
   );
 };
 
-export default function Dashboard({ user, transactions, categories, tags, accounts, stats, netWorth, getDayFlow, viewDate, setViewDate, onEditTx, onAddTx, onSave, onSmartSync, isSyncing, theme }) {
+export default function Dashboard({ user, transactions, categories, tags, accounts, budgets, stats, netWorth, getDayFlow, viewDate, setViewDate, onEditTx, onAddTx, onSave, onSmartSync, isSyncing, theme, goToTransactions }) {
   const C = theme;
   const dateRef = React.useRef(null);
 
@@ -187,11 +187,17 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
             <div style={{ width: 1, height: 24, background: C.borderLight }} />
             <div style={{ textAlign: "right" }}>
               <div style={{ color: C.sub, fontSize: 9, fontWeight: 600 }}>Remaining Budget</div>
-              <div style={{ color: C.income, fontSize: 15, fontWeight: 800 }}>{stats.expense < 50000 ? fmtAmt(50000 - stats.expense) : "Overridden"}</div>
+              <div style={{ color: (budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) === 0 ? C.sub : ((budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) - stats.expense >= 0 ? C.income : C.expense), fontSize: 15, fontWeight: 800 }}>
+                {(budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) === 0 
+                  ? "Not Set" 
+                  : ((budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) - stats.expense >= 0 
+                      ? fmtAmt((budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) - stats.expense) 
+                      : "Over Budget")}
+              </div>
             </div>
           </div>
 
-          <button style={{ width: "100%", background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`, color: "#fff", border: "none", borderRadius: 16, padding: 12, fontSize: 13, fontWeight: 800, letterSpacing: ".05em", cursor: "pointer", transition: "transform .2s" }} onMouseDown={e => e.currentTarget.style.transform = "scale(0.98)"} onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}>
+          <button onClick={goToTransactions} style={{ width: "100%", background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`, color: "#fff", border: "none", borderRadius: 16, padding: 12, fontSize: 13, fontWeight: 800, letterSpacing: ".05em", cursor: "pointer", transition: "transform .2s" }} onMouseDown={e => e.currentTarget.style.transform = "scale(0.98)"} onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}>
             VIEW ALL
           </button>
         </div>

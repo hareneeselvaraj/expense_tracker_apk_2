@@ -532,7 +532,7 @@ export default function App() {
 
 
       <main>
-        {page === "dashboard" && <Dashboard {...{ user, transactions, categories, tags, accounts, stats, netWorth: nw, getDayFlow: (days) => getDayFlow(transactions, days), viewDate, setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", theme: C }} />}
+        {page === "dashboard" && <Dashboard {...{ user, transactions, categories, tags, accounts, budgets, stats, netWorth: nw, getDayFlow: (days) => getDayFlow(transactions, days), viewDate, setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", theme: C, goToTransactions: () => setPage("transactions") }} />}
         {page === "transactions" && <TransactionsPage {...{
           transactions, filteredTx, categories, tags, accounts, searchQ, setSearchQ, filters, setFilters,
           hasFilter: !!(filters.from || filters.to || filters.cats.length || filters.acc || filters.type || filters.cd || filters.tags.length),
