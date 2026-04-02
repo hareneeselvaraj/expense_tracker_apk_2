@@ -237,12 +237,22 @@ export default function App() {
   useEffect(() => {
     if (!ready || !budgets.length) return;
     const alerts = getActiveAlerts(transactions, budgets, categories, tags);
-    const danger = alerts.filter(a => a.level === 'danger');
-    const warns = alerts.filter(a => a.level === 'warning');
-    if (danger.length > 0) {
-      notify(`⚠ Budget exceeded: ${danger.map(a => a.name).join(', ')}`, 'error');
+    const exceeded = alerts.filter(a => a.type === 'critical' || a.type === 'exceeded');
+    const warns = alerts.filter(a => a.type === 'warning');
+
+    if (exceeded.length > 0) {
+      const msg = `⚠ Budget exceeded: ${exceeded.map(a => a.budgetName).join(', ')}`;
+      notify(msg, 'error');
+      // Send browser push notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('💰 Budget Alert!', { body: msg, icon: '/favicon.ico' });
+      }
     } else if (warns.length > 0) {
-      notify(`Budget warning: ${warns.map(a => a.name).join(', ')} nearing limit`, 'warning');
+      const msg = `Budget warning: ${warns.map(a => a.budgetName).join(', ')} nearing limit`;
+      notify(msg, 'warning');
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('💰 Budget Warning', { body: msg, icon: '/favicon.ico' });
+      }
     }
   }, [transactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -554,6 +564,7 @@ export default function App() {
         syncStatus={syncStatus}
         onOpenSync={() => setShowBackup(true)}
         isOffline={isOffline}
+        budgetAlerts={budgetAlerts}
       />
 
 
