@@ -181,7 +181,11 @@ export default function App() {
 
   useEffect(() => {
     if (!ready) return;
-    dbSet("data", { transactions, categories, tags, accounts, budgets, rules, recurring, emailPrefs });
+    dbSet("data", { transactions, categories, tags, accounts, budgets, rules, recurring, emailPrefs })
+      .catch(err => {
+        console.error("Failed to save data to IndexedDB:", err);
+        notify("Failed to save data locally", "error");
+      });
     setSyncStatus("pending");
     const t = setTimeout(() => setSyncStatus("synced"), 1000);
     return () => clearTimeout(t);
@@ -258,8 +262,22 @@ export default function App() {
   }, [isModalOpen]);
 
   // ── AUTH ──────────────────────────────────────────────────────────────────
+  const [gsiReady, setGsiReady] = useState(!!window.google);
+
+  // Poll for Google Sign-In SDK to load (async defer script)
   useEffect(() => {
-    if (!ready || user || !window.google || gInitRef.current) return;
+    if (gsiReady) return;
+    const interval = setInterval(() => {
+      if (window.google) {
+        setGsiReady(true);
+        clearInterval(interval);
+      }
+    }, 200);
+    return () => clearInterval(interval);
+  }, [gsiReady]);
+
+  useEffect(() => {
+    if (!ready || user || !gsiReady || gInitRef.current) return;
 
     const initG = () => {
       gInitRef.current = true;
@@ -282,12 +300,13 @@ export default function App() {
     } else {
       initG();
     }
-  }, [ready, user]);
+  }, [ready, user, gsiReady]);
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
-    setTimeout(() => window.google?.accounts.id.renderButton(document.getElementById("googleBtn"), { theme: "outline", size: "large", shape: "pill" }), 100);
+    gInitRef.current = false;
+    // The auth useEffect will re-run and render the button since user becomes null
   };
 
   // ── ACTIONS ────────────────────────────────────────────────────────────────
@@ -323,7 +342,7 @@ export default function App() {
   };
 
   const handleDeleteTx = (id) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
+    setTransactions(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: new Date().toISOString() } : t));
     setEditTx(null);
     notify("Transaction deleted successfully", "error");
   };
@@ -423,6 +442,7 @@ export default function App() {
   // ── ANALYTICS ─────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
     const mo = transactions.filter(t => {
+      if (t.deleted) return false;
       const d = new Date(t.date);
       return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
     });
@@ -441,6 +461,7 @@ export default function App() {
 
   const filteredTx = useMemo(() => {
     return transactions.filter(t => {
+      if (t.deleted) return false;
       const dq = searchQ.toLowerCase();
       if (dq && !t.description.toLowerCase().includes(dq)) return false;
       if (filters.from && t.date < filters.from) return false;
@@ -519,7 +540,8 @@ export default function App() {
           onEditTx: setEditTx,
           selectedTxIds, setSelectedTxIds,
           onDeleteBulk: () => {
-            setTransactions(p => p.filter(t => !selectedTxIds.includes(t.id)));
+            const now = new Date().toISOString();
+            setTransactions(p => p.map(t => selectedTxIds.includes(t.id) ? { ...t, deleted: true, updatedAt: now } : t));
             setSelectedTxIds([]);
             notify("Items deleted successfully", "error");
           },

@@ -1,4 +1,4 @@
-const CACHE_NAME = "expense-tracker-v2";
+const CACHE_NAME = "expense-tracker-v3";
 const PRECACHE = [
   "/",
   "/index.html",
@@ -23,23 +23,40 @@ self.addEventListener("activate", e => {
   );
 });
 
-// Fetch: network-first for API calls, cache-first for assets
+// Fetch: network-first for navigation/HTML, cache-first for static assets
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   
-  // Never cache Google API calls
-  if (url.hostname.includes("googleapis.com") || url.hostname.includes("google.com")) {
+  // Never cache Google API calls or sign-in scripts
+  if (url.hostname.includes("googleapis.com") || url.hostname.includes("google.com") || url.hostname.includes("gstatic.com")) {
     return;
   }
   
-  // Cache-first for static assets
+  // Network-first for navigation requests (HTML pages)
+  // This ensures users always get the latest app version
+  if (e.request.mode === "navigate") {
+    e.respondWith(
+      fetch(e.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(e.request).then(cached => cached || caches.match("/")))
+    );
+    return;
+  }
+
+  // Cache-first for static assets (JS, CSS, images, fonts)
   e.respondWith(
     caches.match(e.request).then(cached => {
       const fetched = fetch(e.request).then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        }
         return response;
-      });
+      }).catch(() => cached);
       return cached || fetched;
     })
   );

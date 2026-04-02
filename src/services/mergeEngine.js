@@ -58,6 +58,7 @@ export function mergeDatasets(local = {}, remote = {}) {
     accounts: mergeById(local.accounts, remote.accounts),
     budgets: mergeById(local.budgets, remote.budgets),
     rules: mergeById(local.rules, remote.rules),
+    recurring: mergeById(local.recurring, remote.recurring),
     syncVersion: Math.max(local.syncVersion || 0, remote.syncVersion || 0) + 1
   };
 }
