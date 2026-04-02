@@ -54,6 +54,8 @@ export default function RulesPanel({ rules, categories, tags, onAddRule, onEditR
               rule={rule}
               priority={index + 1}
               theme={C}
+              categories={categories}
+              tags={tags}
               onToggle={() => onEditRule({ ...rule, enabled: !rule.enabled })}
               onEdit={() => { setEditingRule(rule); setModalOpen(true); }}
               onDelete={() => onDeleteRule(rule.id)}

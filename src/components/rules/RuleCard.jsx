@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CONDITION_LABELS, ACTION_LABELS } from './constants.js';
 import { Ico } from '../ui/Ico.jsx'; // Assuming icon component exists
 
-export default function RuleCard({ rule, priority, onToggle, onEdit, onDelete, theme }) {
+export default function RuleCard({ rule, priority, onToggle, onEdit, onDelete, categories, tags, theme }) {
   const [expanded, setExpanded] = useState(false);
   const C = theme;
 
@@ -77,14 +77,19 @@ export default function RuleCard({ rule, priority, onToggle, onEdit, onDelete, t
               Conditions ({rule.logic})
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {(rule.conditions || []).map((c, i) => (
+              {(rule.conditions || []).map((c, i) => {
+                let dispVal = c.val;
+                if (c.type === 'category') dispVal = (categories || []).find(x => x.id === c.val)?.name || c.val;
+                if (c.type === 'recurring') dispVal = c.val === 'true' ? 'Yes' : (c.val === 'false' ? 'No' : c.val);
+                return (
                 <span key={i} style={{
                   fontSize: 12, padding: '4px 10px', borderRadius: 12,
                   background: `${C.primary}1A`, border: `1px solid ${C.primary}33`, color: C.primary
                 }}>
-                  {CONDITION_LABELS[c.type] || c.type} {c.op ? c.op.replace('_', ' ') : ''} <strong style={{color: C.text}}>{c.val}</strong>
+                  {CONDITION_LABELS[c.type] || c.type} {c.op ? c.op.replace('_', ' ') : ''} <strong style={{color: C.text}}>{dispVal}</strong>
                 </span>
-              ))}
+                );
+              })}
             </div>
           </div>
           
@@ -94,14 +99,19 @@ export default function RuleCard({ rule, priority, onToggle, onEdit, onDelete, t
               Actions
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {(rule.actions || []).map((a, i) => (
+              {(rule.actions || []).map((a, i) => {
+                let dispDetail = a.detail;
+                if (a.type === 'categorize') dispDetail = (categories || []).find(x => x.id === a.detail)?.name || a.detail;
+                if (a.type === 'tag') dispDetail = (tags || []).find(x => x.id === a.detail)?.name || a.detail;
+                return (
                 <span key={i} style={{
                   fontSize: 12, padding: '4px 10px', borderRadius: 12,
                   background: `${C.income}1A`, border: `1px solid ${C.income}33`, color: C.income
                 }}>
-                  {ACTION_LABELS[a.type] || a.type}{a.detail ? ` → ${a.detail}` : ''}
+                  {ACTION_LABELS[a.type] || a.type}{dispDetail ? ` → ${dispDetail}` : ''}
                 </span>
-              ))}
+                );
+              })}
             </div>
           </div>
           

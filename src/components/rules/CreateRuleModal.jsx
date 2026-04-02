@@ -123,7 +123,7 @@ export default function CreateRuleModal({ rule, onSave, onClose, categories, tag
           {/* Condition Builder */}
           <div>
             <h3 style={{ fontSize: 16, color: C.text, fontWeight: 800, margin: '0 0 12px 0' }}>If...</h3>
-            <ConditionBuilder conditions={conditions} onChange={setConditions} theme={C} />
+            <ConditionBuilder conditions={conditions} onChange={setConditions} categories={categories} theme={C} />
           </div>
 
           {/* Action Builder */}

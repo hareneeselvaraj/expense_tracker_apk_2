@@ -21,7 +21,7 @@ export function evalCondition(c, tx) {
     case 'amount_gt':  return tx.amount > parseFloat(c.val || "0");
     case 'amount_lt':  return tx.amount < parseFloat(c.val || "0");
     case 'amount_eq':  return tx.amount === parseFloat(c.val || "0");
-    case 'category':   return (tx.category || "").toLowerCase() === val;
+    case 'category':   return tx.category === c.val;
     case 'day_of_week': {
       const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
       const dateObj = new Date(tx.date);

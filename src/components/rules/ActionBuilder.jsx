@@ -11,7 +11,12 @@ export default function ActionBuilder({ actions, onChange, categories, tags, the
 
   const updateAction = (idx, field, val) => {
     const next = [...actions];
-    next[idx] = { ...next[idx], [field]: val };
+    // When action type changes, reset detail to blank
+    if (field === 'type') {
+      next[idx] = { ...next[idx], type: val, detail: '' };
+    } else {
+      next[idx] = { ...next[idx], [field]: val };
+    }
     onChange(next);
   };
 
@@ -48,7 +53,7 @@ export default function ActionBuilder({ actions, onChange, categories, tags, the
               style={{ width: '100%', background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 8, padding: '10px 12px', fontSize: 13, outline: 'none' }}
             >
               <option value="">Select Category</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {categories.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
             </select>
           )}
 
@@ -63,14 +68,33 @@ export default function ActionBuilder({ actions, onChange, categories, tags, the
             </select>
           )}
           
-          {['notify', 'split'].includes(a.type) && (
+          {a.type === 'notify' && (
             <input
               type="text"
               value={a.detail}
-              placeholder={a.type === 'notify' ? "Message to send" : "Ratio or Amount"}
+              placeholder="Notification message"
               onChange={(e) => updateAction(i, 'detail', e.target.value)}
               style={{ width: '100%', background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none' }}
             />
+          )}
+
+          {a.type === 'split' && (
+            <input
+              type="text"
+              value={a.detail}
+              placeholder="Ratio or Amount"
+              onChange={(e) => updateAction(i, 'detail', e.target.value)}
+              style={{ width: '100%', background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 8, padding: '10px 12px', fontSize: 14, outline: 'none' }}
+            />
+          )}
+
+          {/* flag, exclude, approve need no detail input */}
+          {['flag', 'exclude', 'approve'].includes(a.type) && (
+            <div style={{ fontSize: 12, color: C.sub, fontStyle: 'italic', padding: '4px 8px' }}>
+              {a.type === 'flag' && '⚑ Transaction will be flagged for review'}
+              {a.type === 'exclude' && '🚫 Transaction will be excluded from budget'}
+              {a.type === 'approve' && '✓ Transaction will be auto-approved'}
+            </div>
           )}
         </div>
       ))}
