@@ -33,17 +33,12 @@ export const UploadModal = ({ open, onClose, onImport, theme, categories = [], r
       }
 
       const rawTxns = processTransactions(rows, colMap);
-      const finalTxns = rawTxns.map(t => {
-        // Run it through the unified pipeline which checks user rules FIRST
-        const draftTx = {
-          ...t,
-          id: uid(),
-          tags: [],
-          accountId: ""
-        };
-        const catTx = categorizeTransaction(draftTx, rules, categories);
-        return { ...draftTx, category: catTx.category };
-      });
+      const finalTxns = rawTxns.map(t => ({
+        ...t,
+        id: uid(),
+        tags: [],
+        accountId: ""
+      }));
 
       onImport(finalTxns);
       setFile(null);

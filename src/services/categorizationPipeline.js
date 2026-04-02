@@ -3,6 +3,11 @@ import { categorizeTransaction as smartCategorize } from "../../statement-engine
 // This function now only handles Smart Engine and fallback defaults.
 // User rules are applied later in App.jsx via useRuleEngine.
 export function categorizeTransaction(tx, categories) {
+  // If the transaction already has a valid category assigned (not from a raw CSV import), keep it.
+  if (tx.category && categories.some(c => c.id === tx.category)) {
+    return tx;
+  }
+
   const desc = (tx.description || "").toLowerCase();
   
   // Priority 2: Smart engine (from statement-engine.js)
