@@ -194,18 +194,44 @@ export default function App() {
     return () => clearTimeout(t);
   }, [transactions, categories, tags, accounts, budgets, rules, recurring, emailPrefs, ready]);
 
-  // Process recurring transactions on load
+  // Process recurring transactions on load and periodically (every 60s)
   useEffect(() => {
     if (!ready || !recurring.length) return;
-    const { newTransactions, updatedTemplates } = processRecurring(recurring);
-    if (newTransactions.length > 0) {
-      setTransactions(prev => [...newTransactions, ...prev]);
-      notify(`${newTransactions.length} recurring transaction${newTransactions.length > 1 ? 's' : ''} posted`);
-    }
-    if (JSON.stringify(updatedTemplates) !== JSON.stringify(recurring)) {
-      setRecurring(updatedTemplates);
-    }
-  }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const runRecurring = () => {
+      const { newTransactions, updatedTemplates } = processRecurring(recurring);
+      if (newTransactions.length > 0) {
+        setTransactions(prev => {
+          // Deduplicate: skip if a tx with same recurringId + date already exists
+          const toAdd = newTransactions.filter(nt =>
+            !prev.some(existing => existing.recurringId === nt.recurringId && existing.date === nt.date && !existing.deleted)
+          );
+          if (toAdd.length === 0) return prev;
+
+          // Run each through categorization + rules pipeline
+          const processed = toAdd.map(tx => {
+            let cat = categorizeTransaction(tx, categories);
+            const patch = applyRulesToTx(cat);
+            if (patch) cat = { ...cat, ...patch };
+            return stampUpdated(cat);
+          });
+
+          notify(`${processed.length} recurring transaction${processed.length > 1 ? 's' : ''} posted`);
+          return [...processed, ...prev];
+        });
+      }
+      if (JSON.stringify(updatedTemplates) !== JSON.stringify(recurring)) {
+        setRecurring(updatedTemplates);
+      }
+    };
+
+    // Run immediately on load
+    runRecurring();
+
+    // Re-check every 60 seconds (catches midnight rollover while app is open)
+    const interval = setInterval(runRecurring, 60_000);
+    return () => clearInterval(interval);
+  }, [ready, recurring]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Budget alert check after every transaction save
   useEffect(() => {

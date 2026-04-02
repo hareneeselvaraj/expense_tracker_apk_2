@@ -2,9 +2,13 @@ export const fmtAmt = n => new Intl.NumberFormat("en-IN",{style:"currency",curre
 
 export const fmtDate = d => { try { return new Date(d).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"2-digit"}); } catch { return d||""; }};
 
-export const todayISO = () => new Date().toISOString().split("T")[0];
+const pad2 = n => String(n).padStart(2, "0");
+export const todayISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+};
 
-export const toISO = d => d.toISOString().split("T")[0];
+export const toISO = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 const p = n => String(n).padStart(2, "0");
 
 /** Get Monday of the week containing `d` */

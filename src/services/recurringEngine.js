@@ -9,17 +9,18 @@ import { todayISO } from "../utils/format.js";
  * Advance a date to the next occurrence based on frequency.
  */
 export function advanceDate(dateStr, frequency) {
-  // Parsing "YYYY-MM-DD" strictly defaults to UTC midnight in JS.
-  const d = new Date(dateStr);
+  const [y, m, day] = dateStr.split('-').map(Number);
+  const d = new Date(y, m - 1, day);
   switch (frequency) {
-    case "daily":    d.setUTCDate(d.getUTCDate() + 1); break;
-    case "weekly":   d.setUTCDate(d.getUTCDate() + 7); break;
-    case "biweekly": d.setUTCDate(d.getUTCDate() + 14); break;
-    case "monthly":  d.setUTCMonth(d.getUTCMonth() + 1); break;
-    case "yearly":   d.setUTCFullYear(d.getUTCFullYear() + 1); break;
-    default:         d.setUTCMonth(d.getUTCMonth() + 1);
+    case "daily":    d.setDate(d.getDate() + 1); break;
+    case "weekly":   d.setDate(d.getDate() + 7); break;
+    case "biweekly": d.setDate(d.getDate() + 14); break;
+    case "monthly":  d.setMonth(d.getMonth() + 1); break;
+    case "yearly":   d.setFullYear(d.getFullYear() + 1); break;
+    default:         d.setMonth(d.getMonth() + 1);
   }
-  return d.toISOString().split("T")[0];
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 /**
