@@ -166,11 +166,11 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
                 <div key={name} className="cat-tile" style={{
                   background: bgStr, borderRadius: 16, padding: 10, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 6
                 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: C.surface, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
                     {cat?.emoji || "📦"}
                   </div>
                   <div style={{ color: C.text, fontSize: 11, fontWeight: 700 }}>{name}</div>
-                  <div style={{ background: "rgba(255,255,255,0.6)", borderRadius: 10, padding: "4px 8px", fontSize: 10, fontWeight: 800, color: C.text, display: "inline-flex", alignItems: "center", gap: 4, width: "100%", justifyContent: "center" }}>
+                  <div style={{ background: C.surface, borderRadius: 10, padding: "4px 8px", fontSize: 10, fontWeight: 800, color: C.text, display: "inline-flex", alignItems: "center", gap: 4, width: "100%", justifyContent: "center" }}>
                     {fmtAmt(amt)}
                     <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.6 }}>{pct}%</span>
                   </div>

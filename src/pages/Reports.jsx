@@ -29,7 +29,8 @@ export default function ReportsPage({
   const stats = React.useMemo(() => {
     const inc = reportTx.filter(t => t.txType === "Income").reduce((s, t) => s + t.amount, 0);
     const exp = reportTx.filter(t => t.txType === "Expense").reduce((s, t) => s + t.amount, 0);
-    return { inc, exp, net: inc - exp };
+    const inv = reportTx.filter(t => t.txType === "Investment").reduce((s, t) => s + t.amount, 0);
+    return { inc, exp, inv, net: inc - exp - inv };
   }, [reportTx]);
 
   const savingsRate = stats.inc > 0 ? Math.round(((stats.inc - stats.exp) / stats.inc) * 100) : 0;
@@ -166,18 +167,22 @@ export default function ReportsPage({
               </div>
             </div>
 
-            {/* INC & EXP (Bottom Grid) */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, position: "relative", zIndex: 2 }}>
-              {/* INC */}
+            {/* INC, EXP & INV (Bottom Grid) */}
+            <div style={{ display: "grid", gridTemplateColumns: stats.inv > 0 ? "1fr 1fr 1fr" : "1fr 1fr", gap: 16, position: "relative", zIndex: 2 }}>
               <div>
                 <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",marginBottom:4, letterSpacing:".05em"}}>Income</div>
-                <div style={{color:C.income,fontSize:22,fontWeight:800}}>{fmtAmt(stats.inc)}</div>
+                <div style={{color:C.income,fontSize:20,fontWeight:800}}>{fmtAmt(stats.inc)}</div>
               </div>
-              {/* EXP */}
               <div>
                 <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",marginBottom:4, letterSpacing:".05em"}}>Expense</div>
-                <div style={{color:C.expense,fontSize:22,fontWeight:800}}>{fmtAmt(stats.exp)}</div>
+                <div style={{color:C.expense,fontSize:20,fontWeight:800}}>{fmtAmt(stats.exp)}</div>
               </div>
+              {stats.inv > 0 && (
+                <div>
+                  <div style={{color:C.sub,fontSize:11,fontWeight:700,textTransform:"uppercase",marginBottom:4, letterSpacing:".05em"}}>Investment</div>
+                  <div style={{color:C.invest,fontSize:20,fontWeight:800}}>{fmtAmt(stats.inv)}</div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -189,21 +194,50 @@ export default function ReportsPage({
             </div>
 
             {reportsSubTab === "trend" ? (
-              <div style={{display:"flex", alignItems:"flex-end", gap:12, height:200, paddingBottom:20, overflowX:"auto", scrollbarWidth:"none"}}>
+              <div style={{width:"100%", overflowX:"auto", scrollbarWidth:"none"}}>
                 {trendData.length === 0 ? (
                   <div style={{width:"100%", padding:40, textAlign:"center", color:C.sub, fontSize:13, fontWeight:600}}>No expense data for trend</div>
-                ) : trendData.map((d, i) => (
-                  <div key={i} style={{flex:1, minWidth:32, display:"flex", flexDirection:"column", alignItems:"center", gap:8, height:"100%"}}>
-                    <div style={{flex:1, display:"flex", alignItems:"flex-end", width:"100%", justifyContent:"center"}}>
-                      <div style={{
-                        width:"100%", maxWidth:32, height:`${Math.max(d.pct, 4)}%`, borderRadius:8,
-                        background:C.primary,
-                        transition:"height 0.4s ease"
-                      }} />
-                    </div>
-                    <div style={{color:C.sub, fontSize:11, fontWeight:700}} title={fmtAmt(d.val)}>{d.label}</div>
-                  </div>
-                ))}
+                ) : (() => {
+                  const W = Math.max(trendData.length * 60, 300);
+                  const H = 200;
+                  const pad = {t:20, r:20, b:40, l:20};
+                  const cW = W - pad.l - pad.r;
+                  const cH = H - pad.t - pad.b;
+                  const maxV = Math.max(...trendData.map(d => d.val), 1);
+                  const pts = trendData.map((d,i) => ({
+                    x: pad.l + (i / Math.max(trendData.length - 1, 1)) * cW,
+                    y: pad.t + cH - (d.val / maxV) * cH,
+                    ...d
+                  }));
+                  const linePath = pts.map((p,i) => `${i===0?'M':'L'}${p.x},${p.y}`).join(' ');
+                  const areaPath = linePath + ` L${pts[pts.length-1].x},${pad.t+cH} L${pts[0].x},${pad.t+cH} Z`;
+                  return (
+                    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{display:"block"}}>
+                      <defs>
+                        <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={C.primary} stopOpacity="0.25"/>
+                          <stop offset="100%" stopColor={C.primary} stopOpacity="0.02"/>
+                        </linearGradient>
+                      </defs>
+                      {/* Grid lines */}
+                      {[0,0.25,0.5,0.75,1].map((f,i) => (
+                        <line key={i} x1={pad.l} x2={W-pad.r} y1={pad.t+cH*(1-f)} y2={pad.t+cH*(1-f)} stroke={C.borderLight} strokeWidth="1" strokeDasharray="4 4"/>
+                      ))}
+                      {/* Area fill */}
+                      <path d={areaPath} fill="url(#trendFill)"/>
+                      {/* Line */}
+                      <path d={linePath} fill="none" stroke={C.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      {/* Dots + Labels */}
+                      {pts.map((p,i) => (
+                        <g key={i}>
+                          <circle cx={p.x} cy={p.y} r="4" fill={C.primary} stroke={C.surface} strokeWidth="2"/>
+                          <text x={p.x} y={p.y - 10} textAnchor="middle" fill={C.sub} fontSize="9" fontWeight="700">{fmtAmt(p.val)}</text>
+                          <text x={p.x} y={H - 8} textAnchor="middle" fill={C.sub} fontSize="10" fontWeight="700">{p.label}</text>
+                        </g>
+                      ))}
+                    </svg>
+                  );
+                })()}
               </div>
             ) : (
               <div style={{display:"flex",flexDirection:"column",gap:20}}>

@@ -37,8 +37,13 @@ export default function RuleCard({ rule, priority, onToggle, onEdit, onDelete, c
           <div style={{ color: C.text, fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {rule.name}
           </div>
-          <div style={{ color: C.sub, fontSize: 12, marginTop: 2 }}>
+          <div style={{ color: C.sub, fontSize: 12, marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
             {(rule.conditions || []).length} condition{(rule.conditions || []).length !== 1 ? 's' : ''} • {(rule.actions || []).length} action{(rule.actions || []).length !== 1 ? 's' : ''}
+            {(rule.match_count || 0) > 0 && (
+              <span style={{ background: `${C.income}22`, color: C.income, fontSize: 10, fontWeight: 800, padding: '1px 6px', borderRadius: 6 }}>
+                {rule.match_count} match{rule.match_count !== 1 ? 'es' : ''}
+              </span>
+            )}
           </div>
         </div>
         

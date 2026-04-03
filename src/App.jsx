@@ -102,7 +102,7 @@ export default function App() {
   // Phase 1C: Offline detection
   const { isOffline, pendingOps, queueOp, clearQueue } = useOffline();
   const { canInstall, install } = useInstallPrompt();
-  const { runAllRules, applyRulesToTx } = useRuleEngine(rules, setTransactions);
+  const { runAllRules, applyRulesToTx } = useRuleEngine(rules, setTransactions, setRules, notify);
 
   // Phase 3D: Insights
   const insights = useMemo(
@@ -622,7 +622,7 @@ export default function App() {
           onDeleteRule: (id) => setRules(p => p.filter(x => x.id !== id)),
           onMagicWand: () => {
              const count = runAllRules(transactions);
-             notify(`Magic Wand applied rules to transactions`);
+             notify(count > 0 ? `⚡ Rules applied to ${count} transaction${count !== 1 ? 's' : ''}` : '✅ No transactions matched any rules', count > 0 ? 'success' : 'warning');
           },
           theme: C
         }} />}
