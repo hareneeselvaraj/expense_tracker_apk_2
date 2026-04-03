@@ -27,7 +27,10 @@ export function evalCondition(c, tx) {
       const dateObj = new Date(tx.date);
       return days[dateObj.getDay()] === val;
     }
-    case 'recurring':  return !!tx.recurringId || !!tx.is_recurring === (c.val === 'true');
+    case 'recurring': {
+      const isRecurring = !!(tx.recurringId || tx.is_recurring);
+      return isRecurring === (c.val === 'true');
+    }
     default:           return false;
   }
 }

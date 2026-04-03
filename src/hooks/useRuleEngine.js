@@ -25,8 +25,7 @@ export function useRuleEngine(rules, setTransactions) {
             patch.flagged = true;
             break;
           case 'exclude':
-             patch.amount = 0; // The existing app doesn't have an excluded_from_budget property built-in, so 0ing amount or ignoring is closest. For now we use the requested flag.
-            patch.excluded_from_budget = true;
+             patch.excluded_from_budget = true;
             break;
         }
       }

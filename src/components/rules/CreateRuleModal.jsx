@@ -19,6 +19,14 @@ export default function CreateRuleModal({ rule, onSave, onClose, categories, tag
     if (conditions.length === 0) return alert("Add at least one condition.");
     if (actions.length === 0) return alert("Add at least one action.");
 
+    // Validate that all conditions have values filled in
+    const emptyCondition = conditions.find(c => !c.val && !['flag', 'exclude', 'approve'].includes(c.type));
+    if (emptyCondition) return alert("All conditions must have a value filled in.");
+
+    // Validate that categorize/tag actions have a detail selected
+    const emptyAction = actions.find(a => ['categorize', 'tag'].includes(a.type) && !a.detail);
+    if (emptyAction) return alert("Please select a category or tag for your action.");
+
     const finalRule = {
       id: rule?.id || uid(),
       name: name.trim(),
@@ -67,7 +75,7 @@ export default function CreateRuleModal({ rule, onSave, onClose, categories, tag
               }} />
             </button>
             <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.sub, cursor: 'pointer', padding: 8, marginLeft: 8 }}>
-              <Ico n="times" sz={20} />
+              <Ico n="close" sz={20} />
             </button>
           </div>
         </div>
