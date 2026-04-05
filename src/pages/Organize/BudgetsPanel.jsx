@@ -58,8 +58,18 @@ export default function BudgetsPanel({ categories, tags, budgets, transactions, 
           </div>
         ) : budgetedItems.map(item => {
           const b = item.budget;
+          const now = new Date();
+          const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
           const spent = transactions
-            .filter(t => isCat ? t.category === item.id : (t.tags || []).includes(item.id))
+            .filter(t => {
+              if (t.deleted) return false;
+              if (!t.date?.startsWith(monthKey)) return false;
+              const matchesEntity = isCat
+                ? t.category === item.id
+                : (t.tags || []).includes(item.id);
+              return matchesEntity && t.creditDebit === "Debit";
+            })
             .reduce((s, t) => s + t.amount, 0);
 
           const pct = b ? Math.min((spent / b.amount) * 100, 100) : 0;

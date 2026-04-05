@@ -110,6 +110,12 @@ export default function App() {
     [transactions, categories]
   );
 
+  // Active (non-deleted) tags for UI consumption
+  const activeTags = useMemo(() => tags.filter(t => !t.deleted), [tags]);
+
+  // Active (non-deleted) categories for UI consumption
+  const activeCategories = useMemo(() => categories.filter(c => !c.deleted), [categories]);
+
   // Phase 3B: Budget alerts
   const budgetAlerts = useMemo(
     () => getActiveAlerts(transactions, budgets, categories, tags),
@@ -592,17 +598,21 @@ export default function App() {
         {page === "organize" && <OrganizePage {...{
           organizeTab, setOrganizeTab, 
           orgDate, setOrgDate, orgPeriodTab, setOrgPeriodTab,
-          categories, transactions, tags, budgets, rules, DEF_CATS,
+          categories: activeCategories, transactions, tags: activeTags, budgets, rules, DEF_CATS,
           onAddCat: () => setAddCat(true),
           onEditCat: (c) => setEditCat(c),
           onDeleteCat: (id) => {
-            setCategories(p => p.filter(c => c.id !== id));
+            setCategories(p => p.map(c =>
+              c.id === id ? { ...c, deleted: true, updatedAt: new Date().toISOString() } : c
+            ));
             notify("Category deleted successfully", "error");
           },
           onAddTag: () => setAddTag(true),
           onEditTag: (t) => setEditTag(t),
           onDeleteTag: (id) => {
-            setTags(p => p.filter(x => x.id !== id));
+            setTags(p => p.map(x =>
+              x.id === id ? { ...x, deleted: true, updatedAt: new Date().toISOString() } : x
+            ));
             notify("Tag deleted successfully", "error");
           },
           onAddBudget: (type) => setEditBudget({ type, isNew: true }),
@@ -725,7 +735,7 @@ export default function App() {
       />
 
       <Modal theme={C} open={addTx} onClose={() => setAddTx(false)} title="Add Transaction">
-        <TxForm categories={categories} tags={tags} accounts={accounts} onSave={handleSaveTx} onClose={() => setAddTx(false)} theme={C} />
+        <TxForm categories={categories} tags={activeTags} accounts={accounts} onSave={handleSaveTx} onClose={() => setAddTx(false)} theme={C} />
       </Modal>
 
       <Modal theme={C} open={!!editTx} onClose={() => setEditTx(null)} title="Edit Transaction">
@@ -790,7 +800,7 @@ export default function App() {
             type={editBudget.type}
             availables={editBudget.type === "categories" 
               ? categories.filter(c => c.type === "Expense" && !budgets.some(b => b.categoryId === c.id))
-              : tags.filter(t => !budgets.some(b => b.tagId === t.id))
+              : activeTags.filter(t => !budgets.some(b => b.tagId === t.id))
             }
             currentBudget={editBudget.budget}
             theme={C}
@@ -904,7 +914,7 @@ export default function App() {
           filters={filters} 
           setFilters={setFilters} 
           categories={categories} 
-          tags={tags} 
+          tags={activeTags} 
           accounts={accounts} 
           onClose={() => setShowFilters(false)} 
           theme={C} 

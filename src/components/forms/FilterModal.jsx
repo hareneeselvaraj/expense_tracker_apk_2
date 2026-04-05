@@ -13,11 +13,11 @@ export const FilterModal = ({ filters, setFilters, categories, tags, accounts, o
     });
   };
 
-  const toggleTag = (name) => {
+  const toggleTag = (id) => {
     setFilters(prev => {
       const tgs = prev.tags || [];
-      if (tgs.includes(name)) return { ...prev, tags: tgs.filter(x => x !== name) };
-      return { ...prev, tags: [...tgs, name] };
+      if (tgs.includes(id)) return { ...prev, tags: tgs.filter(x => x !== id) };
+      return { ...prev, tags: [...tgs, id] };
     });
   };
 
@@ -115,11 +115,11 @@ export const FilterModal = ({ filters, setFilters, categories, tags, accounts, o
         <div style={labelStyle}>Tags</div>
         <div style={chipContainerStyle}>
           {tags.map(tag => {
-            const active = (filters.tags || []).includes(tag.name);
+            const active = (filters.tags || []).includes(tag.id);
             return (
               <button 
                 key={tag.id} 
-                onClick={() => toggleTag(tag.name)}
+                onClick={() => toggleTag(tag.id)}
                 style={getChipStyle(active, C.secondary)}
               >
                 <Ico n="tag" sz={12} />

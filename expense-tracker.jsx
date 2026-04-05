@@ -711,7 +711,7 @@ export default function App() {
     notify(toSave.length > 1 ? `✓ ${toSave.length} transactions saved` : "✓ Saved");
     setAddTx(false); setEditTx(null);
   };
-  const handleDeleteTx = id => { setTx(prev=>prev.filter(t=>t.id!==id)); setEditTx(null); notify("Deleted"); };
+  const handleDeleteTx = id => { setTx(prev=>prev.map(t=>t.id===id?{...t,deleted:true,updatedAt:new Date().toISOString()}:t)); setEditTx(null); notify("Deleted"); };
 
   // ── Upload CSV ───────────────────────────────────────────────────────────────
   const handleUpload = async () => {
@@ -987,6 +987,7 @@ export default function App() {
 
   // ── Filtered ─────────────────────────────────────────────────────────────────
   const filteredTx = useMemo(() => transactions.filter(t => {
+    if(t.deleted) return false;
     if(filters.from && t.date<filters.from) return false;
     if(filters.to   && t.date>filters.to)   return false;
     if(filters.cat  && t.category!==filters.cat) return false;
@@ -1003,6 +1004,7 @@ export default function App() {
   // ── Dashboard stats ───────────────────────────────────────────────────────────
   const stats = useMemo(() => {
     const mo = transactions.filter(t => {
+      if (t.deleted) return false;
       const d = new Date(t.date);
       return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
     });
@@ -1013,10 +1015,12 @@ export default function App() {
     mo.forEach(t => {
       const c = categories.find(x => x.id === t.category)?.name || "Others";
       catMap[c] = (catMap[c] || 0) + t.amount;
-      (t.tags || []).forEach(tid => {
-        const n = tags.find(x => x.id === tid)?.name;
-        if (n) tagMap[n] = (tagMap[n] || 0) + t.amount;
-      });
+      if (t.creditDebit === "Debit") {
+        (t.tags || []).forEach(tid => {
+          const tg = tags.find(x => x.id === tid);
+          if (tg && !tg.deleted) tagMap[tg.name] = (tagMap[tg.name] || 0) + t.amount;
+        });
+      }
     });
     return { income, expense, invest, catMap, tagMap, count: mo.length };
   }, [transactions, categories, tags, viewDate]);
@@ -1318,7 +1322,7 @@ export default function App() {
              <button onClick={() => setSelectedTxIds([])} style={{background:"rgba(0,0,0,0.1)", border:"none", borderRadius:10, padding:"8px 14px", color:"#000", fontSize:12, fontWeight:700, cursor:"pointer"}}>Clear</button>
              <button onClick={() => {
                if(window.confirm(`Delete ${selectedTxIds.length} transactions?`)) {
-                 setTransactions(p => p.filter(t => !selectedTxIds.includes(t.id)));
+                 const now = new Date().toISOString(); setTransactions(p => p.map(t => selectedTxIds.includes(t.id) ? {...t, deleted: true, updatedAt: now} : t));
                  setSelectedTxIds([]);
                  notify(`✓ ${selectedTxIds.length} transactions deleted`);
                }
@@ -1445,7 +1449,7 @@ export default function App() {
                       <div style={{display:"flex",gap:6}}>
                         <button onClick={()=>{setEditingCat(cat);setNewCat({name:cat.name,type:cat.type,color:cat.color,budget:cat.budget||"",emoji:cat.emoji||"💰"});setShowNewCat(true);}} style={{background:"none",border:"none",color:C.sub,cursor:"pointer",padding:4,display:"flex"}} onMouseEnter={e=>e.currentTarget.style.color=C.primary} onMouseLeave={e=>e.currentTarget.style.color=C.sub}><Ico n="pen" sz={14}/></button>
                         {!DEF_CATS.some(d=>d.id===cat.id) && (
-                          <button onClick={()=>setCats(prev=>prev.filter(c=>c.id!==cat.id))} style={{background:"none",border:"none",color:C.sub,cursor:"pointer",padding:4,display:"flex"}} onMouseEnter={e=>e.currentTarget.style.color=C.expense} onMouseLeave={e=>e.currentTarget.style.color=C.sub}><Ico n="trash" sz={14}/></button>
+                          <button onClick={()=>setCats(prev=>prev.map(c=>c.id===cat.id?{...c,deleted:true,updatedAt:new Date().toISOString()}:c))} style={{background:"none",border:"none",color:C.sub,cursor:"pointer",padding:4,display:"flex"}} onMouseEnter={e=>e.currentTarget.style.color=C.expense} onMouseLeave={e=>e.currentTarget.style.color=C.sub}><Ico n="trash" sz={14}/></button>
                         )}
                       </div>
 
@@ -1507,7 +1511,7 @@ export default function App() {
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => { setEditingTag(tg); setNewTag({ name: tg.name, color: tg.color }); setShowNewTag(true); }} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", transition: "color .2s" }} onMouseEnter={e => e.currentTarget.style.color = C.primary} onMouseLeave={e => e.currentTarget.style.color = C.sub}><Ico n="pen" sz={15} /></button>
-                    <button onClick={() => setTgs(prev => prev.filter(t => t.id !== tg.id))} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", transition: "color .2s" }} onMouseEnter={e => e.currentTarget.style.color = C.expense} onMouseLeave={e => e.currentTarget.style.color = C.sub}><Ico n="trash" sz={15} /></button>
+                    <button onClick={() => setTgs(prev => prev.map(t => t.id === tg.id ? {...t, deleted: true, updatedAt: new Date().toISOString()} : t))} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", transition: "color .2s" }} onMouseEnter={e => e.currentTarget.style.color = C.expense} onMouseLeave={e => e.currentTarget.style.color = C.sub}><Ico n="trash" sz={15} /></button>
                   </div>
                 </div>
 
@@ -1731,11 +1735,11 @@ export default function App() {
             if(reportTab === "week") {
               const start = new Date(date); start.setDate(date.getDate() - date.getDay());
               const end = new Date(start); end.setDate(start.getDate() + 6);
-              return transactions.filter(t => { const dt = new Date(t.date); return dt >= start && dt <= end; });
+              return transactions.filter(t => { if(t.deleted) return false; const dt = new Date(t.date); return dt >= start && dt <= end; });
             } else if(reportTab === "month") {
-              return transactions.filter(t => { const dt=new Date(t.date); return dt.getMonth()===date.getMonth() && dt.getFullYear()===date.getFullYear(); });
+              return transactions.filter(t => { if(t.deleted) return false; const dt=new Date(t.date); return dt.getMonth()===date.getMonth() && dt.getFullYear()===date.getFullYear(); });
             } else {
-              return transactions.filter(t => new Date(t.date).getFullYear() === date.getFullYear());
+              return transactions.filter(t => !t.deleted && new Date(t.date).getFullYear() === date.getFullYear());
             }
           };
 
@@ -1760,15 +1764,17 @@ export default function App() {
           const savingsRate = s.inc > 0 ? Math.round(((s.inc - s.exp) / s.inc) * 100) : 0;
 
           // Aggregation logic (Category or Tag)
-          const aggrData = Object.entries(filtered.reduce((acc,t)=>{
+          const expenseOnly = filtered.filter(t => t.txType === "Expense");
+          const aggrData = Object.entries(expenseOnly.reduce((acc,t)=>{
             if(reportsMode === "category") {
               const c = categories.find(cat=>cat.id===t.category)?.name || "Other";
               acc[c] = (acc[c]||0) + t.amount;
             } else {
-              if(!t.tags || t.tags.length === 0) {
+              const txTags = (t.tags || []).filter(tid => { const tg = tags.find(x=>x.id===tid); return tg && !tg.deleted; });
+              if(txTags.length === 0) {
                 acc["Untagged"] = (acc["Untagged"]||0) + t.amount;
               } else {
-                t.tags.forEach(tid => {
+                txTags.forEach(tid => {
                   const tn = tags.find(tg=>tg.id===tid)?.name || "Unknown";
                   acc[tn] = (acc[tn]||0) + t.amount;
                 });

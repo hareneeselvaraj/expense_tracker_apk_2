@@ -39,10 +39,24 @@ export default function ReportsPage({
   const aggrData = React.useMemo(() => {
     const expenseTx = reportTx.filter(t => t.txType === "Expense");
     const map = expenseTx.reduce((acc, t) => {
-      const k = reportsMode === "category" 
-        ? (categories.find(c => c.id === t.category)?.name || "Other") 
-        : (t.tags?.[0] ? (tags.find(tg => tg.id === t.tags[0])?.name || "Tag") : "Untagged");
-      acc[k] = (acc[k] || 0) + t.amount;
+      if (reportsMode === "category") {
+        const k = categories.find(c => c.id === t.category)?.name || "Other";
+        acc[k] = (acc[k] || 0) + t.amount;
+      } else {
+        // Tag mode: iterate ALL tags per transaction
+        const txTags = (t.tags || []).filter(tid => {
+          const tg = tags.find(tg => tg.id === tid);
+          return tg && !tg.deleted;
+        });
+        if (txTags.length === 0) {
+          acc["Untagged"] = (acc["Untagged"] || 0) + t.amount;
+        } else {
+          txTags.forEach(tid => {
+            const name = tags.find(tg => tg.id === tid)?.name || "Tag";
+            acc[name] = (acc[name] || 0) + t.amount;
+          });
+        }
+      }
       return acc;
     }, {});
     return Object.entries(map).sort((a,b) => b[1] - a[1]);

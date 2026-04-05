@@ -26,7 +26,9 @@ export default function TagsPanel({ tags, transactions, onAddTag, onEditTag, onD
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))",gap:16}}>
           {tags.map(tg => {
             const txns = transactions.filter(t => (t.tags || []).includes(tg.id));
-            const total = txns.reduce((s, t) => s + t.amount, 0);
+            const income = txns.filter(t => t.creditDebit === "Credit").reduce((s, t) => s + t.amount, 0);
+            const expense = txns.filter(t => t.creditDebit === "Debit").reduce((s, t) => s + t.amount, 0);
+            const net = income - expense;
             return (
               <div key={tg.id} style={{
                 background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: 16,
@@ -56,11 +58,28 @@ export default function TagsPanel({ tags, transactions, onAddTag, onEditTag, onD
 
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <div style={{ color: C.text, fontSize: 16, fontWeight: 800, letterSpacing:"-.01em" }}>#{tg.name}</div>
-                  <div style={{ color: C.sub, fontSize: 12, marginTop: 4, fontWeight: 600 }}>{txns.length} transactions</div>
+                  <div style={{ color: C.sub, fontSize: 12, marginTop: 4, fontWeight: 600 }}>{txns.length} transaction{txns.length !== 1 ? "s" : ""}</div>
                 </div>
 
-                <div style={{ color: C.text, fontSize: 16, fontWeight: 800, marginTop: 8, borderTop: `1px solid ${C.borderLight}`, paddingTop: 12 }}>
-                  {fmtAmt(total)}
+                <div style={{ borderTop: `1px solid ${C.borderLight}`, paddingTop: 12, marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                  {income > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: C.sub, fontSize: 10, fontWeight: 700 }}>IN</span>
+                      <span style={{ color: C.income, fontSize: 13, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace" }}>+{fmtAmt(income)}</span>
+                    </div>
+                  )}
+                  {expense > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: C.sub, fontSize: 10, fontWeight: 700 }}>OUT</span>
+                      <span style={{ color: C.expense, fontSize: 13, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace" }}>−{fmtAmt(expense)}</span>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+                    <span style={{ color: C.sub, fontSize: 10, fontWeight: 800 }}>NET</span>
+                    <span style={{ color: net >= 0 ? C.income : C.expense, fontSize: 15, fontWeight: 900, fontFamily: "'JetBrains Mono', monospace" }}>
+                      {net >= 0 ? "+" : "−"}{fmtAmt(Math.abs(net))}
+                    </span>
+                  </div>
                 </div>
               </div>
             );
