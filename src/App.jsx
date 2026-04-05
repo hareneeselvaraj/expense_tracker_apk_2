@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 
 // Constants
 import { THEMES, BASE_C } from "./constants/theme.js";
@@ -16,6 +16,7 @@ import { generateInsights } from "./services/insightsEngine.js";
 import { categorizeTransaction } from "./services/categorizationPipeline.js";
 import { checkAndSendYearEndEmail, sendYearEndEmailManual } from "./services/yearEndService.js";
 import { processBudgetAlerts } from "./services/budgetEmailSender.js";
+import { createNotification, shouldAdd, pruneNotifications } from "./services/notificationService.js";
 
 import { useOffline } from "./hooks/useOffline.js";
 import { useInstallPrompt } from "./hooks/useInstallPrompt.js";
@@ -89,6 +90,11 @@ export default function App() {
   const [page, setPage] = useState("dashboard");
   const [toast, setToast] = useState(null);
 
+  // Notification Center state
+  const [notifications, setNotifications] = useState([]);
+  const toastTimer = useRef(null);
+  const prevAlertKeysRef = useRef(new Set());
+
   // Data
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState(DEF_CATS);
@@ -102,7 +108,31 @@ export default function App() {
   // Phase 1C: Offline detection
   const { isOffline, pendingOps, queueOp, clearQueue } = useOffline();
   const { canInstall, install } = useInstallPrompt();
-  const { runAllRules, applyRulesToTx } = useRuleEngine(rules, setTransactions, setRules, notify);
+  const { runAllRules, applyRulesToTx } = useRuleEngine(rules, setTransactions, setRules, (msg, type) => notify(msg, type));
+
+  // Notification center helpers
+  const addNotification = useCallback((notifData) => {
+    const notif = createNotification(notifData);
+    setNotifications(prev => {
+      if (!shouldAdd(prev, notif)) return prev;
+      return pruneNotifications([notif, ...prev]);
+    });
+    return notif;
+  }, []);
+
+  const markRead = useCallback((id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  }, []);
+
+  const markAllRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }, []);
+
+  const clearNotification = useCallback((id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
+  const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
 
   // Phase 3D: Insights
   const insights = useMemo(
@@ -239,27 +269,46 @@ export default function App() {
     return () => clearInterval(interval);
   }, [ready, recurring]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Budget alert check after every transaction save
+  // Budget alert check — only notify for NEW alerts crossing threshold
   useEffect(() => {
     if (!ready || !budgets.length) return;
     const alerts = getActiveAlerts(transactions, budgets, categories, tags);
-    const exceeded = alerts.filter(a => a.type === 'critical' || a.type === 'exceeded');
-    const warns = alerts.filter(a => a.type === 'warning');
+    const currentKeys = new Set(alerts.map(a => `${a.type}_${a.budgetName}`));
 
-    if (exceeded.length > 0) {
-      const msg = `⚠ Budget exceeded: ${exceeded.map(a => a.budgetName).join(', ')}`;
-      notify(msg, 'error');
-      // Send browser push notification
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('💰 Budget Alert!', { body: msg, icon: '/favicon.ico' });
+    alerts.forEach(a => {
+      const key = `${a.type}_${a.budgetName}`;
+      if (prevAlertKeysRef.current.has(key)) return; // Already notified
+
+      const isCritical = a.type === 'critical' || a.type === 'exceeded';
+
+      // Add to notification center
+      addNotification({
+        type: "budget",
+        severity: isCritical ? "critical" : "warning",
+        title: isCritical ? `${a.budgetName} over budget!` : `${a.budgetName} at ${a.percentage}%`,
+        body: isCritical
+          ? `Exceeded by ₹${Math.round(a.overshoot).toLocaleString()}. Spent ₹${Math.round(a.spent).toLocaleString()} of ₹${Math.round(a.limit).toLocaleString()}.`
+          : `₹${Math.round(a.remaining).toLocaleString()} remaining of ₹${Math.round(a.limit).toLocaleString()}.`,
+        actionLabel: "View Budget",
+        actionRoute: "organize",
+        meta: { budgetName: a.budgetName, spent: a.spent, limit: a.limit, percentage: a.percentage }
+      });
+
+      // Toast only for critical
+      if (isCritical) {
+        notify(`🚨 ${a.budgetName}: Over budget by ₹${Math.round(a.overshoot).toLocaleString()}`, "error");
       }
-    } else if (warns.length > 0) {
-      const msg = `Budget warning: ${warns.map(a => a.budgetName).join(', ')} nearing limit`;
-      notify(msg, 'warning');
+
+      // Browser push — only once per newly crossed threshold
       if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('💰 Budget Warning', { body: msg, icon: '/favicon.ico' });
+        new Notification(
+          isCritical ? '🚨 Budget Exceeded' : '⚠️ Budget Warning',
+          { body: `${a.budgetName}: ${a.percentage}% used`, icon: '/favicon.ico' }
+        );
       }
-    }
+    });
+
+    prevAlertKeysRef.current = currentKeys;
   }, [transactions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Budget email orchestrator
@@ -355,9 +404,10 @@ export default function App() {
   };
 
   // ── ACTIONS ────────────────────────────────────────────────────────────────
-  const notify = (msg, type = "success") => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3000);
+  const notify = (msg, type = "success", action = null) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ msg, type, action, key: Date.now() });
+    toastTimer.current = setTimeout(() => setToast(null), 3200);
   };
 
   const handleSaveTx = (data) => {
@@ -389,7 +439,13 @@ export default function App() {
   const handleDeleteTx = (id) => {
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: new Date().toISOString() } : t));
     setEditTx(null);
-    notify("Transaction deleted successfully", "error");
+    notify("Transaction deleted", "error", {
+      label: "Undo",
+      onClick: () => {
+        setTransactions(prev => prev.map(t => t.id === id ? { ...t, deleted: false, updatedAt: new Date().toISOString() } : t));
+        notify("Transaction restored", "success");
+      }
+    });
   };
 
   const toggleTheme = () => {
@@ -470,9 +526,11 @@ export default function App() {
       clearQueue();
 
       notify(action === "merged" ? "Smart Merged & Synced ☁️" : "Saved to Cloud ☁️");
+      addNotification({ type: "sync", severity: "success", title: "Sync complete", body: `Data backed up to Google Drive at ${new Date().toLocaleTimeString()}` });
       setSyncStatus("synced");
     } catch(err) {
       notify(err.message, "error");
+      addNotification({ type: "sync", severity: "critical", title: "Sync failed", body: err.message || "Could not reach Google Drive. Changes saved locally.", actionLabel: "Retry", actionRoute: "settings" });
       setSyncStatus("error");
     }
   };
@@ -571,6 +629,12 @@ export default function App() {
         onOpenSync={() => setShowBackup(true)}
         isOffline={isOffline}
         budgetAlerts={budgetAlerts}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        onMarkRead={markRead}
+        onMarkAllRead={markAllRead}
+        onClearNotification={clearNotification}
+        onNavigate={setPage}
       />
 
 

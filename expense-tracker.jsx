@@ -373,7 +373,7 @@ const TxForm = ({init, categories, tags, accounts, onSave, onDelete, onClose}) =
       <CustomSelect 
         label="Category" 
         value={tx.category} 
-        options={categories.filter(c=>c.type===tx.txType)} 
+        options={categories.filter(c=>c.type===tx.txType && !c.deleted)} 
         onChange={f("category")}
       />
 
@@ -414,7 +414,7 @@ const TxForm = ({init, categories, tags, accounts, onSave, onDelete, onClose}) =
                 <div style={{flex:1.5}}>
                   <CustomSelect
                     value={s.category}
-                    options={categories.filter(c=>c.type===tx.txType)}
+                    options={categories.filter(c=>c.type===tx.txType && !c.deleted)}
                     onChange={v => {
                       const newSplits = [...splits];
                       newSplits[i].category = v;
@@ -444,7 +444,7 @@ const TxForm = ({init, categories, tags, accounts, onSave, onDelete, onClose}) =
         {tags.length===0
           ? <div style={{color:C.sub,fontSize:12,padding:"8px 0"}}>No tags yet — add them in the Tags page</div>
           : <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-              {tags.map(tg=>{
+              {tags.filter(tg=>!tg.deleted).map(tg=>{
                 const sel=(tx.tags||[]).includes(tg.id);
                 return <button key={tg.id} onClick={()=>toggleTag(tg.id)} style={{background:sel?tg.color+"30":"transparent",border:`1px solid ${sel?tg.color:C.border}`,borderRadius:8,padding:"5px 11px",color:sel?tg.color:C.sub,cursor:"pointer",fontSize:12,fontWeight:sel?700:500,fontFamily:"inherit"}}>#{tg.name}</button>;
               })}
@@ -613,7 +613,7 @@ export default function App() {
   const fileRef = useRef(), importRef = useRef(), analyzerFileRef = useRef();
   const [analyzerState, setAnalyzerState] = useState({ step: "upload", file: null, headers: [], rows: [], columnMap: {}, processed: [], loading: false, error: "" });
 
-  const notify = (msg, type="ok") => { setToast({msg,type}); setTimeout(()=>setToast(null), 3000); };
+  const notify = (msg, type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null), 3000); };
 
   // ── Load IndexedDB ──────────────────────────────────────────────────────────
   const CLIENT_ID = "387061627642-rf37d4vu08atlueo9vmf2aad8cp09shu.apps.googleusercontent.com";
@@ -1424,7 +1424,7 @@ export default function App() {
       </div>
 
       {["Expense","Income","Investment"].map(type=>{
-        const cats=categories.filter(c=>c.type===type); if(!cats.length) return null;
+        const cats=categories.filter(c=>c.type===type && !c.deleted); if(!cats.length) return null;
         return (
           <div key={type}>
             <div style={{color:C.sub,fontSize:10,fontWeight:800,letterSpacing:".15em",textTransform:"uppercase",marginBottom:16,paddingLeft:4,display:"flex",alignItems:"center",gap:10}}>
@@ -1493,7 +1493,7 @@ export default function App() {
         </div>
       ) : (
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))",gap:16}}>
-          {tags.map(tg => {
+          {tags.filter(tg => !tg.deleted).map(tg => {
             const txns = transactions.filter(t => (t.tags || []).includes(tg.id));
             const total = txns.reduce((s, t) => s + t.amount, 0);
             return (
@@ -1553,7 +1553,7 @@ export default function App() {
       {organizeTab === "tags" && Tags}
       {organizeTab === "budgets" && (
         <div style={{display:"flex",flexDirection:"column",gap:16}}>
-          {categories.filter(c=>c.id!=="income").map(cat => {
+          {categories.filter(c=>c.id!=="income" && !c.deleted).map(cat => {
             const b = budgets.find(bg => bg.categoryId === cat.id);
             const spent = transactions
               .filter(t => t.category === cat.id && new Date(t.date).getMonth() === new Date().getMonth() && new Date(t.date).getFullYear() === new Date().getFullYear())
@@ -2516,7 +2516,7 @@ export default function App() {
           <div>
             <FLabel>Tags</FLabel>
             <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-              {tags.map(tg=>{const sel=filters.tags.includes(tg.id);return <button key={tg.id} onClick={()=>setFilters(p=>({...p,tags:sel?p.tags.filter(x=>x!==tg.id):[...p.tags,tg.id]}))} style={{background:sel?tg.color+"30":"transparent",border:`1px solid ${sel?tg.color:C.border}`,borderRadius:8,padding:"5px 11px",color:sel?tg.color:C.sub,cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>#{tg.name}</button>;})}
+              {tags.filter(tg=>!tg.deleted).map(tg=>{const sel=filters.tags.includes(tg.id);return <button key={tg.id} onClick={()=>setFilters(p=>({...p,tags:sel?p.tags.filter(x=>x!==tg.id):[...p.tags,tg.id]}))} style={{background:sel?tg.color+"30":"transparent",border:`1px solid ${sel?tg.color:C.border}`,borderRadius:8,padding:"5px 11px",color:sel?tg.color:C.sub,cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>#{tg.name}</button>;})}
             </div>
           </div>
           <div style={{display:"flex",gap:10}}>
@@ -2830,7 +2830,7 @@ export default function App() {
             <div style={{display:"flex",flexDirection:"column",gap:12}}>
                <label style={{color:C.sub,fontSize:10,fontWeight:800,textTransform:"uppercase"}}>Set Category to...</label>
                <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
-                  {categories.filter(c=>c.id!=="income").map(cat => (
+                  {categories.filter(c=>c.id!=="income" && !c.deleted).map(cat => (
                     <button key={cat.id} onClick={()=>setEditingRule({...editingRule, categoryId:cat.id})} style={{
                       padding:"8px 12px", borderRadius:12, fontSize:12, fontWeight:700, cursor:"pointer",
                       background:editingRule.categoryId===cat.id ? cat.color+"20" : C.input,

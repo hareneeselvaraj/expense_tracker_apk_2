@@ -1,17 +1,87 @@
 import React, { useState } from "react";
 import { Ico } from "../ui/Ico.jsx";
+import { timeAgo } from "../../services/notificationService.js";
 
-export const Header = ({ title, theme, themeMode, toggleTheme, onOpenSettings, syncStatus, onOpenSync, isOffline, budgetAlerts = [] }) => {
+const SEVERITY_CONFIG = (C) => ({
+  critical: { accent: C.expense, emoji: "🚨" },
+  warning:  { accent: "#f59e0b", emoji: "⚠️" },
+  info:     { accent: C.primary, emoji: "💡" },
+  success:  { accent: C.income,  emoji: "✅" },
+});
 
+const TYPE_ICON = { budget: "📊", recurring: "🔄", insight: "💡", sync: "☁️", import: "📥", anomaly: "🔍", reminder: "⏰" };
+const TAB_MAP = { All: null, Budget: "budget", Recurring: "recurring", Sync: "sync", Insights: "insight" };
+
+const NotificationCard = ({ notification: n, theme: C, onRead, onAction, onDismiss }) => {
+  const config = SEVERITY_CONFIG(C)[n.severity] || SEVERITY_CONFIG(C).info;
+  return (
+    <div onClick={onRead} style={{
+      background: n.read ? "transparent" : `${config.accent}08`,
+      border: `1px solid ${n.read ? C.borderLight : config.accent + "30"}`,
+      borderRadius: 14, padding: 12,
+      display: "flex", gap: 10, cursor: "pointer",
+      opacity: n.read ? 0.7 : 1, transition: "all .2s"
+    }}>
+      <div style={{
+        width: 32, height: 32, borderRadius: 10, flexShrink: 0,
+        background: `${config.accent}15`,
+        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15
+      }}>
+        {TYPE_ICON[n.type] || config.emoji}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 6 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, lineHeight: 1.3 }}>{n.title}</div>
+          <button onClick={(e) => { e.stopPropagation(); onDismiss(); }} style={{
+            background: "none", border: "none", color: C.sub, cursor: "pointer", padding: 2,
+            opacity: 0.4, flexShrink: 0, display: "flex"
+          }}><Ico n="close" sz={12} /></button>
+        </div>
+        <div style={{ fontSize: 11, color: C.sub, marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
+          <span style={{ fontSize: 9, color: C.sub, fontWeight: 600 }}>{timeAgo(n.timestamp)}</span>
+          {n.actionLabel && (
+            <button onClick={(e) => { e.stopPropagation(); onAction(); }} style={{
+              background: `${config.accent}15`, border: `1px solid ${config.accent}30`,
+              borderRadius: 8, padding: "3px 10px",
+              color: config.accent, fontSize: 10, fontWeight: 700, cursor: "pointer"
+            }}>
+              {n.actionLabel}
+            </button>
+          )}
+        </div>
+      </div>
+      {!n.read && (
+        <div style={{
+          width: 8, height: 8, borderRadius: "50%",
+          background: config.accent, flexShrink: 0, marginTop: 4
+        }} />
+      )}
+    </div>
+  );
+};
+
+export const Header = ({
+  title, theme, themeMode, toggleTheme, onOpenSettings,
+  syncStatus, onOpenSync, isOffline, budgetAlerts = [],
+  notifications = [], unreadCount = 0,
+  onMarkRead, onMarkAllRead, onClearNotification, onNavigate
+}) => {
   const C = theme;
   const [showNotifs, setShowNotifs] = useState(false);
-  const alertCount = budgetAlerts.length;
+  const [activeTab, setActiveTab] = useState("All");
 
   const requestNotifPermission = () => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   };
+
+  const filteredNotifs = activeTab === "All"
+    ? notifications
+    : notifications.filter(n => n.type === TAB_MAP[activeTab]);
+
+  const close = () => setShowNotifs(false);
 
   return (
     <div style={{position:"sticky",top:0,zIndex:300,background:C.headerBg,borderBottom:`1px solid ${C.borderLight}`,padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -25,15 +95,16 @@ export const Header = ({ title, theme, themeMode, toggleTheme, onOpenSettings, s
         <div style={{ position: "relative" }}>
           <button onClick={() => { setShowNotifs(!showNotifs); requestNotifPermission(); }} style={{background:C.input,border:"none",borderRadius:12,padding:"8px",color:C.text,cursor:"pointer",display:"flex",transition:"transform .2s", position: "relative"}} onMouseOver={e=>e.currentTarget.style.transform="scale(1.05)"} onMouseOut={e=>e.currentTarget.style.transform="scale(1)"}>
             <Ico n="bell" sz={18}/>
-            {alertCount > 0 && (
+            {unreadCount > 0 && (
               <div style={{
                 position: "absolute", top: -2, right: -2,
-                width: 16, height: 16, borderRadius: "50%",
+                minWidth: 16, height: 16, borderRadius: 99, padding: "0 4px",
                 background: C.expense, color: "#fff",
                 fontSize: 9, fontWeight: 900,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                border: `2px solid ${C.headerBg}`
-              }}>{alertCount}</div>
+                border: `2px solid ${C.headerBg}`,
+                animation: "fadeIn 0.3s ease"
+              }}>{unreadCount > 9 ? "9+" : unreadCount}</div>
             )}
           </button>
 
@@ -41,58 +112,72 @@ export const Header = ({ title, theme, themeMode, toggleTheme, onOpenSettings, s
           {showNotifs && (
             <div style={{
               position: "absolute", right: 0, top: "100%", marginTop: 8,
-              width: 280, maxHeight: 320, overflowY: "auto",
+              width: 320, maxHeight: 440, overflowY: "auto",
               background: C.surface, border: `1px solid ${C.borderLight}`,
-              borderRadius: 16, boxShadow: C.shadow, zIndex: 999,
-              padding: 12, display: "flex", flexDirection: "column", gap: 8
+              borderRadius: 20, boxShadow: `0 20px 60px rgba(0,0,0,0.3)`, zIndex: 999,
+              padding: 16, display: "flex", flexDirection: "column", gap: 10
             }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: C.text }}>Notifications</span>
-                <button onClick={() => setShowNotifs(false)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", padding: 4 }}>
-                  <Ico n="close" sz={16} />
-                </button>
+              {/* Header row */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 15, fontWeight: 800, color: C.text }}>Notifications</span>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  {unreadCount > 0 && (
+                    <button onClick={onMarkAllRead} style={{
+                      background: "none", border: "none", color: C.primary, fontSize: 11,
+                      fontWeight: 700, cursor: "pointer", fontFamily: "inherit"
+                    }}>Mark all read</button>
+                  )}
+                  <button onClick={close} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", padding: 4, display: "flex" }}>
+                    <Ico n="close" sz={16} />
+                  </button>
+                </div>
               </div>
 
-              {alertCount === 0 ? (
-                <div style={{ textAlign: "center", padding: "24px 12px" }}>
+              {/* Filter tabs */}
+              <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 2 }}>
+                {Object.keys(TAB_MAP).map(tab => {
+                  const count = tab === "All" ? notifications.length : notifications.filter(n => n.type === TAB_MAP[tab]).length;
+                  if (tab !== "All" && count === 0) return null;
+                  const active = activeTab === tab;
+                  return (
+                    <button key={tab} onClick={() => setActiveTab(tab)} style={{
+                      background: active ? C.primaryDim : "transparent",
+                      border: `1px solid ${active ? C.primary + "40" : C.borderLight}`,
+                      borderRadius: 99, padding: "4px 12px",
+                      color: active ? C.primary : C.sub,
+                      fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                      whiteSpace: "nowrap", transition: "all .2s", flexShrink: 0
+                    }}>
+                      {tab}{count > 0 ? ` (${count})` : ""}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Notification list */}
+              {filteredNotifs.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "32px 12px" }}>
                   <div style={{ fontSize: 28, marginBottom: 8 }}>🔔</div>
-                  <div style={{ color: C.sub, fontSize: 13, fontWeight: 600 }}>No alerts right now</div>
-                  <div style={{ color: C.sub, fontSize: 11, marginTop: 4 }}>Budget alerts will appear here</div>
+                  <div style={{ color: C.sub, fontSize: 13, fontWeight: 600 }}>No notifications yet</div>
+                  <div style={{ color: C.sub, fontSize: 11, marginTop: 4 }}>Budget alerts, sync updates, and insights will appear here</div>
                 </div>
               ) : (
-                budgetAlerts.map((a, idx) => {
-                  const isCritical = a.type === 'critical' || a.type === 'exceeded';
-                  const bgColor = isCritical ? `${C.expense}15` : `${C.warning}15`;
-                  const borderColor = isCritical ? `${C.expense}40` : `${C.warning}40`;
-                  const iconColor = isCritical ? C.expense : C.warning;
-                  return (
-                    <div key={idx} style={{
-                      background: bgColor, border: `1px solid ${borderColor}`,
-                      borderRadius: 12, padding: 12, display: "flex", alignItems: "flex-start", gap: 10
-                    }}>
-                      <div style={{
-                        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                        background: isCritical ? `${C.expense}22` : `${C.warning}22`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 16
-                      }}>
-                        {isCritical ? '🚨' : '⚠️'}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{a.budgetName}</div>
-                        <div style={{ fontSize: 11, color: iconColor, fontWeight: 700, marginTop: 2 }}>
-                          {isCritical
-                            ? `Over budget by ₹${Math.round(a.overshoot).toLocaleString()}`
-                            : `${a.percentage}% used — ₹${Math.round(a.remaining).toLocaleString()} left`
-                          }
-                        </div>
-                        <div style={{ fontSize: 10, color: C.sub, marginTop: 2 }}>
-                          ₹{Math.round(a.spent).toLocaleString()} / ₹{Math.round(a.limit).toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {filteredNotifs.map(n => (
+                    <NotificationCard
+                      key={n.id}
+                      notification={n}
+                      theme={C}
+                      onRead={() => onMarkRead?.(n.id)}
+                      onAction={() => {
+                        if (n.actionRoute) onNavigate?.(n.actionRoute);
+                        onMarkRead?.(n.id);
+                        close();
+                      }}
+                      onDismiss={() => onClearNotification?.(n.id)}
+                    />
+                  ))}
+                </div>
               )}
 
               {/* Permission hint */}
@@ -105,7 +190,7 @@ export const Header = ({ title, theme, themeMode, toggleTheme, onOpenSettings, s
                   });
                 }} style={{
                   background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`,
-                  border: "none", borderRadius: 10, padding: "10px 12px",
+                  border: "none", borderRadius: 12, padding: "10px 12px",
                   color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer",
                   marginTop: 4, textAlign: "center"
                 }}>
