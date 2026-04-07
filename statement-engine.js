@@ -182,6 +182,9 @@ export function autoDetectColumns(headers) {
     debit:       find(["debit", "withdrawal", "dr", "debit amount", "dr amount", "debit amt"]),
     credit:      find(["credit", "deposit", "cr", "credit amount", "cr amount", "credit amt"]),
     balance:     find(["balance", "closing balance", "closing bal", "available balance", "running balance"]),
+    category:    find(["category", "cat"]),
+    tags:        find(["tag", "tags", "label", "labels"]),
+    notes:       find(["note", "notes", "comment"]),
   };
 }
 
@@ -245,6 +248,9 @@ export function processTransactions(rows, columnMap) {
         txType,
         category,
         balance: row[columnMap.balance] || "",
+        _rawCategory: columnMap.category ? String(row[columnMap.category] || "").trim() : "",
+        _rawTags: columnMap.tags ? String(row[columnMap.tags] || "").trim() : "",
+        notes: columnMap.notes ? String(row[columnMap.notes] || "").trim() : "",
       };
     })
     .filter(Boolean);
