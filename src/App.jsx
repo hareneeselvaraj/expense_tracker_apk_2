@@ -460,6 +460,78 @@ export default function App() {
     notify("Transaction saved successfully");
   };
 
+  const handleImportTx = (incoming) => {
+    const txs = Array.isArray(incoming) ? incoming : [incoming];
+
+    // Resolve raw category name → ID, auto-create if missing
+    const resolveCategoryName = (rawName, txType) => {
+      if (!rawName) return null;
+      const normalized = rawName.trim().toLowerCase();
+      const existing = categories.find(c => !c.deleted && c.name.toLowerCase() === normalized);
+      if (existing) return existing.id;
+      const newCat = {
+        id: uid(), name: rawName.trim(), type: txType || "Expense",
+        color: "#94a3b8", emoji: "📦", updatedAt: new Date().toISOString()
+      };
+      setCategories(prev => [...prev, newCat]);
+      return newCat.id;
+    };
+
+    // Resolve raw tag string → ID array, auto-create if missing
+    const resolveTagNames = (rawTagString) => {
+      if (!rawTagString) return [];
+      const names = rawTagString.split(/[;,|]/).map(s => s.trim()).filter(Boolean);
+      const ids = [];
+      const newTags = [];
+      names.forEach(name => {
+        const normalized = name.toLowerCase().replace(/^#/, "");
+        const existing = tags.find(t => !t.deleted && t.name.toLowerCase() === normalized);
+        if (existing) { ids.push(existing.id); }
+        else {
+          const newTag = {
+            id: uid(), name: name.replace(/^#/, ""),
+            color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 55%)`,
+            updatedAt: new Date().toISOString()
+          };
+          newTags.push(newTag);
+          ids.push(newTag.id);
+        }
+      });
+      if (newTags.length > 0) setTags(prev => [...prev, ...newTags]);
+      return ids;
+    };
+
+    const processed = txs.map(t => {
+      let categoryId = t.category;
+      if (t._rawCategory) {
+        categoryId = resolveCategoryName(t._rawCategory, t.txType) || categoryId;
+      }
+      let tagIds = t.tags || [];
+      if (t._rawTags) {
+        tagIds = resolveTagNames(t._rawTags);
+      }
+      const cleanTx = {
+        ...t, category: categoryId, tags: tagIds,
+        amount: parseFloat(t.amount) || 0,
+      };
+      delete cleanTx._rawCategory;
+      delete cleanTx._rawTags;
+
+      // Run through categorize+rules pipeline only if no explicit category from sheet
+      let categorized = cleanTx;
+      if (!t._rawCategory) {
+        categorized = categorizeTransaction(cleanTx, categories);
+        const rulesPatch = applyRulesToTx(categorized);
+        if (rulesPatch) categorized = { ...categorized, ...rulesPatch };
+      }
+      return stampUpdated(categorized);
+    });
+
+    setTransactions(prev => [...processed, ...prev]);
+    budgetCheckPending.current = true;
+    notify(`${processed.length} transaction${processed.length > 1 ? 's' : ''} imported`);
+  };
+
   const handleDeleteTx = (id) => {
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: new Date().toISOString() } : t));
     setEditTx(null);
@@ -606,7 +678,7 @@ export default function App() {
       if (filters.cd && t.creditDebit !== filters.cd) return false;
       if (filters.tags.length && !filters.tags.some(tg => (t.tags || []).includes(tg))) return false;
       return true;
-    }).sort((a, b) => b.date.localeCompare(a.date));
+    }).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   }, [transactions, searchQ, filters]);
 
   // ── RENDER ────────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ import { Ico } from "../components/ui/Ico.jsx";
 import { Btn } from "../components/ui/Btn.jsx";
 import { TxRow } from "../components/cards/TxRow.jsx";
 import { fmtAmt, toISO, dateRange, stepDate, periodLabel } from "../utils/format.js";
-import { findAllDuplicates } from "../services/duplicateEngine.js";
+import { findExactDuplicates } from "../services/duplicateEngine.js";
 import { DuplicatesPanel } from "../components/duplicates/DuplicatesPanel.jsx";
 
 
@@ -36,12 +36,33 @@ export default function TransactionsPage({
   const C = theme;
   const [confirmBulkDelete, setConfirmBulkDelete] = React.useState(false);
   const [showDuplicates, setShowDuplicates] = React.useState(false);
+  const [showExportMenu, setShowExportMenu] = React.useState(false);
+  const [showScopeMenu, setShowScopeMenu] = React.useState(false);
   const dateRef = React.useRef(null);
+  const exportRef = React.useRef(null);
+  const scopeRef = React.useRef(null);
 
+  // Only detect exact duplicates (same date + same amount + same description)
+  // This prevents recurring auto-payments from being falsely flagged
   const dupeCount = React.useMemo(() => {
-    const groups = findAllDuplicates(transactions);
-    return groups.reduce((sum, g) => sum + g.items.length - 1, 0);
+    const groups = findExactDuplicates(transactions);
+    return groups.reduce((sum, g) => g.length - 1 + sum, 0);
   }, [transactions]);
+
+  // Close menus when clicking outside
+  React.useEffect(() => {
+    if (!showExportMenu && !showScopeMenu) return;
+    const handler = (e) => {
+      if (exportRef.current && !exportRef.current.contains(e.target)) {
+        setShowExportMenu(false);
+      }
+      if (scopeRef.current && !scopeRef.current.contains(e.target)) {
+        setShowScopeMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showExportMenu, showScopeMenu]);
 
   /* ── time scope state ──────────────────────────────────── */
   const [scope, setScope] = React.useState("month");        // "all" | "week" | "month" | "year"
@@ -53,14 +74,6 @@ export default function TransactionsPage({
     const [from, to] = dateRange(scope, scopeDate);
     return filteredTx.filter(t => t.date >= from && t.date <= to);
   }, [filteredTx, scope, scopeDate]);
-
-  /* ── period summary ────────────────────────────────────── */
-  const summary = React.useMemo(() => {
-    const inc = timeTx.filter(t => t.txType === "Income").reduce((s, t) => s + t.amount, 0);
-    const exp = timeTx.filter(t => t.txType === "Expense").reduce((s, t) => s + t.amount, 0);
-    const inv = timeTx.filter(t => t.txType === "Investment").reduce((s, t) => s + t.amount, 0);
-    return { inc, exp, inv, net: inc - exp - inv };
-  }, [timeTx]);
 
   /* ── group transactions by date ────────────────────────── */
   const grouped = React.useMemo(() => {
@@ -88,27 +101,92 @@ export default function TransactionsPage({
   return (
     <div className="page-enter" style={{ padding: "16px 16px 100px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
 
-      {/* ── Search bar ─────────────────────────────────── */}
-      <div style={{ display: "flex", gap: 8 }}>
-        <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search transactions…" style={{ flex: 1, background: C.surface, borderWidth: 1, borderStyle: "solid", borderColor: C.borderLight, borderRadius: 16, padding: "12px 16px", color: C.text, fontSize: 15, outline: "none", fontFamily: "inherit", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }} />
-        <button onClick={onShowFilters} style={{ background: hasFilter ? C.primary : C.surface, border: `1px solid ${hasFilter ? C.primary : C.borderLight}`, borderRadius: 16, padding: "0 16px", color: hasFilter ? "#fff" : C.sub, cursor: "pointer", display: "flex", alignItems: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", transition: "all .2s" }}>
-          <Ico n="filter" sz={20} />
+      {/* ── Search & Actions bar ───────────────────────────── */}
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search…" style={{ flex: 1, minWidth: 0, background: C.surface, borderWidth: 1, borderStyle: "solid", borderColor: C.borderLight, borderRadius: 12, padding: "8px 12px", color: C.text, fontSize: 13, outline: "none", fontFamily: "inherit", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }} />
+        
+        {/* Scope Dropdown */}
+        <div ref={scopeRef} style={{ position: "relative", flexShrink: 0 }}>
+          <button onClick={() => setShowScopeMenu(p => !p)} style={{ width: 36, height: 36, background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: 0, color: C.sub, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", transition: "all .2s" }}>
+            <Ico n="calendar" sz={18} />
+          </button>
+          {showScopeMenu && (
+            <div style={{
+              position: "absolute", top: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)", zIndex: 500,
+              background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 14,
+              padding: 6, minWidth: 140, boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+              display: "flex", flexDirection: "column", gap: 2,
+              animation: "fadeIn 0.15s ease"
+            }}>
+              {["all", "week", "month", "year"].map(t => (
+                <button key={t} onClick={() => { setScope(t); if (t !== "all") setScopeDate(new Date()); setShowScopeMenu(false); }} style={{
+                  background: scope === t ? C.primaryDim : "transparent",
+                  border: "none", borderRadius: 10,
+                  padding: "10px 14px", color: scope === t ? C.primary : C.text, fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", textAlign: "left", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: 8,
+                  textTransform: "capitalize", transition: "background .15s"
+                }}
+                  onMouseEnter={e => e.currentTarget.style.background = scope === t ? C.primaryDim : C.input}
+                  onMouseLeave={e => e.currentTarget.style.background = scope === t ? C.primaryDim : "transparent"}
+                >
+                  {t === "all" ? "📅 All Time" : t === "week" ? "📆 Week" : t === "month" ? "🗓️ Month" : "📊 Year"}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button onClick={onShowFilters} style={{ width: 36, height: 36, flexShrink: 0, background: hasFilter ? C.primary : C.surface, border: `1px solid ${hasFilter ? C.primary : C.borderLight}`, borderRadius: 12, padding: 0, color: hasFilter ? "#fff" : C.sub, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", transition: "all .2s" }}>
+          <Ico n="filter" sz={18} />
         </button>
+
+        <button onClick={onShowUpload} style={{ width: 36, height: 36, flexShrink: 0, background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: 0, color: C.sub, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", transition: "all .2s" }}>
+          <Ico n="upload" sz={18} />
+        </button>
+
+        <div ref={exportRef} style={{ position: "relative", flexShrink: 0 }}>
+          <button onClick={() => setShowExportMenu(p => !p)} style={{ width: 36, height: 36, background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: 0, color: C.sub, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", transition: "all .2s" }}>
+            <Ico n="down" sz={18} />
+          </button>
+          {showExportMenu && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 500,
+                background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 14,
+                padding: 6, minWidth: 150, boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+                display: "flex", flexDirection: "column", gap: 2,
+                animation: "fadeIn 0.15s ease"
+              }}>
+                <button onClick={() => { onExportCSV(); setShowExportMenu(false); }} style={{
+                  background: "transparent", border: "none", borderRadius: 10,
+                  padding: "10px 14px", color: C.text, fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", textAlign: "left", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: 8,
+                  transition: "background .15s"
+                }}
+                  onMouseEnter={e => e.currentTarget.style.background = C.input}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  📊 CSV (Excel)
+                </button>
+                <button onClick={() => { onExportPDF(); setShowExportMenu(false); }} style={{
+                  background: "transparent", border: "none", borderRadius: 10,
+                  padding: "10px 14px", color: C.text, fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", textAlign: "left", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: 8,
+                  transition: "background .15s"
+                }}
+                  onMouseEnter={e => e.currentTarget.style.background = C.input}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  📄 PDF Report
+                </button>
+              </div>
+            )}
+        </div>
       </div>
 
-      {/* ── Time scope tabs ────────────────────────────── */}
-      <div style={{ display: "flex", background: C.input, borderRadius: 24, padding: 4 }}>
-        {["all", "week", "month", "year"].map(t => (
-          <button key={t} onClick={() => { setScope(t); if (t !== "all") setScopeDate(new Date()); }} style={{
-            flex: 1, padding: "10px", borderRadius: 20, border: "none", cursor: "pointer",
-            fontSize: 12, fontWeight: 700, textTransform: "capitalize",
-            background: scope === t ? C.primary : "transparent",
-            color: scope === t ? "#fff" : C.sub,
-            boxShadow: scope === t ? "0 4px 12px rgba(124, 92, 252, 0.2)" : "none",
-            transition: "all .3s ease"
-          }}>{t === "all" ? "All Time" : t}</button>
-        ))}
-      </div>
+      {/* Scope chips removed - moved to dropdown in header */}
 
       {/* ── Period navigator ───────────────────────────── */}
       {scope !== "all" && (
@@ -153,48 +231,8 @@ export default function TransactionsPage({
         </div>
       )}
 
-      {/* ── Period summary strip ───────────────────────── */}
-      {scope !== "all" && (
-        <div style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8
-        }}>
-          {[
-            { label: "Income", value: summary.inc, color: C.income },
-            { label: "Expense", value: summary.exp, color: C.expense }
-          ].map(s => (
-            <div key={s.label} style={{
-              background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 16,
-              padding: "12px 10px", textAlign: "center", borderTop: `4px solid ${s.color}`, boxShadow: "0 4px 12px rgba(0,0,0,0.02)"
-            }}>
-              <div style={{ color: C.sub, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>{s.label}</div>
-              <div style={{ color: s.color, fontSize: 16, fontWeight: 800 }}>
-                {s.label === "Net" && s.value >= 0 ? "+" : s.label === "Net" && s.value < 0 ? "−" : ""}{fmtAmt(Math.abs(s.value))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Filter pills removed - functionality available in filter modal */}
 
-      {/* ── Quick CR/DR filter pills ───────────────────── */}
-      <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none" }}>
-        {["", "Credit", "Debit", "Income", "Expense", "Investment"].map(opt => {
-          const active = opt === "" ? (filters.cd === "" && filters.type === "") : (filters.cd === opt || filters.type === opt);
-          const col = opt === "Credit" ? C.income : opt === "Debit" ? C.expense : opt === "Income" ? C.income : opt === "Expense" ? C.expense : opt === "Investment" ? C.invest : C.primary;
-          return (
-            <button key={opt} onClick={() => {
-              if (opt === "") setFilters(p => ({ ...p, cd: "", type: "" }));
-              else if (opt === "Credit" || opt === "Debit") setFilters(p => ({ ...p, cd: p.cd === opt ? "" : opt, type: "" }));
-              else setFilters(p => ({ ...p, type: p.type === opt ? "" : opt, cd: "" }));
-            }} style={{
-              background: active ? col : C.surface, border: `1px solid ${active ? col : C.borderLight}`, borderRadius: 14,
-              padding: "6px 16px", color: active ? "#fff" : C.sub, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap", flexShrink: 0,
-              boxShadow: active ? `0 4px 12px ${col}40` : "0 2px 6px rgba(0,0,0,0.02)", transition: "all .2s"
-            }}>{opt || "All"}</button>
-          );
-        })}
-      </div>
-
-      {/* ── Stats strip ────────────────────────────────── */}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {timeTx.length > 0 && (
@@ -216,7 +254,7 @@ export default function TransactionsPage({
           )}
           <span style={{ color: C.sub, fontSize: 12, fontWeight: 700 }}>{timeTx.length} items</span>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
           {dupeCount > 0 && (
             <button onClick={() => setShowDuplicates(true)} style={{
               background: C.warning + "22" || C.expense + "22",
@@ -225,20 +263,9 @@ export default function TransactionsPage({
               fontSize: 11, fontWeight: 800, cursor: "pointer",
               display: "flex", alignItems: "center", gap: 6
             }}>
-              ⚠️ {dupeCount} duplicates — Review
+              ⚠️ {dupeCount} duplicates
             </button>
           )}
-          <Btn theme={C} v="ghost" sm icon="down" onClick={onExportCSV}>CSV</Btn>
-          <Btn theme={C} v="ghost" sm icon="stars" onClick={onExportPDF}>PDF</Btn>
-          <Btn theme={C} v="ghost" sm icon="upload" onClick={onShowUpload}>Import</Btn>
-          <button onClick={onAdd} style={{
-            background: C.primary,
-            border: "none", borderRadius: 12, padding: "8px 16px", color: "#fff", fontSize: 13, fontWeight: 700,
-            cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontFamily: "inherit",
-            boxShadow: `0 4px 12px ${C.primary}40`, transition: "transform .2s"
-          }} onMouseDown={e => e.currentTarget.style.transform = "scale(0.95)"} onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}>
-            <Ico n="plus" sz={16} /> Add
-          </button>
         </div>
       </div>
 
@@ -303,7 +330,7 @@ export default function TransactionsPage({
               <>
                 <button onClick={() => setSelectedTxIds([])} style={{ background: C.input, border: "none", borderRadius: 12, padding: "8px 16px", color: C.text, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Clear</button>
                 <button onClick={() => setConfirmBulkDelete(true)} style={{ background: C.expense + "22", border: `1px solid ${C.expense}40`, borderRadius: 12, padding: "8px 16px", color: C.expense, fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                  <Ico n="trash" sz={14} c={C.expense} /> Let's Delete
+                  <Ico n="trash" sz={14} c={C.expense} /> Delete
                 </button>
               </>
             )}

@@ -25,7 +25,7 @@ export const parseCSV = (file, accountId, cats, rules) => new Promise(resolve =>
       try{dateStr=new Date(dateStr).toISOString().split("T")[0];}catch{}
       
       const draftTx = {id:uid(),date:dateStr,description:desc,amount,creditDebit,txType:"Expense",category:"c13",tags:[],accountId:accountId||"",notes:""};
-      const categorizedTx = categorizeTransaction(draftTx, rules, cats);
+      const categorizedTx = categorizeTransaction(draftTx, cats);
       
       const catType=cats.find(c=>c.id===categorizedTx.category)?.type;
       categorizedTx.txType=catType==="Investment"?"Investment":catType==="Income"?"Income":creditDebit==="Credit"?"Income":"Expense";

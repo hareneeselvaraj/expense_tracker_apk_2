@@ -160,7 +160,6 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            marginTop: -44,
             boxShadow: fabOpen
               ? `0 10px 20px ${C.expense}55`
               : `0 10px 20px ${C.primary}55`,

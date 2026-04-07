@@ -35,10 +35,12 @@ export const UploadModal = ({ open, onClose, onImport, theme, categories = [], r
       }
 
       const rawTxns = processTransactions(rows, colMap);
-      const finalTxns = rawTxns.map(t => {
-        const draft = { ...t, id: uid(), tags: [], accountId: "" };
-        return categorizeTransaction(draft, categories);
-      });
+      const finalTxns = rawTxns.map(t => ({
+        ...t,
+        id: uid(),
+        tags: [],
+        accountId: ""
+      }));
 
       // ── DUPLICATE GUARD ──
       const result = checkImportBatch(finalTxns, transactions);
@@ -82,6 +84,12 @@ export const UploadModal = ({ open, onClose, onImport, theme, categories = [], r
           <div style={{ marginTop: 12, color: file ? C.text : C.sub, fontWeight: 700, fontSize: 14 }}>
             {file ? file.name : "Click or drag file to upload"}
           </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 10, color: C.sub, background: C.input, padding: "3px 8px", borderRadius: 8 }}>✓ Auto-categorize</span>
+          <span style={{ fontSize: 10, color: C.sub, background: C.input, padding: "3px 8px", borderRadius: 8 }}>✓ Duplicate guard</span>
+          <span style={{ fontSize: 10, color: C.sub, background: C.input, padding: "3px 8px", borderRadius: 8 }}>✓ Tags & Category columns</span>
         </div>
 
         {error && (
