@@ -10,7 +10,7 @@ export const FInput = ({value,onChange,placeholder,type="text",style:x, theme}) 
   return (
     <input value={value} onChange={onChange} placeholder={placeholder} type={type} style={{
       background:C.input,borderWidth:1,borderStyle:"solid",borderColor:C.border,borderRadius:10,padding:"6px 12px",
-      color:C.text,fontSize:13,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit",...x
+      color:C.text,fontSize:16,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit",...x
     }}/>
   );
 };

@@ -208,6 +208,17 @@ export const Header = ({
           <Ico n="settings" sz={18}/>
         </button>
       </div>
+
+      {isOffline && (
+        <div style={{
+          position: "absolute", bottom: -28, left: "50%", transform: "translateX(-50%)",
+          background: C.expense, color: "#fff", fontSize: 11, fontWeight: 800,
+          padding: "4px 12px", borderRadius: "0 0 12px 12px", zIndex: 290,
+          display: "flex", alignItems: "center", gap: 6, boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
+        }}>
+          ⚠️ You are offline. Changes saved locally.
+        </div>
+      )}
     </div>
   );
 };

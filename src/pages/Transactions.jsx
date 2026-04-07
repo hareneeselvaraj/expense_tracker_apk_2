@@ -3,6 +3,8 @@ import { Ico } from "../components/ui/Ico.jsx";
 import { Btn } from "../components/ui/Btn.jsx";
 import { TxRow } from "../components/cards/TxRow.jsx";
 import { fmtAmt, toISO, dateRange, stepDate, periodLabel } from "../utils/format.js";
+import { findAllDuplicates } from "../services/duplicateEngine.js";
+import { DuplicatesPanel } from "../components/duplicates/DuplicatesPanel.jsx";
 
 
 
@@ -27,12 +29,19 @@ export default function TransactionsPage({
   selectedTxIds,
   setSelectedTxIds,
   onDeleteBulk,
+  onSoftDeleteBulk,
   onAdd,
   theme
 }) {
   const C = theme;
   const [confirmBulkDelete, setConfirmBulkDelete] = React.useState(false);
+  const [showDuplicates, setShowDuplicates] = React.useState(false);
   const dateRef = React.useRef(null);
+
+  const dupeCount = React.useMemo(() => {
+    const groups = findAllDuplicates(transactions);
+    return groups.reduce((sum, g) => sum + g.items.length - 1, 0);
+  }, [transactions]);
 
   /* ── time scope state ──────────────────────────────────── */
   const [scope, setScope] = React.useState("month");        // "all" | "week" | "month" | "year"
@@ -208,6 +217,17 @@ export default function TransactionsPage({
           <span style={{ color: C.sub, fontSize: 12, fontWeight: 700 }}>{timeTx.length} items</span>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {dupeCount > 0 && (
+            <button onClick={() => setShowDuplicates(true)} style={{
+              background: C.warning + "22" || C.expense + "22",
+              border: `1px solid ${C.warning || C.expense}`,
+              borderRadius: 99, padding: "4px 10px", color: C.warning || C.expense,
+              fontSize: 11, fontWeight: 800, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 6
+            }}>
+              ⚠️ {dupeCount} duplicates — Review
+            </button>
+          )}
           <Btn theme={C} v="ghost" sm icon="down" onClick={onExportCSV}>CSV</Btn>
           <Btn theme={C} v="ghost" sm icon="stars" onClick={onExportPDF}>PDF</Btn>
           <Btn theme={C} v="ghost" sm icon="upload" onClick={onShowUpload}>Import</Btn>
@@ -290,6 +310,20 @@ export default function TransactionsPage({
           </div>
         </div>
       )}
+
+      <DuplicatesPanel
+        open={showDuplicates}
+        onClose={() => setShowDuplicates(false)}
+        transactions={transactions}
+        accounts={accounts}
+        categories={categories}
+        onDelete={(ids) => {
+          if (onSoftDeleteBulk) {
+            onSoftDeleteBulk(ids);
+          }
+        }}
+        theme={C}
+      />
     </div>
   );
 }

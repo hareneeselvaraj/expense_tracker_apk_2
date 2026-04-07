@@ -8,8 +8,9 @@ import { CustomSelect } from "../ui/PremiumSelect.jsx";
 import { uid } from "../../utils/id.js";
 import { fmtAmt } from "../../utils/format.js";
 import { BLANK_TX } from "../../constants/defaults.js";
+import { checkImportBatch } from "../../services/duplicateEngine.js";
 
-export const TxForm = ({init, categories, tags, accounts, onSave, onDelete, onClose, theme}) => {
+export const TxForm = ({init, categories, tags, accounts, existingTransactions, onSave, onDelete, onClose, theme}) => {
   const [tx, setTx] = useState({...BLANK_TX, ...init});
   const [isSplitting, setIsSplitting] = useState(false);
   const [splits, setSplits] = useState([{id:uid(), amount:"", category:init?.category||"c13"}]);
@@ -51,7 +52,7 @@ export const TxForm = ({init, categories, tags, accounts, onSave, onDelete, onCl
         theme={C}
         label="Category" 
         value={tx.category} 
-        options={categories.filter(c=>c.type===tx.txType)} 
+        options={categories.filter(c=>c.type===tx.txType && !c.deleted)} 
         onChange={f("category")}
       />
 
@@ -87,13 +88,13 @@ export const TxForm = ({init, categories, tags, accounts, onSave, onDelete, onCl
                     const newSplits = [...splits];
                     newSplits[i].amount = e.target.value;
                     setSplits(newSplits);
-                  }} type="number" placeholder="Amt" style={{padding:"8px 10px", fontSize:13}}/>
+                  }} type="number" placeholder="Amt" style={{padding:"8px 10px", fontSize:16}}/>
                 </div>
                 <div style={{flex:1.5}}>
                   <CustomSelect
                     theme={C}
                     value={s.category}
-                    options={categories.filter(c=>c.type===tx.txType)}
+                    options={categories.filter(c=>c.type===tx.txType && !c.deleted)}
                     onChange={v => {
                       const newSplits = [...splits];
                       newSplits[i].category = v;
@@ -158,6 +159,19 @@ export const TxForm = ({init, categories, tags, accounts, onSave, onDelete, onCl
         <div style={{flex:1}}/>
         <Btn theme={C} v="ghost" sm onClick={onClose}>Cancel</Btn>
         <Btn theme={C} v="primary" sm disabled={!valid || (isSplitting && Math.abs(tx.amount - splits.reduce((a,c)=>a+(parseFloat(c.amount)||0), 0)) > 0.01)} onClick={()=>{
+          if (!init?.id) {
+            const result = checkImportBatch([{ ...tx, id: "_temp_" }], existingTransactions || []);
+            if (result.duplicates.length > 0) {
+              const dup = result.duplicates[0];
+              const proceed = window.confirm(
+                `This looks like a duplicate of:\n\n` +
+                `"${dup.existing.description}"\n` +
+                `${new Date(dup.existing.date).toLocaleDateString()} • ${fmtAmt(dup.existing.amount)}\n\n` +
+                `Save anyway?`
+              );
+              if (!proceed) return;
+            }
+          }
           if(isSplitting) {
             const splitTxs = splits.map(s => ({
               ...tx, 

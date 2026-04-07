@@ -46,9 +46,11 @@ const QuickAdd = ({ categories, onSave, theme }) => {
   );
 };
 
-export default function Dashboard({ user, transactions, categories, tags, accounts, budgets, stats, netWorth, getDayFlow, viewDate, setViewDate, onEditTx, onAddTx, onSave, onSmartSync, isSyncing, theme, goToTransactions }) {
+export default function Dashboard({ user, transactions, categories, tags, accounts, budgets, stats, netWorth, getDayFlow, viewDate, setViewDate, onEditTx, onAddTx, onSave, onSmartSync, isSyncing, isOffline, theme, goToTransactions }) {
   const C = theme;
   const dateRef = React.useRef(null);
+  const totalBudget = (budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0);
+  const remainingBudget = totalBudget - stats.expense;
 
   return (
     <div className="page-enter" style={{ padding: "12px 12px 100px 12px", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -85,19 +87,19 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button
             onClick={onSmartSync}
-            disabled={isSyncing}
+            disabled={isSyncing || isOffline}
             style={{
-              background: isSyncing ? C.muted : C.primaryDim,
-              border: `1px solid ${isSyncing ? C.border : C.primary + "33"}`,
+              background: (isSyncing || isOffline) ? C.muted : C.primaryDim,
+              border: `1px solid ${(isSyncing || isOffline) ? C.border : C.primary + "33"}`,
               borderRadius: 14, padding: "8px 12px",
-              color: isSyncing ? C.sub : C.primary,
+              color: (isSyncing || isOffline) ? C.sub : C.primary,
               display: "flex", alignItems: "center", gap: 6,
-              cursor: isSyncing ? "wait" : "pointer",
+              cursor: isSyncing ? "wait" : isOffline ? "not-allowed" : "pointer",
               fontWeight: 800, fontSize: 13, transition: "all .2s"
             }}
           >
-            <Ico n="sync" sz={16} />
-            {isSyncing ? "Syncing..." : "Sync"}
+            <Ico n={isOffline ? "cloudOff" : "sync"} sz={16} />
+            {isSyncing ? "Syncing..." : isOffline ? "Offline" : "Sync"}
           </button>
           {user?.picture && <img src={user.picture} style={{ width: 44, height: 44, borderRadius: 14, border: `2px solid ${C.borderLight}`, boxShadow: C.shadow }} alt="Profile" />}
         </div>
@@ -187,11 +189,11 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
             <div style={{ width: 1, height: 24, background: C.borderLight }} />
             <div style={{ textAlign: "right" }}>
               <div style={{ color: C.sub, fontSize: 9, fontWeight: 600 }}>Remaining Budget</div>
-              <div style={{ color: (budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) === 0 ? C.sub : ((budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) - stats.expense >= 0 ? C.income : C.expense), fontSize: 15, fontWeight: 800 }}>
-                {(budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) === 0 
+              <div style={{ color: totalBudget === 0 ? C.sub : (remainingBudget >= 0 ? C.income : C.expense), fontSize: 15, fontWeight: 800 }}>
+                {totalBudget === 0 
                   ? "Not Set" 
-                  : ((budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) - stats.expense >= 0 
-                      ? fmtAmt((budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0) - stats.expense) 
+                  : (remainingBudget >= 0 
+                      ? fmtAmt(remainingBudget) 
                       : "Over Budget")}
               </div>
             </div>

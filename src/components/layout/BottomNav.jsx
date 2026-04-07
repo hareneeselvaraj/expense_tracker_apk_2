@@ -1,9 +1,14 @@
 import React, { useState } from "react";
 import { Ico } from "../ui/Ico.jsx";
 
-export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag, theme }) => {
+export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag, theme, hideFab }) => {
   const C = theme;
   const [fabOpen, setFabOpen] = useState(false);
+
+  // Auto close FAB menu if modal opens
+  React.useEffect(() => {
+    if (hideFab) setFabOpen(false);
+  }, [hideFab]);
 
   const navItems = [
     { id: "dashboard", icon: "home", label: "Home" },
@@ -125,6 +130,7 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
         alignItems: "center",
         justifyContent: "space-between",
         padding: "10px 12px",
+        paddingBottom: "max(10px, env(safe-area-inset-bottom))",
         background: C.navBg,
         backdropFilter: "blur(24px) saturate(180%)",
         WebkitBackdropFilter: "blur(24px) saturate(180%)",
@@ -140,8 +146,9 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
         </div>
 
         {/* Center FAB */}
-        <button
-          onClick={() => setFabOpen(prev => !prev)}
+        <div style={{ width: 58, height: 58, marginTop: -44, pointerEvents: hideFab ? "none" : "auto", opacity: hideFab ? 0 : 1, transition: "opacity 0.2s" }}>
+          <button
+            onClick={() => setFabOpen(prev => !prev)}
           style={{
             width: 58,
             height: 58,
@@ -163,7 +170,8 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
           }}
         >
           <Ico n="plus" sz={28} c="#fff" />
-        </button>
+          </button>
+        </div>
 
         {/* Right Items */}
         <div style={{ display: "flex", flex: 1, justifyContent: "space-around", gap: 4 }}>

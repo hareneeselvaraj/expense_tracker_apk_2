@@ -90,7 +90,7 @@ export const PremiumSelect = ({ label, value, options, onChange, placeholder = "
                  placeholder="Search…" 
                  value={search} 
                  onChange={e => setSearch(e.target.value)}
-                 style={{width:"100%", background:C.input, border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 10px", color:C.text, fontSize:12, outline:"none", fontFamily:"inherit"}}
+                 style={{width:"100%", background:C.input, border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 10px", color:C.text, fontSize:16, outline:"none", fontFamily:"inherit"}}
                />
             </div>
           )}

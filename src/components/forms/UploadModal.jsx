@@ -5,8 +5,10 @@ import { Btn } from "../ui/Btn.jsx";
 import { parseExcelFile, autoDetectColumns, processTransactions } from "../../../statement-engine.js";
 import { uid } from "../../utils/id.js";
 import { categorizeTransaction } from "../../services/categorizationPipeline.js";
+import { checkImportBatch } from "../../services/duplicateEngine.js";
 
-export const UploadModal = ({ open, onClose, onImport, theme, categories = [], rules = [] }) => {
+export const UploadModal = ({ open, onClose, onImport, theme, categories = [], rules = [], transactions = [] }) => {
+  const [duplicateReview, setDuplicateReview] = useState(null);
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,9 +42,15 @@ export const UploadModal = ({ open, onClose, onImport, theme, categories = [], r
         accountId: ""
       }));
 
-      onImport(finalTxns);
-      setFile(null);
-      onClose();
+      // ── DUPLICATE GUARD ──
+      const result = checkImportBatch(finalTxns, transactions);
+      if (result.duplicates.length > 0) {
+        setDuplicateReview(result);
+      } else {
+        onImport(finalTxns);
+        setFile(null);
+        onClose();
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -90,6 +98,54 @@ export const UploadModal = ({ open, onClose, onImport, theme, categories = [], r
             {loading ? "Processing..." : "Import Transactions"}
           </Btn>
         </div>
+
+        {duplicateReview && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ background: C.warning + "22", padding: 14, borderRadius: 12, border: `1px solid ${C.warning}` }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: C.text, marginBottom: 4 }}>
+                ⚠️ Found {duplicateReview.duplicates.length} possible duplicates
+              </div>
+              <div style={{ fontSize: 11, color: C.sub }}>
+                {duplicateReview.clean.length} new transactions look unique. Choose how to handle the duplicates.
+              </div>
+            </div>
+
+            <div style={{ maxHeight: 300, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+              {duplicateReview.duplicates.map((dup, idx) => (
+                <div key={idx} style={{ background: C.input, padding: 12, borderRadius: 12 }}>
+                  <div style={{ fontSize: 11, color: C.sub, marginBottom: 4, fontWeight: 800 }}>
+                    {dup.confidence === "exact" ? "EXACT MATCH" : `${Math.round(dup.similarity * 100)}% SIMILAR`}
+                  </div>
+                  <div style={{ fontSize: 12, color: C.text, fontWeight: 700 }}>
+                    {dup.incoming.description}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.sub, marginTop: 2 }}>
+                    {dup.incoming.date} • {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(dup.incoming.amount)}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <Btn theme={C} v="ghost" full onClick={() => {
+                onImport(duplicateReview.clean);
+                setDuplicateReview(null);
+                setFile(null);
+                onClose();
+              }}>
+                Import {duplicateReview.clean.length} New Only
+              </Btn>
+              <Btn theme={C} v="primary" full onClick={() => {
+                onImport([...duplicateReview.clean, ...duplicateReview.duplicates.map(d => d.incoming)]);
+                setDuplicateReview(null);
+                setFile(null);
+                onClose();
+              }}>
+                Import All {duplicateReview.clean.length + duplicateReview.duplicates.length}
+              </Btn>
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   );

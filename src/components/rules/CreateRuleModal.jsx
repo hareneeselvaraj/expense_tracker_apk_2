@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Modal } from '../ui/Modal.jsx';
 import { Ico } from '../ui/Ico.jsx';
 import { uid } from '../../utils/id.js';
 import ConditionBuilder from './ConditionBuilder.jsx';
@@ -42,46 +43,24 @@ export default function CreateRuleModal({ rule, onSave, onClose, categories, tag
   };
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-      background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', zIndex: 99999,
-      display: 'flex', flexDirection: 'column', justifyContent: 'flex-end'
-    }}>
-      <div style={{
-        background: C.bg, borderTopLeftRadius: 32, borderTopRightRadius: 32,
-        height: '90vh', display: 'flex', flexDirection: 'column', position: 'relative',
-        boxShadow: '0 -10px 40px rgba(0,0,0,0.5)'
-      }}>
-        {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '24px', borderBottom: `1px solid ${C.borderLight}`
-        }}>
-          <h2 style={{ margin: 0, color: C.text, fontSize: 18, fontWeight: 800 }}>
-            {isEdit ? 'Edit Rule' : 'New Rule'}
-          </h2>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <span style={{ fontSize: 12, color: C.sub, fontWeight: 700 }}>Enabled</span>
-            <button
-              onClick={() => setEnabled(!enabled)}
-              style={{
-                width: 44, height: 26, borderRadius: 13, position: 'relative', border: 'none', cursor: 'pointer',
-                background: enabled ? C.primary : C.input, transition: 'all 0.3s'
-              }}
-            >
-              <div style={{
-                width: 22, height: 22, background: '#fff', borderRadius: '50%', position: 'absolute', top: 2,
-                left: enabled ? 20 : 2, transition: 'all 0.3s'
-              }} />
-            </button>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: C.sub, cursor: 'pointer', padding: 8, marginLeft: 8 }}>
-              <Ico n="close" sz={20} />
-            </button>
-          </div>
+    <Modal open={true} onClose={onClose} title={isEdit ? 'Edit Rule' : 'New Rule'} theme={C}>
+      {/* Scrollable Content */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'flex-end' }}>
+          <span style={{ fontSize: 12, color: C.sub, fontWeight: 700 }}>Enabled</span>
+          <button
+            onClick={() => setEnabled(!enabled)}
+            style={{
+              width: 44, height: 26, borderRadius: 13, position: 'relative', border: 'none', cursor: 'pointer',
+              background: enabled ? C.primary : C.input, transition: 'all 0.3s'
+            }}
+          >
+            <div style={{
+              width: 22, height: 22, background: '#fff', borderRadius: '50%', position: 'absolute', top: 2,
+              left: enabled ? 20 : 2, transition: 'all 0.3s'
+            }} />
+          </button>
         </div>
-
-        {/* Scrollable Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 24, paddingBottom: 100, display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* Rule Name */}
           <div>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.05em' }}>Rule Name</label>
@@ -143,9 +122,7 @@ export default function CreateRuleModal({ rule, onSave, onClose, categories, tag
 
         {/* Footer Actions */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, width: '100%',
-          background: C.bg, borderTop: `1px solid ${C.borderLight}`,
-          padding: '12px 16px 24px 16px', display: 'flex', gap: 10
+          display: 'flex', gap: 10, marginTop: 12
         }}>
           <button
             onClick={onClose}
@@ -167,7 +144,6 @@ export default function CreateRuleModal({ rule, onSave, onClose, categories, tag
             {isEdit ? 'Save Changes' : 'Create Rule'}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

@@ -9,7 +9,7 @@ import { CLIENT_ID } from "./constants/config.js";
 // Services
 import { dbGet, dbSet } from "./services/localDb.js";
 import { googleService } from "./services/googleService.js";
-import { stampUpdated, ensureTimestamps, filterDeleted } from "./services/mergeEngine.js";
+import { stampUpdated, ensureTimestamps, filterDeleted, mergeDatasets } from "./services/mergeEngine.js";
 import { checkBudgets, getActiveAlerts } from "./services/budgetChecker.js";
 import { processRecurring, getUpcoming } from "./services/recurringEngine.js";
 import { generateInsights } from "./services/insightsEngine.js";
@@ -208,7 +208,26 @@ export default function App() {
         if (d.tags) setTags(ensureTimestamps(d.tags));
         if (d.accounts) setAccounts(ensureTimestamps(d.accounts));
         if (d.budgets) setBudgets(ensureTimestamps(d.budgets));
-        if (d.rules) setRules(ensureTimestamps(d.rules));
+        if (d.rules) {
+          const loaded = ensureTimestamps(d.rules);
+          const migrated = loaded.map(r => {
+            if (r.pattern && r.categoryId) {
+              return {
+                id: r.id,
+                name: `Rule for ${r.pattern}`,
+                enabled: true,
+                logic: "AND",
+                priority: r.priority || 1,
+                conditions: [{ type: "merchant", op: "contains", val: r.pattern }],
+                actions: [{ type: "categorize", detail: r.categoryId }],
+                createdAt: r.createdAt || new Date().toISOString(),
+                updatedAt: r.updatedAt || new Date().toISOString()
+              };
+            }
+            return r;
+          });
+          setRules(migrated);
+        }
         if (d.recurring) setRecurring(ensureTimestamps(d.recurring));
         if (d.emailPrefs) setEmailPrefs(d.emailPrefs);
       }
@@ -230,12 +249,17 @@ export default function App() {
     return () => clearTimeout(t);
   }, [transactions, categories, tags, accounts, budgets, rules, recurring, emailPrefs, ready]);
 
+  const recurringRef = useRef(recurring);
+  useEffect(() => { recurringRef.current = recurring; }, [recurring]);
+
   // Process recurring transactions on load and periodically (every 60s)
   useEffect(() => {
-    if (!ready || !recurring.length) return;
+    if (!ready) return;
 
     const runRecurring = () => {
-      const { newTransactions, updatedTemplates } = processRecurring(recurring);
+      const currentRec = recurringRef.current;
+      if (!currentRec || !currentRec.length) return;
+      const { newTransactions, updatedTemplates } = processRecurring(currentRec);
       if (newTransactions.length > 0) {
         setTransactions(prev => {
           // Deduplicate: skip if a tx with same recurringId + date already exists
@@ -267,7 +291,7 @@ export default function App() {
     // Re-check every 60 seconds (catches midnight rollover while app is open)
     const interval = setInterval(runRecurring, 60_000);
     return () => clearInterval(interval);
-  }, [ready, recurring]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Budget alert check — only notify for NEW alerts crossing threshold
   useEffect(() => {
@@ -485,14 +509,19 @@ export default function App() {
     setDriveStep("restoring");
     try {
       const data = await googleService.restoreFromDrive(CLIENT_ID, driveTokenRef, file.id);
-      if (data.transactions) setTransactions(data.transactions);
-      if (data.categories) setCategories(data.categories);
-      if (data.tags) setTags(data.tags);
-      if (data.accounts) setAccounts(data.accounts);
-      if (data.budgets) setBudgets(data.budgets);
-      if (data.rules) setRules(data.rules);
+      const localData = { transactions, categories, tags, accounts, budgets, rules, recurring };
+      const merged = mergeDatasets(localData, data);
+      
+      if (merged.transactions) setTransactions(merged.transactions);
+      if (merged.categories) setCategories(merged.categories);
+      if (merged.tags) setTags(merged.tags);
+      if (merged.accounts) setAccounts(merged.accounts);
+      if (merged.budgets) setBudgets(merged.budgets);
+      if (merged.rules) setRules(merged.rules);
+      if (merged.recurring) setRecurring(merged.recurring);
+      
       if (file.modifiedTime) localStorage.setItem("expense_last_sync", new Date(file.modifiedTime).getTime().toString());
-      notify("Data restored successfully");
+      notify("Data restored & merged successfully");
       setShowBackup(false);
     } catch (err) {
       notify(err.message, "error");
@@ -639,25 +668,20 @@ export default function App() {
 
 
       <main>
-        {page === "dashboard" && <Dashboard {...{ user, transactions, categories, tags, accounts, budgets, stats, netWorth: nw, getDayFlow: (days) => getDayFlow(transactions, days), viewDate, setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", theme: C, goToTransactions: () => setPage("transactions") }} />}
+        {page === "dashboard" && <Dashboard {...{ user, transactions, categories, netWorth: getNetWorth(accounts, transactions), getDayFlow: (d) => getDayFlow(transactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setShowAdd(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
         {page === "transactions" && <TransactionsPage {...{
-          transactions, filteredTx, categories, tags, accounts, searchQ, setSearchQ, filters, setFilters,
-          hasFilter: !!(filters.from || filters.to || filters.cats.length || filters.acc || filters.type || filters.cd || filters.tags.length),
-          onShowFilters: () => setShowFilters(true),
-          onShowUpload: () => setShowUpload(true),
-          onExportCSV: () => exportCSV(filteredTx, categories, tags, accounts),
-          onExportPDF: () => exportTransactionsPDF(filteredTx, categories, accounts, (m) => notify(m)),
-          onEditTx: setEditTx,
-          selectedTxIds, setSelectedTxIds,
-          onDeleteBulk: () => {
-            const now = new Date().toISOString();
-            setTransactions(p => p.map(t => selectedTxIds.includes(t.id) ? { ...t, deleted: true, updatedAt: now } : t));
-            setSelectedTxIds([]);
-            notify("Items deleted successfully", "error");
-          },
-          onAdd: () => setAddTx(true),
-          theme: C
-        }} />}
+            transactions, filteredTx, categories, tags, accounts, searchQ, setSearchQ, filters, setFilters,
+            hasFilter: !!(filters.from || filters.to || filters.cats.length || filters.acc || filters.type || filters.cd || filters.tags.length),
+            onShowFilters: () => setShowFilters(true), onShowUpload: () => setShowUpload(true),
+            onExportCSV: () => exportCSV(filteredTx, categories, tags, accounts), onExportPDF: () => exportPDF(filteredTx, user, "Summary"),
+            onEditTx: setEditTx, selectedTxIds, setSelectedTxIds,
+            onDeleteBulk: handleDeleteSelected, 
+            onSoftDeleteBulk: (ids) => {
+              const now = new Date().toISOString();
+              setTransactions(prev => prev.map(t => ids.includes(t.id) ? { ...t, deleted: true, updatedAt: now } : t));
+            },
+            onAdd: () => setShowAdd(true), theme: C
+          }} />}
 
         {page === "organize" && <OrganizePage {...{
           organizeTab, setOrganizeTab, 
@@ -746,7 +770,7 @@ export default function App() {
           onLogout: logout,
           onShowBackup: () => setShowBackup(true),
           onExportBackup: () => {
-            const data = { transactions, categories, tags, accounts, budgets, rules };
+            const data = { transactions, categories, tags, accounts, budgets, rules, recurring };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -771,6 +795,7 @@ export default function App() {
                   if (data.accounts) setAccounts(data.accounts);
                   if (data.budgets) setBudgets(data.budgets);
                   if (data.rules) setRules(data.rules);
+                  if (data.recurring) setRecurring(data.recurring);
                   notify("Import Successful");
                 } catch (err) { notify("Invalid file", "error"); }
               };
@@ -791,19 +816,36 @@ export default function App() {
       <BottomNav 
         page={page} 
         setPage={setPage} 
-        onAddTx={() => setAddTx(true)} 
+        onAddTx={() => setShowAdd(true)} 
         onAddAcc={() => setAddAcc(true)}
         onAddCat={() => setAddCat(true)}
         onAddTag={() => setAddTag(true)}
         theme={C} 
+        hideFab={isModalOpen}
       />
 
-      <Modal theme={C} open={addTx} onClose={() => setAddTx(false)} title="Add Transaction">
-        <TxForm categories={categories} tags={activeTags} accounts={accounts} onSave={handleSaveTx} onClose={() => setAddTx(false)} theme={C} />
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Transaction" theme={C}>
+        <TxForm 
+          categories={categories} tags={activeTags} accounts={accounts} 
+          existingTransactions={transactions}
+          onSave={tx => {
+            if (Array.isArray(tx)) { handleSaveTx(tx); }
+            else { handleSaveTx(tx); setShowAdd(false); }
+          }} 
+          onClose={() => setShowAdd(false)} theme={C} 
+        />
       </Modal>
 
-      <Modal theme={C} open={!!editTx} onClose={() => setEditTx(null)} title="Edit Transaction">
-        {editTx && <TxForm init={editTx} categories={categories} tags={tags} accounts={accounts} onSave={handleSaveTx} onDelete={handleDeleteTx} onClose={() => setEditTx(null)} theme={C} />}
+      <Modal open={!!editTx} onClose={() => setEditTx(null)} title="Edit Transaction" theme={C}>
+        {editTx && (
+          <TxForm 
+            init={editTx} categories={categories} tags={tags} accounts={accounts} 
+            existingTransactions={transactions}
+            onSave={tx => { handleSaveTx(tx); setEditTx(null); }} 
+            onDelete={id => { handleDeleteTx(id); setEditTx(null); }} 
+            onClose={() => setEditTx(null)} theme={C} 
+          />
+        )}
       </Modal>
 
       <Modal theme={C} open={showBackup} onClose={() => setShowBackup(false)} title="Sync & Backup">
@@ -827,14 +869,15 @@ export default function App() {
           theme={C}
           onCancel={() => { setAddCat(false); setEditCat(null); }}
           onSave={(c) => {
+            const item = stampUpdated(c);
             setCategories(p => {
-              const idx = p.findIndex(x => x.id === c.id);
-              if (idx > -1) return p.map(x => x.id === c.id ? c : x);
-              return [c, ...p];
+              const idx = p.findIndex(x => x.id === item.id);
+              if (idx > -1) return p.map(x => x.id === item.id ? item : x);
+              return [item, ...p];
             });
             setAddCat(false);
             setEditCat(null);
-            notify("Category created successfully");
+            notify(editCat ? "Category updated successfully" : "Category created successfully");
           }}
         />
       </Modal>
@@ -845,14 +888,15 @@ export default function App() {
           theme={C}
           onCancel={() => { setAddTag(false); setEditTag(null); }}
           onSave={(t) => {
+            const item = stampUpdated(t);
             setTags(p => {
-              const idx = p.findIndex(x => x.id === t.id);
-              if (idx > -1) return p.map(x => x.id === t.id ? t : x);
-              return [t, ...p];
+              const idx = p.findIndex(x => x.id === item.id);
+              if (idx > -1) return p.map(x => x.id === item.id ? item : x);
+              return [item, ...p];
             });
             setAddTag(false);
             setEditTag(null);
-            notify("Tag created successfully");
+            notify(editTag ? "Tag updated successfully" : "Tag created successfully");
           }}
         />
       </Modal>
@@ -894,10 +938,11 @@ export default function App() {
           theme={C}
           onCancel={() => { setAddAcc(false); setEditAcc(null); }}
           onSave={(acc) => {
+            const item = stampUpdated(acc);
             setAccounts(p => {
-              const idx = p.findIndex(x => x.id === acc.id);
-              if (idx > -1) return p.map(x => x.id === acc.id ? acc : x);
-              return [acc, ...p];
+              const idx = p.findIndex(x => x.id === item.id);
+              if (idx > -1) return p.map(x => x.id === item.id ? item : x);
+              return [item, ...p];
             });
             setAddAcc(false);
             setEditAcc(null);
@@ -965,12 +1010,11 @@ export default function App() {
       <UploadModal 
         open={showUpload} 
         onClose={() => setShowUpload(false)} 
-        onImport={(txns) => {
-          handleSaveTx(txns);
-        }} 
-        theme={C} 
+        onImport={handleImportTx}
+        theme={C}
         categories={categories}
         rules={rules}
+        transactions={transactions}
       />
 
       <Modal theme={C} open={showFilters} onClose={() => setShowFilters(false)} title="Filter Transactions">

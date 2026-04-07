@@ -15,7 +15,7 @@ export function checkBudgets(transactions, budgets, categories, tags) {
   const alerts = [];
 
   // Get this month's transactions
-  const monthTx = transactions.filter(t => t.date?.startsWith(monthKey));
+  const monthTx = transactions.filter(t => t.date?.startsWith(monthKey) && !t.deleted);
 
   for (const budget of budgets) {
     let spent = 0;
