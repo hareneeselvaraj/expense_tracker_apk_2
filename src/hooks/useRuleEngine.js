@@ -42,7 +42,7 @@ export function useRuleEngine(rules, setTransactions, setRules, notify) {
     }
 
     if (tags.size) patch.tags = Array.from(tags);
-    return patch;
+    return { ...patch, updatedAt: new Date().toISOString() };
   }, [rules, notify]);
 
   // Run all rules against ALL transactions (bulk backfill)
@@ -77,7 +77,7 @@ export function useRuleEngine(rules, setTransactions, setRules, notify) {
 
         if (tags.size) patch.tags = Array.from(tags);
         updatedCount++;
-        return patch;
+        return { ...patch, updatedAt: new Date().toISOString() };
       });
       return next;
     });
@@ -85,7 +85,7 @@ export function useRuleEngine(rules, setTransactions, setRules, notify) {
     // Update match_count on each rule
     if (setRules && Object.keys(matchCounts).length > 0) {
       setRules(prev => prev.map(r => matchCounts[r.id] 
-        ? { ...r, match_count: (r.match_count || 0) + matchCounts[r.id], last_run: new Date().toISOString() } 
+        ? { ...r, match_count: (r.match_count || 0) + matchCounts[r.id], last_run: new Date().toISOString(), updatedAt: new Date().toISOString() } 
         : r
       ));
     }

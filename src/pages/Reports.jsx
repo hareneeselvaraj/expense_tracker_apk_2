@@ -69,7 +69,7 @@ export default function ReportsPage({
     if (reportsSubTab !== "trend" || reportTx.length === 0) return [];
     const map = {};
     reportTx.filter(t => t.txType === "Expense").forEach(t => {
-      const gKey = reportTab === "year" ? t.date.substring(0, 7) : t.date;
+      const gKey = reportTab === "year" ? (t.date?.substring(0, 7) || "") : (t.date || "");
       map[gKey] = (map[gKey] || 0) + t.amount;
     });
     const sorted = Object.entries(map).sort((a,b)=>a[0].localeCompare(b[0]));

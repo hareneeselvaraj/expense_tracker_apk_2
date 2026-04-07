@@ -35,12 +35,10 @@ export const UploadModal = ({ open, onClose, onImport, theme, categories = [], r
       }
 
       const rawTxns = processTransactions(rows, colMap);
-      const finalTxns = rawTxns.map(t => ({
-        ...t,
-        id: uid(),
-        tags: [],
-        accountId: ""
-      }));
+      const finalTxns = rawTxns.map(t => {
+        const draft = { ...t, id: uid(), tags: [], accountId: "" };
+        return categorizeTransaction(draft, categories);
+      });
 
       // ── DUPLICATE GUARD ──
       const result = checkImportBatch(finalTxns, transactions);

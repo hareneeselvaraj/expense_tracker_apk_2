@@ -160,6 +160,9 @@ export const TxForm = ({init, categories, tags, accounts, existingTransactions, 
         <Btn theme={C} v="ghost" sm onClick={onClose}>Cancel</Btn>
         <Btn theme={C} v="primary" sm disabled={!valid || (isSplitting && Math.abs(tx.amount - splits.reduce((a,c)=>a+(parseFloat(c.amount)||0), 0)) > 0.01)} onClick={()=>{
           if (!init?.id) {
+            if (!existingTransactions) {
+              console.warn("TxForm: existingTransactions prop missing — duplicate check skipped");
+            }
             const result = checkImportBatch([{ ...tx, id: "_temp_" }], existingTransactions || []);
             if (result.duplicates.length > 0) {
               const dup = result.duplicates[0];

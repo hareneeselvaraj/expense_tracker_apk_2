@@ -49,8 +49,9 @@ const QuickAdd = ({ categories, onSave, theme }) => {
 export default function Dashboard({ user, transactions, categories, tags, accounts, budgets, stats, netWorth, getDayFlow, viewDate, setViewDate, onEditTx, onAddTx, onSave, onSmartSync, isSyncing, isOffline, theme, goToTransactions }) {
   const C = theme;
   const dateRef = React.useRef(null);
+  const s = stats || { income: 0, expense: 0, invest: 0, catMap: {} };
   const totalBudget = (budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0);
-  const remainingBudget = totalBudget - stats.expense;
+  const remainingBudget = totalBudget - s.expense;
 
   return (
     <div className="page-enter" style={{ padding: "12px 12px 100px 12px", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -120,7 +121,7 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
           </div>
           <div style={{ width: 1, height: 40, background: C.borderLight }} />
           <div style={{ textAlign: "right" }}>
-            <div style={{ color: C.income, fontSize: 16, fontWeight: 800 }}>+{fmtAmt(transactions.filter(t => t.creditDebit === "Credit" && t.date.startsWith(new Date().toISOString().slice(0, 7))).reduce((s, t) => s + t.amount, 0))}</div>
+            <div style={{ color: C.income, fontSize: 16, fontWeight: 800 }}>+{fmtAmt(transactions.filter(t => t.creditDebit === "Credit" && t.date?.startsWith(new Date().toISOString().slice(0, 7))).reduce((s, t) => s + t.amount, 0))}</div>
             <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, marginTop: 4 }}>THIS MONTH</div>
           </div>
         </div>
@@ -129,9 +130,9 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
       {/* Vitals Grid */}
       <div className="vitals-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
         {[
-          { l: "Inflow", a: stats.income, co: C.income, ic: "trendUp" },
-          { l: "Outflow", a: stats.expense, co: C.expense, ic: "trendDown" },
-          { l: "Growth", a: stats.invest, co: C.invest, ic: "stars" }
+          { l: "Inflow", a: s.income, co: C.income, ic: "trendUp" },
+          { l: "Outflow", a: s.expense, co: C.expense, ic: "trendDown" },
+          { l: "Growth", a: s.invest, co: C.invest, ic: "stars" }
         ].map((s, i) => (
           <div key={i} className="vital-card" style={{
             background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 14, padding: 10,
@@ -149,7 +150,7 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
       </div>
 
       {/* Top Expenses (Pastel Grid) */}
-      {Object.keys(stats.catMap).length > 0 && (
+      {Object.keys(s.catMap).length > 0 && (
         <div className="section-card" style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 18, padding: 12, boxShadow: C.shadow }}>
 
           <div style={{ textAlign: "center", marginBottom: 16 }}>
@@ -158,11 +159,12 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
           </div>
 
           <div className="cat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
-            {Object.entries(stats.catMap).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name, amt], idx) => {
+            {Object.entries(s.catMap).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name, amt], idx) => {
               const cat = categories.find(c => c.name === name);
-              const max = Math.max(...Object.values(stats.catMap));
+              const max = Math.max(...Object.values(s.catMap));
               const pct = Math.round((amt / max) * 100);
-              const bgStr = C.pastel?.[idx % C.pastel.length] || C.muted;
+              const pastel = C.pastel || [];
+              const bgStr = pastel[idx % (pastel.length || 1)] || C.muted;
 
               return (
                 <div key={name} className="cat-tile" style={{
@@ -184,7 +186,7 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
           <div className="budget-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: C.input, borderRadius: 16, padding: "10px 12px", marginBottom: 16 }}>
             <div>
               <div style={{ color: C.sub, fontSize: 9, fontWeight: 600 }}>Total Expense</div>
-              <div className="budget-amount" style={{ color: C.text, fontSize: 15, fontWeight: 800 }}>{fmtAmt(stats.expense)}</div>
+              <div className="budget-amount" style={{ color: C.text, fontSize: 15, fontWeight: 800 }}>{fmtAmt(s.expense)}</div>
             </div>
             <div style={{ width: 1, height: 24, background: C.borderLight }} />
             <div style={{ textAlign: "right" }}>

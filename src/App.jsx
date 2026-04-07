@@ -280,7 +280,7 @@ export default function App() {
           return [...processed, ...prev];
         });
       }
-      if (JSON.stringify(updatedTemplates) !== JSON.stringify(recurring)) {
+      if (JSON.stringify(updatedTemplates) !== JSON.stringify(recurringRef.current)) {
         setRecurring(updatedTemplates);
       }
     };
@@ -482,7 +482,7 @@ export default function App() {
   const saveToDrive = async () => {
     setDriveStep("saving");
     try {
-      const file = await googleService.saveToDrive(CLIENT_ID, driveTokenRef, { transactions, categories, tags, accounts, budgets, rules });
+      const file = await googleService.saveToDrive(CLIENT_ID, driveTokenRef, { transactions, categories, tags, accounts, budgets, rules, recurring });
       if (file && file.modifiedTime) {
         localStorage.setItem("expense_last_sync", new Date(file.modifiedTime).getTime().toString());
       }
@@ -519,6 +519,7 @@ export default function App() {
       if (merged.budgets) setBudgets(merged.budgets);
       if (merged.rules) setRules(merged.rules);
       if (merged.recurring) setRecurring(merged.recurring);
+      budgetCheckPending.current = true;
       
       if (file.modifiedTime) localStorage.setItem("expense_last_sync", new Date(file.modifiedTime).getTime().toString());
       notify("Data restored & merged successfully");
@@ -546,6 +547,7 @@ export default function App() {
       if (merged.budgets) setBudgets(merged.budgets);
       if (merged.rules) setRules(merged.rules);
       if (merged.recurring) setRecurring(merged.recurring);
+      budgetCheckPending.current = true;
 
       if (result.file?.modifiedTime) {
         localStorage.setItem("expense_last_sync", new Date(result.file.modifiedTime).getTime().toString());
@@ -668,19 +670,24 @@ export default function App() {
 
 
       <main>
-        {page === "dashboard" && <Dashboard {...{ user, transactions, categories, netWorth: getNetWorth(accounts, transactions), getDayFlow: (d) => getDayFlow(transactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setShowAdd(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
+        {page === "dashboard" && <Dashboard {...{ user, transactions, categories, tags, accounts, budgets, stats, netWorth: getNetWorth(accounts, transactions), getDayFlow: (d) => getDayFlow(transactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
         {page === "transactions" && <TransactionsPage {...{
             transactions, filteredTx, categories, tags, accounts, searchQ, setSearchQ, filters, setFilters,
             hasFilter: !!(filters.from || filters.to || filters.cats.length || filters.acc || filters.type || filters.cd || filters.tags.length),
             onShowFilters: () => setShowFilters(true), onShowUpload: () => setShowUpload(true),
-            onExportCSV: () => exportCSV(filteredTx, categories, tags, accounts), onExportPDF: () => exportPDF(filteredTx, user, "Summary"),
+            onExportCSV: () => exportCSV(filteredTx, categories, tags, accounts), onExportPDF: () => exportTransactionsPDF(filteredTx, categories, accounts, (m) => notify(m)),
             onEditTx: setEditTx, selectedTxIds, setSelectedTxIds,
-            onDeleteBulk: handleDeleteSelected, 
+            onDeleteBulk: () => {
+              const now = new Date().toISOString();
+              setTransactions(p => p.map(t => selectedTxIds.includes(t.id) ? { ...t, deleted: true, updatedAt: now } : t));
+              setSelectedTxIds([]);
+              notify("Items deleted successfully", "error");
+            }, 
             onSoftDeleteBulk: (ids) => {
               const now = new Date().toISOString();
               setTransactions(prev => prev.map(t => ids.includes(t.id) ? { ...t, deleted: true, updatedAt: now } : t));
             },
-            onAdd: () => setShowAdd(true), theme: C
+            onAdd: () => setAddTx(true), theme: C
           }} />}
 
         {page === "organize" && <OrganizePage {...{
@@ -816,7 +823,7 @@ export default function App() {
       <BottomNav 
         page={page} 
         setPage={setPage} 
-        onAddTx={() => setShowAdd(true)} 
+        onAddTx={() => setAddTx(true)} 
         onAddAcc={() => setAddAcc(true)}
         onAddCat={() => setAddCat(true)}
         onAddTag={() => setAddTag(true)}
@@ -824,22 +831,22 @@ export default function App() {
         hideFab={isModalOpen}
       />
 
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Transaction" theme={C}>
+      <Modal open={addTx} onClose={() => setAddTx(false)} title="Add Transaction" theme={C}>
         <TxForm 
           categories={categories} tags={activeTags} accounts={accounts} 
           existingTransactions={transactions}
           onSave={tx => {
             if (Array.isArray(tx)) { handleSaveTx(tx); }
-            else { handleSaveTx(tx); setShowAdd(false); }
+            else { handleSaveTx(tx); setAddTx(false); }
           }} 
-          onClose={() => setShowAdd(false)} theme={C} 
+          onClose={() => setAddTx(false)} theme={C} 
         />
       </Modal>
 
       <Modal open={!!editTx} onClose={() => setEditTx(null)} title="Edit Transaction" theme={C}>
         {editTx && (
           <TxForm 
-            init={editTx} categories={categories} tags={tags} accounts={accounts} 
+            init={editTx} categories={categories} tags={activeTags} accounts={accounts} 
             existingTransactions={transactions}
             onSave={tx => { handleSaveTx(tx); setEditTx(null); }} 
             onDelete={id => { handleDeleteTx(id); setEditTx(null); }} 
