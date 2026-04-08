@@ -176,11 +176,33 @@ export function parseExcelFile(file) {
 // Attempts to guess which columns map to Date, Description (Narration), Debit, Credit.
 export function autoDetectColumns(headers) {
   const find = (patterns) => headers.find(h => patterns.some(p => h.toLowerCase().includes(p))) || "";
+  
+  // Detect a combined "Credit/Debit" text column separately
+  const creditDebitCol = headers.find(h => {
+    const l = h.toLowerCase().replace(/[^a-z]/g, "");
+    return l === "creditdebit" || l === "drcr" || l === "type";
+  }) || "";
+  
+  // Only match standalone debit/credit columns (NOT "credit/debit")
+  const debit = headers.find(h => {
+    const l = h.toLowerCase();
+    if (l.includes("credit")) return false; // skip combined column
+    return ["debit", "withdrawal", " dr ", "dr amount"].some(p => l.includes(p));
+  }) || "";
+  
+  const credit = headers.find(h => {
+    const l = h.toLowerCase();
+    if (l.includes("debit")) return false; // skip combined column
+    return ["credit", "deposit", " cr ", "cr amount"].some(p => l.includes(p));
+  }) || "";
+  
   return {
     date:        find(["date", "txn date", "transaction date", "value date", "posting date", "trans date"]),
     description: find(["narration", "description", "remarks", "particular", "detail", "transaction detail", "remark"]),
-    debit:       find(["debit", "withdrawal", "dr", "debit amount", "dr amount", "debit amt"]),
-    credit:      find(["credit", "deposit", "cr", "credit amount", "cr amount", "credit amt"]),
+    amount:      find(["amount", "amt"]),
+    debit,
+    credit,
+    creditDebit: creditDebitCol,
     balance:     find(["balance", "closing balance", "closing bal", "available balance", "running balance"]),
     category:    find(["category", "cat"]),
     tags:        find(["tag", "tags", "label", "labels"]),
@@ -194,11 +216,28 @@ export function processTransactions(rows, columnMap) {
   return rows
     .map((row, idx) => {
       const rawDesc = String(row[columnMap.description] || "");
-      const rawDebit = parseFloat(String(row[columnMap.debit] || "0").replace(/,/g, "")) || 0;
-      const rawCredit = parseFloat(String(row[columnMap.credit] || "0").replace(/,/g, "")) || 0;
-      const amount = rawCredit > 0 ? rawCredit : rawDebit;
-      const isCredit = rawCredit > 0;
-
+      
+      let amount = 0;
+      let isCredit = false;
+      
+      if (columnMap.debit && columnMap.credit && columnMap.debit !== columnMap.credit) {
+        // Format A: separate debit + credit numeric columns
+        const rawDebit  = parseFloat(String(row[columnMap.debit]  || "0").replace(/,/g, "")) || 0;
+        const rawCredit = parseFloat(String(row[columnMap.credit] || "0").replace(/,/g, "")) || 0;
+        amount = rawCredit > 0 ? rawCredit : rawDebit;
+        isCredit = rawCredit > 0;
+      } else if (columnMap.amount) {
+        // Format B: single Amount column + optional Credit/Debit text column
+        const raw = parseFloat(String(row[columnMap.amount] || "0").replace(/[^0-9.-]/g, "")) || 0;
+        amount = Math.abs(raw);
+        if (columnMap.creditDebit) {
+          const cd = String(row[columnMap.creditDebit] || "").toLowerCase();
+          isCredit = cd.includes("cr");  // matches "credit", "cr"
+        } else {
+          isCredit = raw > 0;  // negative number = debit
+        }
+      }
+      
       if (!rawDesc && amount === 0) return null; // skip empty rows
 
       const category = categorizeTransaction(rawDesc, amount, isCredit);
