@@ -26,7 +26,7 @@ export default function CategoriesPanel({ categories, transactions, DEF_CATS, on
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(140px, 1fr))",gap:12}}>
               {cats.map(cat=>{
-                const txns=transactions.filter(t=>t.category===cat.id);
+                const txns=transactions.filter(t=>!t.deleted && t.category===cat.id);
                 const count=txns.length;
                 const total=txns.reduce((s,t)=>s+t.amount,0);
                 return (

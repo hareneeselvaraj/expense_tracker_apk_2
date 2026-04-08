@@ -14,6 +14,7 @@ import { checkBudgets, getActiveAlerts } from "./services/budgetChecker.js";
 import { processRecurring, getUpcoming } from "./services/recurringEngine.js";
 import { generateInsights } from "./services/insightsEngine.js";
 import { categorizeTransaction } from "./services/categorizationPipeline.js";
+import { checkImportBatch } from "./services/duplicateEngine.js";
 import { checkAndSendYearEndEmail, sendYearEndEmailManual } from "./services/yearEndService.js";
 import { processBudgetAlerts } from "./services/budgetEmailSender.js";
 import { createNotification, shouldAdd, pruneNotifications } from "./services/notificationService.js";
@@ -210,10 +211,11 @@ export default function App() {
     const load = async () => {
       const d = await dbGet("data");
       if (d) {
-        if (d.transactions) setTransactions(purgeOldDeleted(ensureTimestamps(d.transactions.map(t => ({ ...t, amount: parseFloat(t.amount) || 0 })))));
-        if (d.categories) setCategories(purgeOldDeleted(ensureTimestamps(d.categories)));
-        if (d.tags) setTags(purgeOldDeleted(ensureTimestamps(d.tags)));
-        if (d.accounts) setAccounts(purgeOldDeleted(ensureTimestamps(d.accounts)));
+        const lastSync = parseInt(localStorage.getItem("expense_last_sync") || "0", 10);
+        if (d.transactions) setTransactions(purgeOldDeleted(ensureTimestamps(d.transactions.map(t => ({ ...t, amount: parseFloat(t.amount) || 0 }))), 90, lastSync));
+        if (d.categories) setCategories(purgeOldDeleted(ensureTimestamps(d.categories), 90, lastSync));
+        if (d.tags) setTags(purgeOldDeleted(ensureTimestamps(d.tags), 90, lastSync));
+        if (d.accounts) setAccounts(purgeOldDeleted(ensureTimestamps(d.accounts), 90, lastSync));
         if (d.budgets) setBudgets(ensureTimestamps(d.budgets));
         if (d.rules) {
           const loaded = ensureTimestamps(d.rules);
@@ -281,7 +283,7 @@ export default function App() {
         setTransactions(prev => {
           // Deduplicate: skip if a tx with same recurringId + date already exists
           const toAdd = newTransactions.filter(nt =>
-            !prev.some(existing => existing.recurringId === nt.recurringId && existing.date === nt.date && !existing.deleted)
+            !prev.some(existing => existing.recurringId === nt.recurringId && existing.date === nt.date)
           );
           if (toAdd.length === 0) return prev;
 
@@ -467,7 +469,7 @@ export default function App() {
         
         const idx = next.findIndex(x => x.id === sanitized.id);
         if (idx > -1) {
-          sanitized.deleted = sanitized.deleted ?? next[idx].deleted;
+          sanitized.deleted = next[idx].deleted || sanitized.deleted;
           next[idx] = sanitized;
         }
         else next = [sanitized, ...next];
@@ -547,9 +549,17 @@ export default function App() {
       return stampUpdated(categorized);
     });
 
-    setTransactions(prev => [...processed, ...prev]);
+    setTransactions(prev => {
+      const { clean, duplicates } = checkImportBatch(processed, prev);
+      if (duplicates.length > 0) {
+        notify(`${duplicates.length} duplicate(s) skipped, ${clean.length} imported`, clean.length > 0 ? "success" : "warning");
+      } else {
+        notify(`${clean.length} transaction${clean.length > 1 ? 's' : ''} imported`);
+      }
+      if (clean.length === 0) return prev;
+      return [...clean, ...prev];
+    });
     budgetCheckPending.current = true;
-    notify(`${processed.length} transaction${processed.length > 1 ? 's' : ''} imported`);
   };
 
   const handleDeleteTx = (id) => {
@@ -615,6 +625,8 @@ export default function App() {
       
       if (file.modifiedTime) localStorage.setItem("expense_last_sync", new Date(file.modifiedTime).getTime().toString());
       notify("Data restored & merged successfully");
+      // Re-run rules on restored data
+      setTimeout(() => runAllRules(activeTransactions), 100);
       setShowBackup(false);
     } catch (err) {
       notify(err.message, "error");
@@ -667,20 +679,26 @@ export default function App() {
 
   // ── ANALYTICS ─────────────────────────────────────────────────────────────
   const stats = useMemo(() => {
+    const monthKey = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}`;
     const mo = transactions.filter(t => {
       if (t.deleted) return false;
-      const d = new Date(t.date);
-      return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
+      return t.date?.startsWith(monthKey);
     });
     const income = mo.filter(t => t.txType === "Income").reduce((s, t) => s + t.amount, 0);
     const expense = mo.filter(t => t.txType === "Expense").reduce((s, t) => s + t.amount, 0);
     const invest = mo.filter(t => t.txType === "Investment").reduce((s, t) => s + t.amount, 0);
-    const catMap = {};
-    mo.forEach(t => {
-      const c = categories.find(x => x.id === t.category)?.name || "Others";
-      catMap[c] = (catMap[c] || 0) + t.amount;
-    });
-    return { income, expense, invest, catMap };
+    const buildCatMap = (txs) => {
+      const m = {};
+      txs.forEach(t => {
+        const c = categories.find(x => x.id === t.category)?.name || "Others";
+        m[c] = (m[c] || 0) + t.amount;
+      });
+      return m;
+    };
+    const expCatMap = buildCatMap(mo.filter(t => t.txType === "Expense"));
+    const incCatMap = buildCatMap(mo.filter(t => t.txType === "Income"));
+    const invCatMap = buildCatMap(mo.filter(t => t.txType === "Investment"));
+    return { income, expense, invest, expCatMap, incCatMap, invCatMap };
   }, [transactions, categories, viewDate]);
 
   const nw = getNetWorth(accounts, transactions);
@@ -762,7 +780,7 @@ export default function App() {
 
 
       <main>
-        {page === "dashboard" && <Dashboard {...{ user, transactions: activeTransactions, categories, tags, accounts, budgets, stats, netWorth: getNetWorth(accounts, transactions), getDayFlow: (d) => getDayFlow(transactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
+        {page === "dashboard" && <Dashboard {...{ user, transactions: activeTransactions, categories, tags, accounts, budgets, stats, netWorth: getNetWorth(accounts, activeTransactions), getDayFlow: (d) => getDayFlow(activeTransactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
         {page === "transactions" && <TransactionsPage {...{
             transactions, filteredTx, categories, tags, accounts, searchQ, setSearchQ, filters, setFilters,
             hasFilter: !!(filters.from || filters.to || filters.cats.length || filters.acc || filters.type || filters.cd || filters.tags.length),
@@ -792,6 +810,7 @@ export default function App() {
             setCategories(p => p.map(c =>
               c.id === id ? { ...c, deleted: true, updatedAt: new Date().toISOString() } : c
             ));
+            setBudgets(p => p.filter(b => b.categoryId !== id));
             notify("Category deleted successfully", "error");
           },
           onAddTag: () => setAddTag(true),
@@ -800,6 +819,7 @@ export default function App() {
             setTags(p => p.map(x =>
               x.id === id ? { ...x, deleted: true, updatedAt: new Date().toISOString() } : x
             ));
+            setBudgets(p => p.filter(b => b.tagId !== id));
             notify("Tag deleted successfully", "error");
           },
           onAddBudget: (type) => setEditBudget({ type, isNew: true }),
@@ -818,7 +838,7 @@ export default function App() {
           onEditRule: (r) => setRules(p => p.map(x => x.id === r.id ? r : x)),
           onDeleteRule: (id) => setRules(p => p.filter(x => x.id !== id)),
           onMagicWand: () => {
-             const count = runAllRules(transactions);
+             const count = runAllRules(activeTransactions);
              notify(count > 0 ? `⚡ Rules applied to ${count} transaction${count !== 1 ? 's' : ''}` : '✅ No transactions matched any rules', count > 0 ? 'success' : 'warning');
           },
           theme: C
@@ -1078,7 +1098,7 @@ export default function App() {
             if (newTransactions.length > 0) {
               setTransactions(prev => {
                 const toAdd = newTransactions.filter(nt =>
-                  !prev.some(existing => existing.recurringId === nt.recurringId && existing.date === nt.date && !existing.deleted)
+                  !prev.some(existing => existing.recurringId === nt.recurringId && existing.date === nt.date)
                 );
                 if (toAdd.length === 0) return prev;
 

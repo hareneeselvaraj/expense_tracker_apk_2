@@ -49,9 +49,18 @@ const QuickAdd = ({ categories, onSave, theme }) => {
 export default function Dashboard({ user, transactions, categories, tags, accounts, budgets, stats, netWorth, getDayFlow, viewDate, setViewDate, onEditTx, onAddTx, onSave, onSmartSync, isSyncing, isOffline, theme, goToTransactions }) {
   const C = theme;
   const dateRef = React.useRef(null);
-  const s = stats || { income: 0, expense: 0, invest: 0, catMap: {} };
-  const totalBudget = (budgets || []).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0);
+  const s = stats || { income: 0, expense: 0, invest: 0, expCatMap: {}, incCatMap: {}, invCatMap: {} };
+  const totalBudget = (budgets || []).filter(b => b.categoryId).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0);
   const remainingBudget = totalBudget - s.expense;
+  const [topTab, setTopTab] = useState("expense");
+
+  const tabConfig = [
+    { key: "expense", label: "Expense", map: s.expCatMap, total: s.expense, color: C.expense, emoji: "💸" },
+    { key: "income", label: "Income", map: s.incCatMap, total: s.income, color: C.income, emoji: "💰" },
+    { key: "invest", label: "Investment", map: s.invCatMap, total: s.invest, color: C.invest || C.primary, emoji: "📈" },
+  ];
+  const activeTab = tabConfig.find(t => t.key === topTab) || tabConfig[0];
+  const hasAnyData = tabConfig.some(t => Object.keys(t.map).length > 0);
 
   return (
     <div className="page-enter" style={{ padding: "12px 12px 100px 12px", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -149,57 +158,84 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
         ))}
       </div>
 
-      {/* Top Expenses (Pastel Grid) */}
-      {Object.keys(s.catMap).length > 0 && (
+      {/* Top Categories by Type */}
+      {hasAnyData && (
         <div className="section-card" style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 18, padding: 12, boxShadow: C.shadow }}>
-
+          
           <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <h2 style={{ color: C.text, fontSize: 14, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>Top Expenses</h2>
+            <h2 style={{ color: C.text, fontSize: 14, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>Top Categories</h2>
             <div style={{ color: C.sub, fontSize: 11, fontWeight: 600, marginTop: 2 }}>{viewDate.toLocaleString("en", { month: "long", year: "numeric" })}</div>
           </div>
 
-          <div className="cat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
-            {Object.entries(s.catMap).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([name, amt], idx) => {
-              const cat = categories.find(c => c.name === name);
-              const max = Math.max(...Object.values(s.catMap));
-              const pct = Math.round((amt / max) * 100);
-              const pastel = C.pastel || [];
-              const bgStr = pastel[idx % (pastel.length || 1)] || C.muted;
-
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 16 }}>
+            {tabConfig.map(t => {
+              if (Object.keys(t.map).length === 0) return null;
+              const active = topTab === t.key;
               return (
-                <div key={name} className="cat-tile" style={{
-                  background: bgStr, borderRadius: 16, padding: 10, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 6
-                }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: C.surface, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
-                    {cat?.emoji || "📦"}
-                  </div>
-                  <div style={{ color: C.text, fontSize: 11, fontWeight: 700 }}>{name}</div>
-                  <div style={{ background: C.surface, borderRadius: 10, padding: "4px 8px", fontSize: 10, fontWeight: 800, color: C.text, display: "inline-flex", alignItems: "center", gap: 4, width: "100%", justifyContent: "center" }}>
-                    {fmtAmt(amt)}
-                    <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.6 }}>{pct}%</span>
-                  </div>
-                </div>
+                <button
+                  key={t.key}
+                  onClick={() => setTopTab(t.key)}
+                  style={{
+                    background: active ? t.color + "22" : "transparent",
+                    color: active ? t.color : C.sub,
+                    border: `1px solid ${active ? t.color : C.borderLight}`,
+                    borderRadius: 20, padding: "6px 12px", fontSize: 11, fontWeight: 800,
+                    cursor: "pointer", transition: "all .2s", display: "flex", alignItems: "center", gap: 6
+                  }}
+                >
+                  <span>{t.emoji}</span> {t.label}
+                </button>
               );
             })}
           </div>
 
-          <div className="budget-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: C.input, borderRadius: 16, padding: "10px 12px", marginBottom: 16 }}>
-            <div>
-              <div style={{ color: C.sub, fontSize: 9, fontWeight: 600 }}>Total Expense</div>
-              <div className="budget-amount" style={{ color: C.text, fontSize: 15, fontWeight: 800 }}>{fmtAmt(s.expense)}</div>
+          {Object.keys(activeTab.map).length > 0 ? (
+            <div className="cat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+              {Object.entries(activeTab.map).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, amt], idx) => {
+                const cat = categories.find(c => c.name === name);
+                const pct = activeTab.total > 0 ? Math.round((amt / activeTab.total) * 100) : 0;
+                const pastel = C.pastel || [];
+                const bgStr = pastel[idx % (pastel.length || 1)] || C.muted;
+
+                return (
+                  <div key={name} className="cat-tile" style={{
+                    background: bgStr, borderRadius: 16, padding: 10, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 6
+                  }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: C.surface, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
+                      {cat?.emoji || "📦"}
+                    </div>
+                    <div style={{ color: C.text, fontSize: 11, fontWeight: 700 }}>{name}</div>
+                    <div style={{ background: C.surface, borderRadius: 10, padding: "4px 8px", fontSize: 10, fontWeight: 800, color: C.text, display: "inline-flex", alignItems: "center", gap: 4, width: "100%", justifyContent: "center" }}>
+                      {fmtAmt(amt)}
+                      <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.6 }}>{pct}%</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div style={{ width: 1, height: 24, background: C.borderLight }} />
-            <div style={{ textAlign: "right" }}>
-              <div style={{ color: C.sub, fontSize: 9, fontWeight: 600 }}>Remaining Budget</div>
-              <div style={{ color: totalBudget === 0 ? C.sub : (remainingBudget >= 0 ? C.income : C.expense), fontSize: 15, fontWeight: 800 }}>
-                {totalBudget === 0 
-                  ? "Not Set" 
-                  : (remainingBudget >= 0 
-                      ? fmtAmt(remainingBudget) 
-                      : "Over Budget")}
+          ) : (
+             <div style={{ textAlign: "center", padding: "20px 0", color: C.sub, fontSize: 12, fontWeight: 600 }}>No {activeTab.label.toLowerCase()} entries this month.</div>
+          )}
+
+          {activeTab.key === "expense" && (
+            <div className="budget-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: C.input, borderRadius: 16, padding: "10px 12px", marginBottom: 16 }}>
+              <div>
+                <div style={{ color: C.sub, fontSize: 9, fontWeight: 600 }}>Total Expense</div>
+                <div className="budget-amount" style={{ color: C.text, fontSize: 15, fontWeight: 800 }}>{fmtAmt(s.expense)}</div>
+              </div>
+              <div style={{ width: 1, height: 24, background: C.borderLight }} />
+              <div style={{ textAlign: "right" }}>
+                <div style={{ color: C.sub, fontSize: 9, fontWeight: 600 }}>Remaining Budget</div>
+                <div style={{ color: totalBudget === 0 ? C.sub : (remainingBudget >= 0 ? C.income : C.expense), fontSize: 15, fontWeight: 800 }}>
+                  {totalBudget === 0 
+                    ? "Not Set" 
+                    : (remainingBudget >= 0 
+                        ? fmtAmt(remainingBudget) 
+                        : "Over Budget")}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <button onClick={goToTransactions} style={{ width: "100%", background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`, color: "#fff", border: "none", borderRadius: 16, padding: 12, fontSize: 13, fontWeight: 800, letterSpacing: ".05em", cursor: "pointer", transition: "transform .2s" }} onMouseDown={e => e.currentTarget.style.transform = "scale(0.98)"} onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}>
             VIEW ALL

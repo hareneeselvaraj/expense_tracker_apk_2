@@ -25,7 +25,7 @@ export default function TagsPanel({ tags, transactions, onAddTag, onEditTag, onD
       ) : (
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))",gap:16}}>
           {tags.map(tg => {
-            const txns = transactions.filter(t => (t.tags || []).includes(tg.id));
+            const txns = transactions.filter(t => !t.deleted && (t.tags || []).includes(tg.id));
             const income = txns.filter(t => t.creditDebit === "Credit").reduce((s, t) => s + t.amount, 0);
             const expense = txns.filter(t => t.creditDebit === "Debit").reduce((s, t) => s + t.amount, 0);
             const net = income - expense;

@@ -36,6 +36,6 @@ export const getSummary = (transactions, categories = []) => {
       s.catMap[cName] = (s.catMap[cName] || 0) + t.amount;
     } else if (t.txType === "Investment") s.inv += t.amount;
   });
-  s.net = s.inc - s.exp - s.inv;
+  s.net = s.inc - s.exp;
   return s;
 };

@@ -17,8 +17,8 @@ export function generateInsights(transactions = [], categories = []) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   })();
 
-  const thisMo = transactions.filter(t => t.date?.startsWith(thisMonth));
-  const lastMo = transactions.filter(t => t.date?.startsWith(lastMonth));
+  const thisMo = transactions.filter(t => !t.deleted && t.date?.startsWith(thisMonth));
+  const lastMo = transactions.filter(t => !t.deleted && t.date?.startsWith(lastMonth));
 
   // 1. Savings Rate
   const income = thisMo.filter(t => t.txType === "Income").reduce((s, t) => s + t.amount, 0);
@@ -75,7 +75,7 @@ export function generateInsights(transactions = [], categories = []) {
 
   // 3. Anomaly Detection — transactions > 3× category average
   const catAvg = {};
-  const expTx = transactions.filter(t => t.txType === "Expense");
+  const expTx = transactions.filter(t => !t.deleted && t.txType === "Expense");
   expTx.forEach(t => {
     const cat = categories.find(c => c.id === t.category)?.name || "Other";
     if (!catAvg[cat]) catAvg[cat] = { total: 0, count: 0 };

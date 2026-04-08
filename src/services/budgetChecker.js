@@ -24,7 +24,7 @@ export function checkBudgets(transactions, budgets, categories, tags) {
 
     if (budget.categoryId) {
       // Category budget
-      const cat = categories.find(c => c.id === budget.categoryId);
+      const cat = categories.find(c => c.id === budget.categoryId && !c.deleted);
       if (!cat) continue;
       budgetName = cat.name;
       budgetColor = cat.color;
@@ -33,7 +33,7 @@ export function checkBudgets(transactions, budgets, categories, tags) {
         .reduce((sum, t) => sum + (t.amount || 0), 0);
     } else if (budget.tagId) {
       // Tag budget
-      const tag = tags.find(t => t.id === budget.tagId);
+      const tag = tags.find(t => t.id === budget.tagId && !t.deleted);
       if (!tag) continue;
       budgetName = `#${tag.name}`;
       budgetColor = tag.color;
