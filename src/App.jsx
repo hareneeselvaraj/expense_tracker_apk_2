@@ -17,6 +17,7 @@ import { categorizeTransaction } from "./services/categorizationPipeline.js";
 import { checkAndSendYearEndEmail, sendYearEndEmailManual } from "./services/yearEndService.js";
 import { processBudgetAlerts } from "./services/budgetEmailSender.js";
 import { createNotification, shouldAdd, pruneNotifications } from "./services/notificationService.js";
+import { purgeOldDeleted } from "./services/purgeEngine.js";
 
 import { useOffline } from "./hooks/useOffline.js";
 import { useInstallPrompt } from "./hooks/useInstallPrompt.js";
@@ -209,10 +210,10 @@ export default function App() {
     const load = async () => {
       const d = await dbGet("data");
       if (d) {
-        if (d.transactions) setTransactions(ensureTimestamps(d.transactions.map(t => ({ ...t, amount: parseFloat(t.amount) || 0 }))));
-        if (d.categories) setCategories(ensureTimestamps(d.categories));
-        if (d.tags) setTags(ensureTimestamps(d.tags));
-        if (d.accounts) setAccounts(ensureTimestamps(d.accounts));
+        if (d.transactions) setTransactions(purgeOldDeleted(ensureTimestamps(d.transactions.map(t => ({ ...t, amount: parseFloat(t.amount) || 0 })))));
+        if (d.categories) setCategories(purgeOldDeleted(ensureTimestamps(d.categories)));
+        if (d.tags) setTags(purgeOldDeleted(ensureTimestamps(d.tags)));
+        if (d.accounts) setAccounts(purgeOldDeleted(ensureTimestamps(d.accounts)));
         if (d.budgets) setBudgets(ensureTimestamps(d.budgets));
         if (d.rules) {
           const loaded = ensureTimestamps(d.rules);
@@ -234,7 +235,7 @@ export default function App() {
           });
           setRules(migrated);
         }
-        if (d.recurring) setRecurring(ensureTimestamps(d.recurring));
+        if (d.recurring) setRecurring(purgeOldDeleted(ensureTimestamps(d.recurring)));
         if (d.emailPrefs) setEmailPrefs(d.emailPrefs);
       }
 
@@ -242,6 +243,16 @@ export default function App() {
     };
     load();
   }, []);
+
+  // One-time stamping pass for old data lacking timestamps
+  useEffect(() => {
+    if (!ready) return;
+    const now = new Date().toISOString();
+    setTransactions(prev => prev.map(t => t.updatedAt ? t : { ...t, updatedAt: now }));
+    setCategories(prev => prev.map(c => c.updatedAt ? c : { ...c, updatedAt: now }));
+    setTags(prev => prev.map(t => t.updatedAt ? t : { ...t, updatedAt: now }));
+    setAccounts(prev => prev.map(a => a.updatedAt ? a : { ...a, updatedAt: now }));
+  }, [ready]);
 
   useEffect(() => {
     if (!ready) return;
@@ -455,7 +466,10 @@ export default function App() {
         const sanitized = stampUpdated(categorizedTx);
         
         const idx = next.findIndex(x => x.id === sanitized.id);
-        if (idx > -1) next[idx] = sanitized;
+        if (idx > -1) {
+          sanitized.deleted = sanitized.deleted ?? next[idx].deleted;
+          next[idx] = sanitized;
+        }
         else next = [sanitized, ...next];
       });
       return next;
