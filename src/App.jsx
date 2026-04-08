@@ -134,10 +134,16 @@ export default function App() {
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
 
+  // Active (non-deleted) transactions for UI consumption
+  const activeTransactions = useMemo(
+    () => transactions.filter(t => !t.deleted),
+    [transactions]
+  );
+
   // Phase 3D: Insights
   const insights = useMemo(
-    () => generateInsights(transactions, categories),
-    [transactions, categories]
+    () => generateInsights(activeTransactions, categories),
+    [activeTransactions, categories]
   );
 
   // Active (non-deleted) tags for UI consumption
@@ -742,7 +748,7 @@ export default function App() {
 
 
       <main>
-        {page === "dashboard" && <Dashboard {...{ user, transactions, categories, tags, accounts, budgets, stats, netWorth: getNetWorth(accounts, transactions), getDayFlow: (d) => getDayFlow(transactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
+        {page === "dashboard" && <Dashboard {...{ user, transactions: activeTransactions, categories, tags, accounts, budgets, stats, netWorth: getNetWorth(accounts, transactions), getDayFlow: (d) => getDayFlow(transactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
         {page === "transactions" && <TransactionsPage {...{
             transactions, filteredTx, categories, tags, accounts, searchQ, setSearchQ, filters, setFilters,
             hasFilter: !!(filters.from || filters.to || filters.cats.length || filters.acc || filters.type || filters.cd || filters.tags.length),
@@ -765,7 +771,7 @@ export default function App() {
         {page === "organize" && <OrganizePage {...{
           organizeTab, setOrganizeTab, 
           orgDate, setOrgDate, orgPeriodTab, setOrgPeriodTab,
-          categories: activeCategories, transactions, tags: activeTags, budgets, rules, DEF_CATS,
+          categories: activeCategories, transactions: activeTransactions, tags: activeTags, budgets, rules, DEF_CATS,
           onAddCat: () => setAddCat(true),
           onEditCat: (c) => setEditCat(c),
           onDeleteCat: (id) => {
@@ -804,7 +810,7 @@ export default function App() {
           theme: C
         }} />}
         {page === "vault" && <VaultPage {...{
-          accounts, transactions,
+          accounts, transactions: activeTransactions,
           onAddAcc: () => setAddAcc(true),
           onEditAcc: (acc) => setEditAcc(acc),
           onDeleteAcc: (id) => {

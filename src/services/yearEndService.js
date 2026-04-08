@@ -34,7 +34,7 @@ import { fmtAmt } from "../utils/format.js";
 
 // Build the summary object from raw transaction data
 export function buildYearSummary(transactions, categories, tags, accounts, year) {
-  const yearTx = transactions.filter(t => t.date?.startsWith(String(year)));
+  const yearTx = transactions.filter(t => !t.deleted && t.date?.startsWith(String(year)));
   
   const totalIncome = yearTx
     .filter(t => t.creditDebit === "Credit" && t.txType !== "Investment")
@@ -94,7 +94,7 @@ export function buildYearSummary(transactions, categories, tags, accounts, year)
 // Build CSV content for attachment
 export function buildYearCSV(transactions, categories, tags, accounts, year) {
   const yearTx = transactions
-    .filter(t => t.date?.startsWith(String(year)))
+    .filter(t => !t.deleted && t.date?.startsWith(String(year)))
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   
   const header = "Date,Description,Amount,Type,Credit/Debit,Category,Tags,Account,Notes";
