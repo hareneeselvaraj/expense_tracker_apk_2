@@ -26,7 +26,7 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
   const isStock = type === "stock";
 
   useEffect(() => {
-    if (init) {
+    if (init && open) {
       setSymbol(init.symbol || "");
       setName(init.name || "");
       setQty(init.qty || "");
@@ -36,6 +36,17 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
       if (init.currentPrice) {
         setManualPriceMode(true);
         setManualPrice(init.currentPrice.toString());
+      }
+      
+      // Auto-refresh live price in background
+      if (init.symbol) {
+        getLivePriceSmart(init.symbol).then(p => {
+          if (p) {
+            setLivePrice(p);
+            setManualPriceMode(false);
+            setManualPrice("");
+          }
+        }).catch(() => {});
       }
     } else {
       setSymbol("");
@@ -51,20 +62,24 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
   }, [init, open]);
 
   const verifyLivePrice = async () => {
-    if (!symbol) return;
+    const clean = String(symbol || "").trim().toUpperCase();
+    if (!clean) return;
+    setSymbol(clean); // sync back normalized
     setFetchError("");
     setIsFetchingPrice(true);
+    setLivePrice(null);
     try {
-      const price = await getLivePriceSmart(symbol);
+      const price = await getLivePriceSmart(clean, { force: true });
       if (price) {
         setLivePrice(price);
         setManualPriceMode(false);
+        setManualPrice(""); // clear stale manual value
       } else {
-        setFetchError("Could not fetch live price. Please enter manually.");
+        setFetchError(`No price found for "${clean}". Check ticker (add .NS for NSE)`);
         setManualPriceMode(true);
       }
     } catch (e) {
-      setFetchError("Live price fetch failed.");
+      setFetchError(`Live price unavailable (${e.details?.[0] || e.message}). Enter manually.`);
       setManualPriceMode(true);
     }
     setIsFetchingPrice(false);
@@ -73,9 +88,11 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
   const currentPrice = manualPriceMode ? parseFloat(manualPrice) : livePrice;
   const totalCost = (parseFloat(qty) || 0) * (parseFloat(purchasePrice) || 0);
 
+  const priceNum = Number(currentPrice);
+  const priceValid = Number.isFinite(priceNum) && priceNum >= 0;
+
   const handleSave = () => {
-    if (!symbol || !qty || !purchasePrice) return;
-    if (!currentPrice && currentPrice !== 0) return;
+    if (!symbol || !qty || !purchasePrice || !priceValid) return;
 
     const isNew = !init;
     const hId = init?.id || "hld_" + uid();
@@ -121,7 +138,7 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
           <div style={{ display: "flex", gap: 8 }}>
             <FInput theme={C} value={symbol} onChange={e => setSymbol(e.target.value)} placeholder={isStock ? "TCS.NS" : "ISIN code..."} />
             <Btn theme={C} v="soft" onClick={verifyLivePrice} disabled={isFetchingPrice || !symbol}>
-              {isFetchingPrice ? "Wait..." : "Verify"}
+              {isFetchingPrice ? "⏳ Checking..." : livePrice && !fetchError ? "✓ Refresh" : (fetchError ? "↻ Retry" : "Verify")}
             </Btn>
           </div>
           {fetchError && <div style={{ color: C.expense, fontSize: 11, marginTop: 4 }}>{fetchError}</div>}
@@ -174,7 +191,7 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
           </div>
         )}
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 8 }} disabled={!currentPrice && currentPrice !== 0}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 8 }} disabled={!priceValid || !qty || !purchasePrice}>
           {init ? "Save Details" : `Add ${isStock ? "Stock" : "Fund"}`}
         </Btn>
       </div>

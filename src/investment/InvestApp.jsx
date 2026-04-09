@@ -36,8 +36,9 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
     const isNew = !investData.holdings.some(h => h.id === holding.id);
     
     if (isNew && holding.symbol && investData.holdings.some(h => !h.deleted && h.symbol === holding.symbol && h.type === holding.type)) {
-       alert(`You already have an active holding for ${holding.symbol}. Please edit the existing one instead to update your position.`);
-       return;
+       if (!window.confirm(`You already have an active holding for ${holding.symbol}.\n\nAre you sure you want to add another lot? (Cancel to edit existing)`)) {
+         return;
+       }
     }
     
     setInvestData(prev => {

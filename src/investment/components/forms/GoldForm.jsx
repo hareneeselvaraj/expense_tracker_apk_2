@@ -46,17 +46,7 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
     }
   }, [init, open]);
 
-  // Re-calculate when purity changes and we already have live data
-  useEffect(() => {
-    if (liveGold && !manualMode && liveGold.pricePerGram24k) {
-      const PURITY_MAP = { "24k": 0.999, "22k": 0.916, "18k": 0.750 };
-      const mult = PURITY_MAP[purity] || 1;
-      setLiveGold({
-        ...liveGold,
-        pricePerGram: Math.round(liveGold.pricePerGram24k * mult)
-      });
-    }
-  }, [purity]); // eslint-disable-line react-hooks/exhaustive-deps
+  // (Removed problematic useEffect for purity recalculation)
 
   const fetchPrice = async () => {
     setIsFetchingGold(true);
@@ -77,7 +67,18 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
     setIsFetchingGold(false);
   };
 
-  const currentPricePerGram = manualMode ? parseFloat(manualCurrentPrice) || 0 : (liveGold?.pricePerGram || 0);
+  // Use dynamically calculated price based on purity
+  const displayLiveGold = React.useMemo(() => {
+    if (!liveGold) return null;
+    const PURITY_MAP = { "24k": 0.999, "22k": 0.916, "18k": 0.750 };
+    const mult = PURITY_MAP[purity] || 1;
+    return {
+      ...liveGold,
+      pricePerGram: Math.round(liveGold.pricePerGram24k * mult)
+    };
+  }, [liveGold, purity]);
+
+  const currentPricePerGram = manualMode ? parseFloat(manualCurrentPrice) || 0 : (displayLiveGold?.pricePerGram || 0);
   const gramsNum = parseFloat(grams) || 0;
   const currentValue = gramsNum * currentPricePerGram;
   const totalCost = parseFloat(purchasePrice) || 0;
@@ -167,18 +168,18 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
 
           {goldError && <div style={{ color: C.expense, fontSize: 11, marginBottom: 8 }}>{goldError}</div>}
 
-          {liveGold && !manualMode && (
+          {displayLiveGold && !manualMode && (
             <div style={{ background: "#fbbf2415", border: "1px solid #fbbf2433", borderRadius: 14, padding: "12px 16px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={{ fontSize: 10, color: C.sub, fontWeight: 700 }}>LIVE {purity.toUpperCase()} GOLD</div>
-                  <div style={{ fontSize: 20, color: C.text, fontWeight: 800 }}>₹{liveGold.pricePerGram.toLocaleString()}<span style={{ fontSize: 11, color: C.sub, fontWeight: 600 }}>/gram</span></div>
+                  <div style={{ fontSize: 20, color: C.text, fontWeight: 800 }}>₹{displayLiveGold.pricePerGram.toLocaleString()}<span style={{ fontSize: 11, color: C.sub, fontWeight: 600 }}>/gram</span></div>
                 </div>
                 <button onClick={() => setManualMode(true)} style={{ background: "transparent", border: "none", color: C.primary, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Edit</button>
               </div>
-              {liveGold.usdInr && (
+              {displayLiveGold.usdInr && (
                 <div style={{ fontSize: 10, color: C.sub, marginTop: 4 }}>
-                  24K base: ₹{liveGold.pricePerGram24k}/g • USD/INR: {liveGold.usdInr}
+                  24K base: ₹{displayLiveGold.pricePerGram24k}/g • USD/INR: {displayLiveGold.usdInr}
                 </div>
               )}
             </div>
@@ -188,7 +189,7 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <FLabel theme={C}>Current Price per Gram (₹)</FLabel>
-                {liveGold && <button onClick={() => setManualMode(false)} style={{ background: "none", border: "none", color: C.primary, fontSize: 10, cursor: "pointer", fontWeight: 700 }}>Use Live (₹{liveGold.pricePerGram})</button>}
+                {displayLiveGold && <button onClick={() => setManualMode(false)} style={{ background: "none", border: "none", color: C.primary, fontSize: 10, cursor: "pointer", fontWeight: 700 }}>Use Live (₹{displayLiveGold.pricePerGram})</button>}
               </div>
               <FInput theme={C} type="number" value={manualCurrentPrice} onChange={e => setManualCurrentPrice(e.target.value)} placeholder="₹/gram today" />
             </div>

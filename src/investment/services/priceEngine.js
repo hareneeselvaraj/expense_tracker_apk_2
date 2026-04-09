@@ -2,30 +2,47 @@
 
 const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
-// Multi-proxy fallback to bypass CORS blocks and rate limits (429s)
 const PROXIES = [
-  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+  { name: "codetabs",   build: url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}` },
+  { name: "allorigins", build: url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` },
+  { name: "corsproxy",  build: url => `https://corsproxy.io/?${encodeURIComponent(url)}` },
+  { name: "direct",     build: url => url } // 4th fallback: direct fetch
 ];
 
+async function fetchWithTimeout(url, ms = 7000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { "Accept": "application/json" }
+    });
+    return res;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function resilientFetch(targetUrl) {
-  for (const proxyGen of PROXIES) {
-    const proxyUrl = proxyGen(targetUrl);
+  const errors = [];
+  for (const proxy of PROXIES) {
     try {
-      const res = await fetch(proxyUrl);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.chart?.result || json.quotes) {
-          return json;
-        }
-        throw new Error("Invalid JSON structure from proxy");
-      }
-    } catch(err) {
-      console.warn("Proxy failed:", proxyUrl);
+      const res = await fetchWithTimeout(proxy.build(targetUrl));
+      if (!res.ok) { errors.push(`${proxy.name}: HTTP ${res.status}`); continue; }
+      const text = await res.text();
+      let json;
+      try { json = JSON.parse(text); }
+      catch { errors.push(`${proxy.name}: non-JSON`); continue; }
+      if (json.chart?.result || json.quotes) return json;
+      if (json.chart?.error) { errors.push(`yahoo: ${json.chart.error.description}`); continue; }
+      errors.push(`${proxy.name}: unexpected shape`);
+    } catch (err) {
+      errors.push(`${proxy.name}: ${err.name === 'AbortError' ? 'timeout' : err.message}`);
     }
   }
-  throw new Error("All proxies failed for: " + targetUrl);
+  const e = new Error("All proxies failed");
+  e.details = errors;
+  throw e;
 }
 
 /**
@@ -51,11 +68,12 @@ export async function searchYahooSymbol(query) {
 /**
  * Fetches the live price for a given explicit Yahoo Finance symbol (e.g. RELIANCE.NS)
  */
-export async function fetchLivePrice(symbol) {
+export async function fetchLivePrice(symbol, force = false) {
   if (!symbol) return null;
   
   // 1. Check local cache
   const cacheKey = `price_cache_${symbol}`;
+  if (force) localStorage.removeItem(cacheKey);
   const cached = localStorage.getItem(cacheKey);
   if (cached) {
     try {
@@ -96,16 +114,23 @@ export async function fetchLivePrice(symbol) {
  * Higher level function: given a query (like ISIN "INF846K01EW2" or stock "RELIANCE.NS"),
  * it automatically resolves the symbol if necessary and fetches the price.
  */
-export async function getLivePriceSmart(query) {
-  // If it already looks like a Yahoo ticker (has .NS or .BO), just fetch it
-  if (query.includes(".NS") || query.includes(".BO")) {
-    return await fetchLivePrice(query);
+export async function getLivePriceSmart(query, { force = false } = {}) {
+  const clean = String(query || "").trim().toUpperCase();
+  if (!clean) return null;
+
+  // Auto-append .NS if it looks like a plain NSE ticker (all letters, no dot)
+  const guess = /^[A-Z0-9&-]+$/.test(clean) && !clean.includes(".")
+    ? `${clean}.NS`
+    : clean;
+
+  if (guess.endsWith(".NS") || guess.endsWith(".BO")) {
+    return await fetchLivePrice(guess, force);
   }
   
   // Otherwise, do a search to get the Yahoo symbol (e.g. for MFs via ISIN)
-  const symbol = await searchYahooSymbol(query);
+  const symbol = await searchYahooSymbol(clean);
   if (symbol) {
-    return await fetchLivePrice(symbol);
+    return await fetchLivePrice(symbol, force);
   }
   
   return null;
