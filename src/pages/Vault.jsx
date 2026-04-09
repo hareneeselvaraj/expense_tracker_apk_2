@@ -22,6 +22,16 @@ export default function VaultPage({
   const netWorth = getNetWorth(accounts, transactions);
   const [confirmDeleteId, setConfirmDeleteId] = React.useState(null);
 
+  const [flipped, setFlipped] = React.useState(false);
+
+  const investedValue = React.useMemo(() => {
+    return (transactions || [])
+      .filter(t => !t.deleted && t.txType === "Investment")
+      .reduce((sum, t) => sum + (t.creditDebit === "Debit" ? t.amount : -t.amount), 0);
+  }, [transactions]);
+
+  const overallNetWorth = netWorth + investedValue;
+
   return (
     <div className="page-enter" style={{padding:"16px 16px 100px 16px",display:"flex",flexDirection:"column",gap:20}}>
       
@@ -74,14 +84,79 @@ export default function VaultPage({
 
           {/* Total Balance Summary */}
           {accounts.length > 0 && (
-            <div className="hero-card" style={{
-              background: C.surface, 
-              border:`1px solid ${C.borderLight}`, borderRadius:32, padding:24,
-              boxShadow:C.shadow, position:"relative", overflow:"hidden"
-            }}>
-              <div className="hero-label" style={{color:C.sub,fontSize:12,fontWeight:700,textTransform:"uppercase",letterSpacing:".1em",marginBottom:8}}>Total Net Worth</div>
-              <div className="hero-amount" style={{color:C.text,fontSize:32,fontWeight:800,letterSpacing:"-.02em"}}>
-                {fmtAmt(netWorth)}
+            <div
+              onClick={() => setFlipped(f => !f)}
+              style={{
+                perspective: 1200,
+                cursor: "pointer",
+                minHeight: 148,
+              }}
+            >
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  minHeight: 148,
+                  transition: "transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+                  transformStyle: "preserve-3d",
+                  transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                }}
+              >
+                {/* ── FRONT ── */}
+                <div
+                  className="hero-card"
+                  style={{
+                    position: "absolute", inset: 0,
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    background: C.surface, border: `1px solid ${C.borderLight}`,
+                    borderRadius: 32, padding: 24, boxShadow: C.shadow, overflow: "hidden",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ color: C.sub, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em" }}>
+                      Total Net Worth
+                    </div>
+                    <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, opacity: 0.6 }}>TAP TO FLIP ↻</div>
+                  </div>
+                  <div className="hero-amount" style={{ color: C.text, fontSize: 32, fontWeight: 800, letterSpacing: "-.02em" }}>
+                    {fmtAmt(netWorth)}
+                  </div>
+                </div>
+
+                {/* ── BACK ── */}
+                <div
+                  style={{
+                    position: "absolute", inset: 0,
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    transform: "rotateY(180deg)",
+                    background: `linear-gradient(135deg, ${C.surface}, ${C.primaryDim || C.surface})`,
+                    border: `1px solid ${C.primary}33`,
+                    borderRadius: 32, padding: 24, boxShadow: C.shadow, overflow: "hidden",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ color: C.primary, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em" }}>
+                      Total Wealth
+                    </div>
+                    <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, opacity: 0.6 }}>TAP TO FLIP ↻</div>
+                  </div>
+                  <div style={{ color: C.text, fontSize: 32, fontWeight: 800, letterSpacing: "-.02em" }}>
+                    {fmtAmt(overallNetWorth)}
+                  </div>
+                  <div style={{ display: "flex", gap: 10, marginTop: 12, borderTop: `1px dashed ${C.border}`, paddingTop: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Liquid</div>
+                      <div style={{ color: C.text, fontSize: 18, fontWeight: 800, marginTop: 2 }}>{fmtAmt(netWorth)}</div>
+                    </div>
+                    <div style={{ width: 1, background: C.borderLight }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Invested</div>
+                      <div style={{ color: C.invest || C.primary, fontSize: 18, fontWeight: 800, marginTop: 2 }}>{fmtAmt(investedValue)}</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

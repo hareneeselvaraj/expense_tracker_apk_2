@@ -54,6 +54,18 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
   const remainingBudget = totalBudget - s.expense;
   const [topTab, setTopTab] = useState("expense");
 
+  const [flipped, setFlipped] = React.useState(false);
+
+  // Total value of assets still "parked" in investments
+  // = all investment debits − all investment credits (redemptions)
+  const investedValue = React.useMemo(() => {
+    return (transactions || [])
+      .filter(t => !t.deleted && t.txType === "Investment")
+      .reduce((sum, t) => sum + (t.creditDebit === "Debit" ? t.amount : -t.amount), 0);
+  }, [transactions]);
+
+  const overallNetWorth = netWorth + investedValue;
+
   const tabConfig = [
     { key: "expense", label: "Expense", map: s.expCatMap, total: s.expense, color: C.expense, emoji: "💸" },
     { key: "income", label: "Income", map: s.incCatMap, total: s.income, color: C.income, emoji: "💰" },
@@ -115,23 +127,92 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
         </div>
       </div>
 
-      {/* Net Worth Hero Card */}
-      <div className="net-hero" style={{
-        background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 18, padding: 12,
-        position: "relative", overflow: "hidden", boxShadow: C.shadow
-      }}>
-        <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Current Net Worth</div>
-        <div className="net-amount" style={{ color: C.text, fontSize: 26, fontWeight: 800, margin: "2px 0", letterSpacing: "-0.03em" }}>{fmtAmt(netWorth)}</div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12, borderTop: `1px dashed ${C.border}`, paddingTop: 12 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, marginBottom: 8 }}>30D FLOW</div>
-            <Sparkline data={getDayFlow(30)} color={C.primary} height={36} />
+      {/* Net Worth Hero Card — flippable */}
+      <div
+        onClick={() => setFlipped(f => !f)}
+        style={{
+          perspective: 1200,
+          cursor: "pointer",
+          minHeight: 148,
+        }}
+      >
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            minHeight: 148,
+            transition: "transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)",
+            transformStyle: "preserve-3d",
+            transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          }}
+        >
+          {/* ── FRONT ── */}
+          <div
+            className="net-hero"
+            style={{
+              position: "absolute", inset: 0,
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+              background: C.surface, border: `1px solid ${C.borderLight}`,
+              borderRadius: 18, padding: 12, boxShadow: C.shadow, overflow: "hidden",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>
+                Current Net Worth
+              </div>
+              <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, opacity: 0.6 }}>TAP TO FLIP ↻</div>
+            </div>
+            <div className="net-amount" style={{ color: C.text, fontSize: 26, fontWeight: 800, margin: "2px 0", letterSpacing: "-0.03em" }}>
+              {fmtAmt(netWorth)}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12, borderTop: `1px dashed ${C.border}`, paddingTop: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, marginBottom: 8 }}>30D FLOW</div>
+                <Sparkline data={getDayFlow(30)} color={C.primary} height={36} />
+              </div>
+              <div style={{ width: 1, height: 40, background: C.borderLight }} />
+              <div style={{ textAlign: "right" }}>
+                <div style={{ color: C.income, fontSize: 16, fontWeight: 800 }}>
+                  +{fmtAmt(s.income)}
+                </div>
+                <div style={{ color: C.sub, fontSize: 10, fontWeight: 700 }}>THIS MONTH</div>
+              </div>
+            </div>
           </div>
-          <div style={{ width: 1, height: 40, background: C.borderLight }} />
-          <div style={{ textAlign: "right" }}>
-            <div style={{ color: C.income, fontSize: 16, fontWeight: 800 }}>+{fmtAmt(transactions.filter(t => t.creditDebit === "Credit" && t.date?.startsWith(new Date().toISOString().slice(0, 7))).reduce((s, t) => s + t.amount, 0))}</div>
-            <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, marginTop: 4 }}>THIS MONTH</div>
+
+          {/* ── BACK ── */}
+          <div
+            style={{
+              position: "absolute", inset: 0,
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+              background: `linear-gradient(135deg, ${C.surface}, ${C.primaryDim || C.surface})`,
+              border: `1px solid ${C.primary}33`,
+              borderRadius: 18, padding: 12, boxShadow: C.shadow, overflow: "hidden",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ color: C.primary, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>
+                Total Wealth
+              </div>
+              <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, opacity: 0.6 }}>TAP TO FLIP ↻</div>
+            </div>
+            <div style={{ color: C.text, fontSize: 26, fontWeight: 800, margin: "2px 0", letterSpacing: "-0.03em" }}>
+              {fmtAmt(overallNetWorth)}
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: 12, borderTop: `1px dashed ${C.border}`, paddingTop: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Liquid</div>
+                <div style={{ color: C.text, fontSize: 15, fontWeight: 800, marginTop: 2 }}>{fmtAmt(netWorth)}</div>
+              </div>
+              <div style={{ width: 1, background: C.borderLight }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Invested</div>
+                <div style={{ color: C.invest || C.primary, fontSize: 15, fontWeight: 800, marginTop: 2 }}>{fmtAmt(investedValue)}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

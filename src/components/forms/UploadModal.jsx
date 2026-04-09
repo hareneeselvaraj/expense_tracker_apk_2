@@ -38,8 +38,6 @@ export const UploadModal = ({ open, onClose, onImport, theme, categories = [], r
       const finalTxns = rawTxns.map(t => ({
         ...t,
         id: uid(),
-        tags: [],
-        accountId: ""
       }));
 
       // ── DUPLICATE GUARD ──

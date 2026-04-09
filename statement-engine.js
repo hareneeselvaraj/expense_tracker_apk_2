@@ -207,6 +207,7 @@ export function autoDetectColumns(headers) {
     category:    find(["category", "cat"]),
     tags:        find(["tag", "tags", "label", "labels"]),
     notes:       find(["note", "notes", "comment"]),
+    account:     find(["account", "acct", "bank"]),
   };
 }
 
@@ -289,6 +290,7 @@ export function processTransactions(rows, columnMap) {
         balance: row[columnMap.balance] || "",
         _rawCategory: columnMap.category ? String(row[columnMap.category] || "").trim() : "",
         _rawTags: columnMap.tags ? String(row[columnMap.tags] || "").trim() : "",
+        _rawAccount: columnMap.account ? String(row[columnMap.account] || "").trim() : "",
         notes: columnMap.notes ? String(row[columnMap.notes] || "").trim() : "",
       };
     })

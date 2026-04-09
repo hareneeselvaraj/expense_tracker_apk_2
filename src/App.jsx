@@ -523,6 +523,23 @@ export default function App() {
       return ids;
     };
 
+    // Resolve raw account name → ID, auto-create if missing
+    const resolveAccountName = (rawName) => {
+      if (!rawName) return "";
+      const normalized = rawName.trim().toLowerCase();
+      const existing = accounts.find(a => !a.deleted && a.name.toLowerCase() === normalized);
+      if (existing) return existing.id;
+      const newAcc = {
+        id: uid(),
+        name: rawName.trim(),
+        type: "Bank",
+        initialBalance: 0,
+        updatedAt: new Date().toISOString()
+      };
+      setAccounts(prev => [...prev, newAcc]);
+      return newAcc.id;
+    };
+
     const processed = txs.map(t => {
       let categoryId = t.category;
       if (t._rawCategory) {
@@ -532,12 +549,18 @@ export default function App() {
       if (t._rawTags) {
         tagIds = resolveTagNames(t._rawTags);
       }
+      let accountId = t.accountId || "";
+      if (t._rawAccount) {
+        accountId = resolveAccountName(t._rawAccount) || accountId;
+      }
       const cleanTx = {
         ...t, category: categoryId, tags: tagIds,
+        accountId,
         amount: parseFloat(t.amount) || 0,
       };
       delete cleanTx._rawCategory;
       delete cleanTx._rawTags;
+      delete cleanTx._rawAccount;
 
       // Run through categorize+rules pipeline only if no explicit category from sheet
       let categorized = cleanTx;
