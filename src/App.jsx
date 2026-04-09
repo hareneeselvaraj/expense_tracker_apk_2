@@ -7,7 +7,7 @@ import { DEF_CATS, DEF_TAGS, BLANK_TX } from "./constants/defaults.js";
 import { CLIENT_ID } from "./constants/config.js";
 
 // Services
-import { dbGet, dbSet } from "./services/localDb.js";
+import { dbGet, dbSet, getInvestData, setInvestData as setInvestData_db, getAppMode, setAppMode as setAppMode_db } from "./services/localDb.js";
 import { googleService } from "./services/googleService.js";
 import { stampUpdated, ensureTimestamps, filterDeleted, mergeDatasets } from "./services/mergeEngine.js";
 import { checkBudgets, getActiveAlerts } from "./services/budgetChecker.js";
@@ -47,6 +47,7 @@ import ReportsPage from "./pages/Reports.jsx";
 import OrganizePage from "./pages/Organize.jsx";
 import VaultPage from "./pages/Vault.jsx";
 import SettingsPage from "./pages/Settings.jsx";
+import InvestApp from "./investment/InvestApp.jsx";
 
 // Forms
 import { TxForm } from "./components/forms/TxForm.jsx";
@@ -91,6 +92,12 @@ export default function App() {
   const [themeMode, setThemeMode] = useState(localStorage.getItem("theme") || "light");
   const [page, setPage] = useState("dashboard");
   const [toast, setToast] = useState(null);
+
+  // ── Dual-mode: Expense / Investment ─────────────────────────────────────
+  const [appMode, setAppMode] = useState("expense");
+  const [investData, setInvestData] = useState({
+    holdings: [], transactions: [], prefs: {}, meta: { version: 1 }
+  });
 
   // Notification Center state
   const [notifications, setNotifications] = useState([]);
@@ -241,6 +248,12 @@ export default function App() {
         if (d.emailPrefs) setEmailPrefs(d.emailPrefs);
       }
 
+      // Load investment data + app mode
+      const savedMode = await getAppMode();
+      setAppMode(savedMode);
+      const savedInvest = await getInvestData();
+      setInvestData(savedInvest);
+
       setReady(true);
     };
     load();
@@ -267,6 +280,18 @@ export default function App() {
     const t = setTimeout(() => setSyncStatus("synced"), 1000);
     return () => clearTimeout(t);
   }, [transactions, categories, tags, accounts, budgets, rules, recurring, emailPrefs, ready]);
+
+  // Persist investData
+  useEffect(() => {
+    if (!ready) return;
+    setInvestData_db(investData).catch(err => console.error("Failed to save investData:", err));
+  }, [investData, ready]);
+
+  // Persist appMode
+  useEffect(() => {
+    if (!ready) return;
+    setAppMode_db(appMode).catch(err => console.error("Failed to save appMode:", err));
+  }, [appMode, ready]);
 
   const recurringRef = useRef(recurring);
   useEffect(() => { recurringRef.current = recurring; }, [recurring]);
@@ -455,6 +480,8 @@ export default function App() {
 
   const handleSaveTx = (data) => {
     const txs = Array.isArray(data) ? data : [data];
+    const now = new Date().toISOString();
+    
     setTransactions(prev => {
       let next = [...prev];
       txs.forEach(t => {
@@ -473,6 +500,41 @@ export default function App() {
           next[idx] = sanitized;
         }
         else next = [sanitized, ...next];
+
+        // ── Investment Sync Logic ──────────────────────────────────────────
+        // If category is "Investment" (c11), sync to investData
+        if (sanitized.category === "c11" && !sanitized.deleted) {
+          setInvestData(prevInvest => {
+            const newInvest = { ...prevInvest };
+            const existingIdx = newInvest.transactions.findIndex(itx => itx.expenseTxId === sanitized.id);
+            
+            const investTx = {
+              id: existingIdx > -1 ? newInvest.transactions[existingIdx].id : "itx_" + uid(),
+              expenseTxId: sanitized.id,
+              date: sanitized.date,
+              amount: sanitized.amount,
+              type: "buy", // default to buy for now
+              description: sanitized.description,
+              updatedAt: now,
+              deleted: false
+            };
+
+            if (existingIdx > -1) {
+              newInvest.transactions[existingIdx] = investTx;
+            } else {
+              newInvest.transactions = [investTx, ...newInvest.transactions];
+            }
+            return newInvest;
+          });
+        } else if (sanitized.category === "c11" && sanitized.deleted) {
+          // If it was an investment and now deleted, delete counterpart
+          setInvestData(prevInvest => ({
+            ...prevInvest,
+            transactions: prevInvest.transactions.map(itx => 
+              itx.expenseTxId === sanitized.id ? { ...itx, deleted: true, updatedAt: now } : itx
+            )
+          }));
+        }
       });
       return next;
     });
@@ -586,12 +648,33 @@ export default function App() {
   };
 
   const handleDeleteTx = (id) => {
-    setTransactions(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: new Date().toISOString() } : t));
+    const now = new Date().toISOString();
+    const wasInvestment = transactions.find(t => t.id === id)?.category === "c11";
+
+    setTransactions(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: now } : t));
+    
+    if (wasInvestment) {
+      setInvestData(prev => ({
+        ...prev,
+        transactions: prev.transactions.map(itx => 
+          itx.expenseTxId === id ? { ...itx, deleted: true, updatedAt: now } : itx
+        )
+      }));
+    }
+
     setEditTx(null);
     notify("Transaction deleted", "error", {
       label: "Undo",
       onClick: () => {
         setTransactions(prev => prev.map(t => t.id === id ? { ...t, deleted: false, updatedAt: new Date().toISOString() } : t));
+        if (wasInvestment) {
+          setInvestData(prev => ({
+            ...prev,
+            transactions: prev.transactions.map(itx => 
+              itx.expenseTxId === id ? { ...itx, deleted: false, updatedAt: new Date().toISOString() } : itx
+            )
+          }));
+        }
         notify("Transaction restored", "success");
       }
     });
@@ -607,7 +690,7 @@ export default function App() {
   const saveToDrive = async () => {
     setDriveStep("saving");
     try {
-      const file = await googleService.saveToDrive(CLIENT_ID, driveTokenRef, { transactions, categories, tags, accounts, budgets, rules, recurring });
+      const file = await googleService.saveToDrive(CLIENT_ID, driveTokenRef, { transactions, categories, tags, accounts, budgets, rules, recurring, investData });
       if (file && file.modifiedTime) {
         localStorage.setItem("expense_last_sync", new Date(file.modifiedTime).getTime().toString());
       }
@@ -634,7 +717,7 @@ export default function App() {
     setDriveStep("restoring");
     try {
       const data = await googleService.restoreFromDrive(CLIENT_ID, driveTokenRef, file.id);
-      const localData = { transactions, categories, tags, accounts, budgets, rules, recurring };
+      const localData = { transactions, categories, tags, accounts, budgets, rules, recurring, investData };
       const merged = mergeDatasets(localData, data);
       
       if (merged.transactions) setTransactions(merged.transactions);
@@ -644,6 +727,7 @@ export default function App() {
       if (merged.budgets) setBudgets(merged.budgets);
       if (merged.rules) setRules(merged.rules);
       if (merged.recurring) setRecurring(merged.recurring);
+      if (merged.investData) setInvestData(merged.investData);
       budgetCheckPending.current = true;
       
       if (file.modifiedTime) localStorage.setItem("expense_last_sync", new Date(file.modifiedTime).getTime().toString());
@@ -662,7 +746,7 @@ export default function App() {
     if (isOffline) { notify("You're offline — sync will resume when connected", "error"); return; }
     setSyncStatus("pending");
     try {
-      const localData = { transactions, categories, tags, accounts, budgets, rules, recurring };
+      const localData = { transactions, categories, tags, accounts, budgets, rules, recurring, investData };
       const result = await googleService.smartSync(CLIENT_ID, driveTokenRef, localData);
       const { merged, action } = result;
 
@@ -674,6 +758,7 @@ export default function App() {
       if (merged.budgets) setBudgets(merged.budgets);
       if (merged.rules) setRules(merged.rules);
       if (merged.recurring) setRecurring(merged.recurring);
+      if (merged.investData) setInvestData(merged.investData);
       budgetCheckPending.current = true;
 
       if (result.file?.modifiedTime) {
@@ -770,6 +855,32 @@ export default function App() {
       </div>
     </div>
   );
+
+  // ── INVESTMENT MODE ──────────────────────────────────────────────────────
+  if (appMode === "investment") {
+    return (
+      <>
+        <style>{globalStyles}</style>
+        <InvestApp
+          investData={investData}
+          setInvestData={setInvestData}
+          onBackToExpense={() => setAppMode("expense")}
+          theme={C}
+        />
+        <Toast toast={toast} theme={C} />
+        <style>{`
+          .spinner { width:40px; height:40px; border:4px solid transparent; border-top-color:${C.primary}; border-radius:50%; animation:spin 1s linear infinite; }
+          @keyframes spin { to { transform:rotate(360deg); } }
+          @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+          .page-enter { animation: fadeIn 0.4s ease-out; }
+          ::-webkit-scrollbar { width: 6px; height: 6px; }
+          ::-webkit-scrollbar-track { background: transparent; }
+          ::-webkit-scrollbar-thumb { background: ${C.border}; borderRadius: 10px; }
+          ::-webkit-scrollbar-thumb:hover { background: ${C.primary}; }
+        `}</style>
+      </>
+    );
+  }
 
   const activeTitle = {
     dashboard: "Expense tracker 💰",
@@ -910,6 +1021,8 @@ export default function App() {
           },
           themeMode, toggleTheme,
           onLogout: logout,
+          investData,
+          onOpenInvestments: () => setAppMode("investment"),
           onShowBackup: () => setShowBackup(true),
           onExportBackup: () => {
             const data = { transactions, categories, tags, accounts, budgets, rules, recurring };

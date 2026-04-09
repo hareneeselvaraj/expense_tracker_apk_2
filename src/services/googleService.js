@@ -64,6 +64,12 @@ export const googleService = {
       budgets: ensureTimestamps(data.budgets),
       rules: ensureTimestamps(data.rules),
       recurring: ensureTimestamps(data.recurring || []),
+      investData: data.investData ? {
+        holdings: ensureTimestamps(data.investData.holdings || []),
+        transactions: ensureTimestamps(data.investData.transactions || []),
+        prefs: data.investData.prefs || {},
+        meta: data.investData.meta || { version: 1 },
+      } : undefined,
       syncVersion: (data.syncVersion || 0) + 1,
       savedAt: new Date().toISOString()
     };
@@ -110,7 +116,19 @@ export const googleService = {
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    return await res.json();
+    const data = await res.json();
+
+    // v2 → v3 migration: if no investData key, initialize empty
+    if (!data.investData) {
+      data.investData = {
+        holdings: [],
+        transactions: [],
+        prefs: {},
+        meta: { version: 1, lastPriceRefresh: null },
+      };
+    }
+
+    return data;
   },
 
   /**

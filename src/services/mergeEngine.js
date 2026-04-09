@@ -49,8 +49,13 @@ export function ensureTimestamps(arr = []) {
 
 /**
  * Full dataset merge: merges all data collections (transactions, categories, etc.)
+ * Supports both v2 (expense-only) and v3 (expense + investment) backup formats.
  */
 export function mergeDatasets(local = {}, remote = {}) {
+  // Extract investData from both sides (handles v2 backups with no investData)
+  const localInvest = local.investData || {};
+  const remoteInvest = remote.investData || {};
+
   return {
     transactions: mergeById(local.transactions, remote.transactions),
     categories: mergeById(local.categories, remote.categories),
@@ -59,6 +64,15 @@ export function mergeDatasets(local = {}, remote = {}) {
     budgets: mergeById(local.budgets, remote.budgets),
     rules: mergeById(local.rules, remote.rules),
     recurring: mergeById(local.recurring, remote.recurring),
+    investData: {
+      holdings: mergeById(localInvest.holdings, remoteInvest.holdings),
+      transactions: mergeById(localInvest.transactions, remoteInvest.transactions),
+      prefs: { ...(localInvest.prefs || {}), ...(remoteInvest.prefs || {}) },
+      meta: {
+        version: Math.max(localInvest.meta?.version || 1, remoteInvest.meta?.version || 1),
+        lastPriceRefresh: localInvest.meta?.lastPriceRefresh || remoteInvest.meta?.lastPriceRefresh || null,
+      },
+    },
     syncVersion: Math.max(local.syncVersion || 0, remote.syncVersion || 0) + 1
   };
 }

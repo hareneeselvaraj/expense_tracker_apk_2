@@ -10,6 +10,8 @@ export default function SettingsPage({
   onImportBackup, 
   onClearData,
   onLogout,
+  onOpenInvestments,
+  investData,
   user,
   transactions,
   emailPrefs,
@@ -18,6 +20,15 @@ export default function SettingsPage({
   theme 
 }) {
   const C = theme;
+
+  const portfolioValue = useMemo(() => {
+    const holdings = (investData?.holdings || []).filter(h => !h.deleted);
+    return holdings.reduce((sum, h) => {
+      if (h.qty !== undefined && h.currentPrice !== undefined) return sum + (h.qty * h.currentPrice);
+      if (h.currentPrice !== undefined) return sum + h.currentPrice;
+      return sum + (h.principal || 0);
+    }, 0);
+  }, [investData]);
   
   const availableYears = useMemo(() => {
     if (!transactions?.length) return [new Date().getFullYear()];
@@ -45,6 +56,33 @@ export default function SettingsPage({
       </div>
 
       <div style={{display:"flex", flexDirection:"column", gap:16}}>
+
+        {/* Investment Tracker Card */}
+        <div style={{
+          background: `linear-gradient(135deg, ${C.primary}20, ${(C.secondary || C.primary)}20)`,
+          border: `1px solid ${C.primary}40`,
+          borderRadius: 32, padding: 24,
+          display: "flex", flexDirection: "column", gap: 16,
+          boxShadow: C.shadow
+        }}>
+          <div style={{display: "flex", alignItems: "center", gap: 12}}>
+            <div style={{fontSize: 32}}>💎</div>
+            <div>
+              <div style={{fontSize: 18, fontWeight: 800, color: C.text}}>Investments</div>
+              <div style={{fontSize: 12, color: C.sub, marginTop: 2, display: "flex", alignItems: "center", gap: 6}}>
+                {portfolioValue > 0 ? (
+                   <span style={{ color: C.primary, fontWeight: 700 }}>Value: ₹{portfolioValue.toLocaleString()}</span>
+                ) : (
+                   <span>Track stocks, MFs, gold & more</span>
+                )}
+              </div>
+            </div>
+          </div>
+          <Btn theme={C} v="primary" full icon="arrowRight" onClick={onOpenInvestments}>
+            Open Investment Tracker
+          </Btn>
+        </div>
+
         <div style={{background:C.surface, borderRadius:32, padding:24, display:"flex", flexDirection:"column", gap:20, border:`1px solid ${C.borderLight}`, boxShadow:C.shadow}}>
            <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em"}}>Data Management</div>
            <div style={{display:"flex", flexDirection:"column", gap:12}}>
