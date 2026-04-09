@@ -1,16 +1,34 @@
-import React from "react";
+import React, { useState } from "react";
 import { ASSET_TYPES } from "../constants/assetTypes.js";
 import { Ico } from "../../components/ui/Ico.jsx";
 import { fmtAmt } from "../../utils/format.js";
+import { calcHoldingValue } from "../utils/valuation.js";
 
 export const HoldingsPage = ({ investData, theme, onEditHolding, onDeleteHolding }) => {
   const C = theme;
-  const holdings = (investData.holdings || []).filter(h => !h.deleted);
+  const [sortBy, setSortBy] = useState("value"); // "value", "name", "date"
+  
+  const rawHoldings = (investData.holdings || []).filter(h => !h.deleted);
+  
+  const holdings = [...rawHoldings].sort((a, b) => {
+     if (sortBy === "value") {
+        return calcHoldingValue(b) - calcHoldingValue(a);
+     } else if (sortBy === "name") {
+        return a.name.localeCompare(b.name);
+     } else {
+        return new Date(b.startDate || 0) - new Date(a.startDate || 0);
+     }
+  });
 
   return (
     <div className="page-enter" style={{ padding: "12px 12px 100px", display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ color: C.sub, fontSize: 13, fontWeight: 600 }}>{holdings.length} holdings</div>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "4px 8px", fontSize: 11, fontWeight: 600, outline: "none" }}>
+           <option value="value">Sort by Value</option>
+           <option value="name">Sort by Name</option>
+           <option value="date">Sort by Date</option>
+        </select>
       </div>
       {holdings.length === 0 ? (
         <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: 40, textAlign: "center", boxShadow: C.shadow }}>
@@ -32,8 +50,23 @@ export const HoldingsPage = ({ investData, theme, onEditHolding, onDeleteHolding
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>{h.name}</div>
-                <div style={{ color: C.sub, fontSize: 11, fontWeight: 600, marginTop: 2 }}>
-                  {at.label} • {h.principal ? fmtAmt(h.principal) : "0"}
+                <div style={{ color: C.sub, fontSize: 11, fontWeight: 600, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                  {at.label}
+                  <span style={{color: C.borderLight}}>•</span>
+                  {(() => {
+                    const val = calcHoldingValue(h);
+                    const gain = val - (h.principal || 0);
+                    return (
+                      <span style={{ display: "flex", gap: 6 }}>
+                        <span style={{color: C.text, fontWeight: 700}}>{fmtAmt(val)}</span>
+                        {gain !== 0 && (
+                          <span style={{color: gain > 0 ? C.income : C.expense}}>
+                             {gain > 0 ? "+" : ""}{fmtAmt(gain)}
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>

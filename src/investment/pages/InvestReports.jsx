@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { fmtAmt, fmtDate } from "../../utils/format.js";
 import { ASSET_TYPES } from "../constants/assetTypes.js";
+import { calcHoldingValue } from "../utils/valuation.js";
 
 export const InvestReportsPage = ({ investData, theme }) => {
   const C = theme;
@@ -9,7 +10,7 @@ export const InvestReportsPage = ({ investData, theme }) => {
   const activeTxs = useMemo(() => 
     (investData?.transactions || [])
       .filter(t => !t.deleted)
-      .sort((a,b) => b.date.localeCompare(a.date)), 
+      .sort((a,b) => (b.date || "").localeCompare(a.date || "")), 
   [investData]);
 
   const stats = useMemo(() => {
@@ -17,13 +18,7 @@ export const InvestReportsPage = ({ investData, theme }) => {
     let currentVal = 0;
     activeHoldings.forEach(h => {
       principal += h.principal || 0;
-      if (h.qty !== undefined && h.currentPrice !== undefined) {
-        currentVal += h.qty * h.currentPrice;
-      } else if (h.currentPrice !== undefined) {
-        currentVal += h.currentPrice;
-      } else {
-        currentVal += h.principal;
-      }
+      currentVal += calcHoldingValue(h);
     });
     const profit = currentVal - principal;
     const roi = principal > 0 ? (profit / principal) * 100 : 0;
@@ -90,7 +85,7 @@ export const InvestReportsPage = ({ investData, theme }) => {
                       {holding?.name || tx.description || "Unassigned Investment"}
                     </div>
                     <div style={{ color: C.sub, fontSize: 10, fontWeight: 600, textTransform: "uppercase" }}>
-                      {tx.type} • {fmtDate(tx.date)}
+                      {tx.type} • {fmtDate(tx.date || "")}
                     </div>
                   </div>
                 </div>

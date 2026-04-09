@@ -26,6 +26,7 @@ export const RDForm = ({ open, init, onClose, onSave, theme }) => {
       setStartDate(init.startDate || todayISO());
       setMaturityDate(init.maturityDate || "");
       setDayOfMonth(init.dayOfMonth || "1");
+      setTenureMonths(init.tenureMonths || "");
     } else {
       setBank("");
       setName("");
@@ -61,6 +62,7 @@ export const RDForm = ({ open, init, onClose, onSave, theme }) => {
       startDate,
       maturityDate,
       dayOfMonth: parseInt(dayOfMonth, 10),
+      tenureMonths: parseInt(tenureMonths, 10) || 0,
       createdAt: init?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       deleted: false,

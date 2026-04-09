@@ -26,6 +26,7 @@ export const FDForm = ({ open, init, onClose, onSave, theme }) => {
       setInterestRate(init.interestRate || "");
       setStartDate(init.startDate || todayISO());
       setMaturityDate(init.maturityDate || "");
+      setTenureMonths(init.tenureMonths || "");
       setCompoundingFreq(init.compoundingFreq || "quarterly");
       setInterestPayout(init.interestPayout || "cumulative");
     } else {
@@ -63,6 +64,7 @@ export const FDForm = ({ open, init, onClose, onSave, theme }) => {
       interestRate: parseFloat(interestRate),
       startDate,
       maturityDate,
+      tenureMonths: parseInt(tenureMonths, 10) || 0,
       compoundingFreq,
       interestPayout,
       createdAt: init?.createdAt || new Date().toISOString(),

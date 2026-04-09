@@ -15,7 +15,11 @@ async function resilientFetch(targetUrl) {
     try {
       const res = await fetch(proxyUrl);
       if (res.ok) {
-        return await res.json();
+        const json = await res.json();
+        if (json.chart?.result || json.quotes) {
+          return json;
+        }
+        throw new Error("Invalid JSON structure from proxy");
       }
     } catch(err) {
       console.warn("Proxy failed:", proxyUrl);

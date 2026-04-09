@@ -502,6 +502,21 @@ export default function App() {
         else next = [sanitized, ...next];
 
         // ── Investment Sync Logic ──────────────────────────────────────────
+        if (sanitized.category !== "c11") {
+          setInvestData(prevInvest => {
+            const hasTx = prevInvest.transactions.some(itx => itx.expenseTxId === sanitized.id && !itx.deleted);
+            if (hasTx) {
+              return {
+                ...prevInvest,
+                transactions: prevInvest.transactions.map(itx => 
+                  itx.expenseTxId === sanitized.id ? { ...itx, deleted: true, updatedAt: now } : itx
+                )
+              };
+            }
+            return prevInvest;
+          });
+        }
+        
         // If category is "Investment" (c11), sync to investData
         if (sanitized.category === "c11" && !sanitized.deleted) {
           setInvestData(prevInvest => {
@@ -1025,12 +1040,12 @@ export default function App() {
           onOpenInvestments: () => setAppMode("investment"),
           onShowBackup: () => setShowBackup(true),
           onExportBackup: () => {
-            const data = { transactions, categories, tags, accounts, budgets, rules, recurring };
+            const data = { transactions, categories, tags, accounts, budgets, rules, recurring, investData };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `Expense_Backup_${new Date().toISOString().split("T")[0]}.json`;
+            a.download = `Portfolio_Backup_${new Date().toISOString().split("T")[0]}.json`;
             a.click();
             notify("Backup Downloaded");
           },
@@ -1051,6 +1066,7 @@ export default function App() {
                   if (data.budgets) setBudgets(data.budgets);
                   if (data.rules) setRules(data.rules);
                   if (data.recurring) setRecurring(data.recurring);
+                  if (data.investData) setInvestData(data.investData);
                   notify("Import Successful");
                 } catch (err) { notify("Invalid file", "error"); }
               };
@@ -1059,8 +1075,9 @@ export default function App() {
             input.click();
           },
           onClearData: () => {
-            if (window.confirm("CLEAR EVERYTHING?")) {
+            if (window.confirm("CLEAR EVERYTHING? (Including Investments)")) {
               setTransactions([]); setAccounts([]); setBudgets([]); setRules([]);
+              setInvestData({ holdings: [], transactions: [], prefs: {}, meta: { version: 1 } });
               notify("Data Cleared");
             }
           },

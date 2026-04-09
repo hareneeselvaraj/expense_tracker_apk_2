@@ -46,10 +46,15 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
     }
   }, [init, open]);
 
-  // Re-fetch when purity changes and we already have live data
+  // Re-calculate when purity changes and we already have live data
   useEffect(() => {
-    if (liveGold && !manualMode) {
-      fetchPrice();
+    if (liveGold && !manualMode && liveGold.pricePerGram24k) {
+      const PURITY_MAP = { "24k": 0.999, "22k": 0.916, "18k": 0.750 };
+      const mult = PURITY_MAP[purity] || 1;
+      setLiveGold({
+        ...liveGold,
+        pricePerGram: Math.round(liveGold.pricePerGram24k * mult)
+      });
     }
   }, [purity]); // eslint-disable-line react-hooks/exhaustive-deps
 

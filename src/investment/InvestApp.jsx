@@ -35,6 +35,11 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
   const handleSaveHolding = (holding, initialTx) => {
     const isNew = !investData.holdings.some(h => h.id === holding.id);
     
+    if (isNew && holding.symbol && investData.holdings.some(h => !h.deleted && h.symbol === holding.symbol && h.type === holding.type)) {
+       alert(`You already have an active holding for ${holding.symbol}. Please edit the existing one instead to update your position.`);
+       return;
+    }
+    
     setInvestData(prev => {
       const newData = { ...prev };
       
@@ -54,9 +59,11 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
 
   const handleDeleteHolding = (holdingId) => {
     if (window.confirm("Are you sure you want to delete this holding?")) {
+      const now = new Date().toISOString();
       setInvestData(prev => ({
         ...prev,
-        holdings: prev.holdings.map(h => h.id === holdingId ? { ...h, deleted: true, updatedAt: new Date().toISOString() } : h)
+        holdings: prev.holdings.map(h => h.id === holdingId ? { ...h, deleted: true, updatedAt: now } : h),
+        transactions: prev.transactions.map(t => t.holdingId === holdingId ? { ...t, deleted: true, updatedAt: now } : t)
       }));
     }
   };

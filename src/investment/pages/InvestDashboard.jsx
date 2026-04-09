@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { fmtAmt } from "../../utils/format.js";
 import { ASSET_TYPES } from "../constants/assetTypes.js";
+import { calcHoldingValue } from "../utils/valuation.js";
 
 function calcInvestMetrics(investData) {
   const holdings = (investData?.holdings || []).filter(h => !h.deleted);
@@ -19,13 +20,7 @@ function calcInvestMetrics(investData) {
 
   holdings.forEach(h => {
     const princ = h.principal || 0;
-    
-    let val = princ; // default to principal fallback
-    if (h.qty !== undefined && h.currentPrice !== undefined) {
-      val = h.qty * h.currentPrice;
-    } else if (h.currentPrice !== undefined) {
-      val = h.currentPrice;
-    }
+    const val = calcHoldingValue(h);
 
     totalPrincipal += princ;
     totalValue += val;
@@ -61,11 +56,26 @@ export const InvestDashboard = ({ investData, theme }) => {
         border: `1px solid ${C.primary}33`, borderRadius: 24, padding: 24,
         boxShadow: C.shadow, position: "relative", overflow: "hidden"
       }}>
-        <div style={{ color: C.sub, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>
-          Total Net Worth
-        </div>
-        <div style={{ color: C.text, fontSize: 36, fontWeight: 800, letterSpacing: "-.03em" }}>
-          {fmtAmt(mx.totalValue)}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <div style={{ color: C.sub, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 4 }}>
+              Total Net Worth
+            </div>
+            <div style={{ color: C.text, fontSize: 36, fontWeight: 800, letterSpacing: "-.03em" }}>
+              {fmtAmt(mx.totalValue)}
+            </div>
+          </div>
+          <button 
+             onClick={() => {
+                const symbols = (investData?.holdings || []).map(h => h.symbol).filter(Boolean);
+                symbols.forEach(s => localStorage.removeItem(`price_cache_${s}`));
+                localStorage.removeItem(`gold_price_cache`);
+                window.location.reload();
+             }}
+             style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "6px 12px", fontSize: 10, color: C.text, fontWeight: 700, cursor: "pointer", boxShadow: C.shadow }}
+          >
+            ↻ Refresh Prices
+          </button>
         </div>
         
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 16 }}>
