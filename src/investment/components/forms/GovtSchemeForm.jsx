@@ -64,7 +64,7 @@ export const GovtSchemeForm = ({ open, init, type, onClose, onSave, theme }) => 
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={init ? `Edit ${shortName}` : `Add ${title}`} theme={C}>
+    <Modal maxWidth={420} open={open} onClose={onClose} title={init ? `Edit ${shortName}` : `Add ${title}`} theme={C}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
           <FLabel theme={C}>Custom Name (Optional)</FLabel>

@@ -1,6 +1,7 @@
 import React from "react";
+import { Ico } from "../../components/ui/Ico.jsx";
 
-export const InvestHeader = ({ theme }) => {
+export const InvestHeader = ({ theme, onOpenSettings }) => {
   const C = theme;
   return (
     <div style={{
@@ -16,6 +17,18 @@ export const InvestHeader = ({ theme }) => {
           WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
         }}>Investments</span>
       </div>
+      {onOpenSettings && (
+        <button 
+          onClick={onOpenSettings}
+          style={{
+            background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column",
+            alignItems: "center", gap: 2, color: C.sub, padding: "4px 8px"
+          }}
+        >
+          <Ico n="settings" sz={20} c={C.sub} />
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "-0.01em" }}>Settings</span>
+        </button>
+      )}
     </div>
   );
 };

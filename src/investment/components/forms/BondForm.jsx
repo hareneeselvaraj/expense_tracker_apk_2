@@ -15,6 +15,7 @@ export const BondForm = ({ open, init, onClose, onSave, theme }) => {
   const [couponRate, setCouponRate] = useState("");
   const [date, setDate] = useState(todayISO());
   const [maturityDate, setMaturityDate] = useState("");
+  const [couponFrequency, setCouponFrequency] = useState("annual");
   
   useEffect(() => {
     if (init) {
@@ -25,6 +26,7 @@ export const BondForm = ({ open, init, onClose, onSave, theme }) => {
       setCouponRate(init.couponRate || "");
       setDate(init.startDate || todayISO());
       setMaturityDate(init.maturityDate || "");
+      setCouponFrequency(init.couponFrequency || "annual");
     } else {
       setIssuer("");
       setName("");
@@ -33,6 +35,7 @@ export const BondForm = ({ open, init, onClose, onSave, theme }) => {
       setCouponRate("");
       setDate(todayISO());
       setMaturityDate("");
+      setCouponFrequency("annual");
     }
   }, [init, open]);
 
@@ -51,6 +54,7 @@ export const BondForm = ({ open, init, onClose, onSave, theme }) => {
       couponRate: parseFloat(couponRate),
       startDate: date,
       maturityDate,
+      couponFrequency,
       createdAt: init?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       deleted: false,
@@ -74,7 +78,7 @@ export const BondForm = ({ open, init, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={init ? "Edit Bond Holding" : "Add Bond"} theme={C}>
+    <Modal maxWidth={420} open={open} onClose={onClose} title={init ? "Edit Bond Holding" : "Add Bond"} theme={C}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
           <FLabel theme={C}>Issuer Name</FLabel>
@@ -110,6 +114,15 @@ export const BondForm = ({ open, init, onClose, onSave, theme }) => {
              <FLabel theme={C}>Maturity Date</FLabel>
              <FInput theme={C} type="date" value={maturityDate} onChange={e => setMaturityDate(e.target.value)} />
           </div>
+        </div>
+
+        <div>
+           <FLabel theme={C}>Coupon Payouts</FLabel>
+           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+             {["annual", "semi-annual", "quarterly"].map(fq => (
+               <button key={fq} onClick={() => setCouponFrequency(fq)} style={{ flex: 1, padding: 8, background: couponFrequency === fq ? C.primary : "transparent", color: couponFrequency === fq ? "#fff" : C.sub, border: `1px solid ${couponFrequency === fq ? C.primary : C.borderLight}`, borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer", textTransform: "capitalize" }}>{fq}</button>
+             ))}
+           </div>
         </div>
 
         <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 8 }}>

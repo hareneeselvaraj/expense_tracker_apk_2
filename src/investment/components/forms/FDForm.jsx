@@ -90,7 +90,7 @@ export const FDForm = ({ open, init, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={init ? "Edit Fixed Deposit" : "Add Fixed Deposit"} theme={C}>
+    <Modal maxWidth={420} open={open} onClose={onClose} title={init ? "Edit Fixed Deposit" : "Add Fixed Deposit"} theme={C}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
           <FLabel theme={C}>Bank Name</FLabel>

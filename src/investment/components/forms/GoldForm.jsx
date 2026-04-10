@@ -124,7 +124,7 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={init ? "Edit Gold Holding" : "Add Physical Gold"} theme={C}>
+    <Modal maxWidth={420} open={open} onClose={onClose} title={init ? "Edit Gold Holding" : "Add Physical Gold"} theme={C}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
           <FLabel theme={C}>Item Name / Jeweller</FLabel>

@@ -65,7 +65,7 @@ export const NPSForm = ({ open, init, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={init ? "Edit NPS Holding" : "Add National Pension System"} theme={C}>
+    <Modal maxWidth={420} open={open} onClose={onClose} title={init ? "Edit NPS Holding" : "Add National Pension System"} theme={C}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
           <FLabel theme={C}>Custom Name (Optional)</FLabel>

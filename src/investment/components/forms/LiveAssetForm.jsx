@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Modal } from "../../../components/ui/Modal.jsx";
 import { FInput, FLabel } from "../../../components/ui/FInput.jsx";
 import { Btn } from "../../../components/ui/Btn.jsx";
 import { uid } from "../../../utils/id.js";
-import { todayISO } from "../../../utils/format.js";
+import { todayISO, fmtAmt } from "../../../utils/format.js";
 import { getLivePriceSmart } from "../../services/priceEngine.js";
 
 // Form for Stock and Mutual Fund (Assets requiring live pricing)
@@ -16,6 +16,10 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
   const [purchasePrice, setPurchasePrice] = useState("");
   const [date, setDate] = useState(todayISO());
   
+  // SIP details (MF mostly)
+  const [sipAmount, setSipAmount] = useState("");
+  const [sipDay, setSipDay] = useState("");
+  
   // Live Price State
   const [livePrice, setLivePrice] = useState(null);
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
@@ -25,23 +29,36 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
 
   const isStock = type === "stock";
 
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, [open]);
+
+  const userTouchedRef = useRef(false);
+
   useEffect(() => {
     if (init && open) {
+      userTouchedRef.current = false;
       setSymbol(init.symbol || "");
       setName(init.name || "");
       setQty(init.qty || "");
       setPurchasePrice(init.purchasePrice || "");
       setDate(init.startDate || todayISO());
+      setSipAmount(init.sipAmount || "");
+      setSipDay(init.sipDay || "");
       
+      const isManual = init.priceSource === "manual";
       if (init.currentPrice) {
-        setManualPriceMode(true);
+        setManualPriceMode(isManual);
         setManualPrice(init.currentPrice.toString());
       }
       
-      // Auto-refresh live price in background
-      if (init.symbol) {
-        getLivePriceSmart(init.symbol).then(p => {
-          if (p) {
+      // Auto-refresh live price in background if it wasn't a manual override
+      if (init.symbol && !isManual) {
+        getLivePriceSmart(init.symbol, { force: true }).then(p => {
+          if (!mounted.current) return;
+          if (p && !userTouchedRef.current) {
             setLivePrice(p);
             setManualPriceMode(false);
             setManualPrice("");
@@ -54,6 +71,8 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
       setQty("");
       setPurchasePrice("");
       setDate(todayISO());
+      setSipAmount("");
+      setSipDay("");
       setLivePrice(null);
       setManualPriceMode(false);
       setManualPrice("");
@@ -70,6 +89,7 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
     setLivePrice(null);
     try {
       const price = await getLivePriceSmart(clean, { force: true });
+      if (!mounted.current) return;
       if (price) {
         setLivePrice(price);
         setManualPriceMode(false);
@@ -106,6 +126,9 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
       principal: totalCost,
       currentPrice: parseFloat(currentPrice),
       startDate: date,
+      priceSource: manualPriceMode ? "manual" : "live",
+      sipAmount: parseFloat(sipAmount) || 0,
+      sipDay: parseInt(sipDay, 10) || 0,
       createdAt: init?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       deleted: false,
@@ -131,7 +154,7 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={init ? `Edit ${isStock ? "Stock" : "Mutual Fund"}` : `Add ${isStock ? "Stock" : "Mutual Fund"}`} theme={C}>
+    <Modal maxWidth={420} open={open} onClose={onClose} title={init ? `Edit ${isStock ? "Stock" : "Mutual Fund"}` : `Add ${isStock ? "Stock" : "Mutual Fund"}`} theme={C}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
           <FLabel theme={C}>{isStock ? "Stock Ticker (e.g. RELIANCE.NS)" : "MF Name or ISIN (e.g. INF846K01EW2)"}</FLabel>
@@ -153,7 +176,7 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
           <div style={{ background: C.primary + "18", border: `1px solid ${C.primary}33`, borderRadius: 12, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 11, color: C.sub, fontWeight: 700 }}>VERIFIED LIVE PRICE</div>
-              <div style={{ fontSize: 16, color: C.text, fontWeight: 800 }}>₹{livePrice}</div>
+              <div style={{ fontSize: 16, color: C.text, fontWeight: 800 }}>{fmtAmt(livePrice)}</div>
             </div>
             <button onClick={() => setManualPriceMode(true)} style={{ background: "transparent", border: "none", color: C.primary, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Edit Manually</button>
           </div>
@@ -163,9 +186,9 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <FLabel theme={C}>Current Price (₹)</FLabel>
-              {livePrice && <button onClick={() => setManualPriceMode(false)} style={{ background: "none", border: "none", color: C.primary, fontSize: 10, cursor: "pointer" }}>Use Live Price ({livePrice})</button>}
+              {livePrice && <button onClick={() => setManualPriceMode(false)} style={{ background: "none", border: "none", color: C.primary, fontSize: 10, cursor: "pointer" }}>Use Live Price ({fmtAmt(livePrice)})</button>}
             </div>
-            <FInput theme={C} type="number" value={manualPrice} onChange={e => setManualPrice(e.target.value)} placeholder="Current market price" />
+            <FInput theme={C} type="number" value={manualPrice} onChange={e => { userTouchedRef.current = true; setManualPrice(e.target.value); }} placeholder="Current market price" />
           </div>
         )}
         
@@ -184,6 +207,20 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
            <FLabel theme={C}>Purchase Date</FLabel>
            <FInput theme={C} type="date" value={date} onChange={e => setDate(e.target.value)} />
         </div>
+
+        {!isStock && (
+          <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.borderLight}`, padding: 12 }}>
+             <FLabel theme={C}>SIP Settings (Optional)</FLabel>
+             <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+               <div style={{ flex: 1 }}>
+                 <FInput theme={C} type="number" value={sipAmount} onChange={e => setSipAmount(e.target.value)} placeholder="SIP Amount (₹)" />
+               </div>
+               <div style={{ width: 100 }}>
+                 <FInput theme={C} type="number" value={sipDay} onChange={e => setSipDay(e.target.value)} placeholder="Day (1-31)" />
+               </div>
+             </div>
+          </div>
+        )}
 
         {qty && purchasePrice && (
           <div style={{ fontSize: 12, color: C.sub, textAlign: "right" }}>

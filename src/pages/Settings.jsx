@@ -50,38 +50,10 @@ export default function SettingsPage({
 
   return (
     <div className="page-enter" style={{padding:"20px 20px 100px 20px",display:"flex",flexDirection:"column",gap:24}}>
-      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-         <h1 style={{fontSize:24,fontWeight:800,color:C.text,margin:0,letterSpacing:"-.02em"}}>Settings</h1>
-         <div style={{background:C.input, color:C.sub, padding:"6px 14px", borderRadius:12, fontSize:12, fontWeight:700, border:`1px solid ${C.borderLight}`}}>v2.2.0</div>
-      </div>
 
       <div style={{display:"flex", flexDirection:"column", gap:16}}>
 
-        {/* Investment Tracker Card */}
-        <div style={{
-          background: `linear-gradient(135deg, ${C.primary}20, ${(C.secondary || C.primary)}20)`,
-          border: `1px solid ${C.primary}40`,
-          borderRadius: 32, padding: 24,
-          display: "flex", flexDirection: "column", gap: 16,
-          boxShadow: C.shadow
-        }}>
-          <div style={{display: "flex", alignItems: "center", gap: 12}}>
-            <div style={{fontSize: 32}}>💎</div>
-            <div>
-              <div style={{fontSize: 18, fontWeight: 800, color: C.text}}>Investments</div>
-              <div style={{fontSize: 12, color: C.sub, marginTop: 2, display: "flex", alignItems: "center", gap: 6}}>
-                {portfolioValue > 0 ? (
-                   <span style={{ color: C.primary, fontWeight: 700 }}>Value: ₹{portfolioValue.toLocaleString()}</span>
-                ) : (
-                   <span>Track stocks, MFs, gold & more</span>
-                )}
-              </div>
-            </div>
-          </div>
-          <Btn theme={C} v="primary" full icon="arrowRight" onClick={onOpenInvestments}>
-            Open Investment Tracker
-          </Btn>
-        </div>
+        {/* Investment Tracker Card moved down */}
 
         <div style={{background:C.surface, borderRadius:32, padding:24, display:"flex", flexDirection:"column", gap:20, border:`1px solid ${C.borderLight}`, boxShadow:C.shadow}}>
            <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em"}}>Data Management</div>
@@ -204,6 +176,32 @@ export default function SettingsPage({
         <div style={{background:C.surface, borderRadius:32, padding:24, display:"flex", flexDirection:"column", gap:20, border:`1px solid ${C.borderLight}`, boxShadow:C.shadow}}>
            <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em"}}>Account</div>
            <Btn theme={C} v="ghost" full icon="logOut" onClick={onLogout}>Sign Out</Btn>
+        </div>
+
+        {/* Investment Tracker Card */}
+        <div style={{
+          background: `linear-gradient(135deg, ${C.primary}20, ${(C.secondary || C.primary)}20)`,
+          border: `1px solid ${C.primary}40`,
+          borderRadius: 32, padding: 24,
+          display: "flex", flexDirection: "column", gap: 16,
+          boxShadow: C.shadow
+        }}>
+          <div style={{display: "flex", alignItems: "center", gap: 12}}>
+            <div style={{fontSize: 32}}>💎</div>
+            <div>
+              <div style={{fontSize: 18, fontWeight: 800, color: C.text}}>Investments</div>
+              <div style={{fontSize: 12, color: C.sub, marginTop: 2, display: "flex", alignItems: "center", gap: 6}}>
+                {portfolioValue > 0 ? (
+                   <span style={{ color: C.primary, fontWeight: 700 }}>Value: ₹{portfolioValue.toLocaleString()}</span>
+                ) : (
+                   <span>Track stocks, MFs, gold & more</span>
+                )}
+              </div>
+            </div>
+          </div>
+          <Btn theme={C} v="primary" full icon="arrowRight" onClick={onOpenInvestments}>
+            Open Investment Tracker
+          </Btn>
         </div>
 
         <div style={{background:C.surface, borderRadius:32, padding:32, textAlign:"center", position:"relative", border:`1px solid ${C.borderLight}`, boxShadow:C.shadow}}>

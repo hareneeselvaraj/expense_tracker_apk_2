@@ -251,8 +251,23 @@ export default function App() {
       // Load investment data + app mode
       const savedMode = await getAppMode();
       setAppMode(savedMode);
-      const savedInvest = await getInvestData();
-      setInvestData(savedInvest);
+      const savedInvest = await getInvestData() || {};
+      
+      setInvestData(prev => ({
+        ...savedInvest,
+        holdings: savedInvest.holdings || [],
+        transactions: savedInvest.transactions || [],
+        goals: savedInvest.goals || [],
+        prefs: { 
+          defaultExchange: "NS", 
+          displayCurrency: "INR", 
+          xirrAssumption: 12,
+          refreshMode: "manual",
+          targetAllocation: { equity: 60, debt: 30, gold: 10, cash: 0 },
+          ...savedInvest.prefs 
+        },
+        meta: { version: 2 }
+      }));
 
       setReady(true);
     };
@@ -427,11 +442,17 @@ export default function App() {
   const [gsiReady, setGsiReady] = useState(!!window.google);
 
   // Poll for Google Sign-In SDK to load (async defer script)
+  const [gsiError, setGsiError] = useState(false);
+
   useEffect(() => {
     if (gsiReady) return;
+    const startTime = Date.now();
     const interval = setInterval(() => {
       if (window.google) {
         setGsiReady(true);
+        clearInterval(interval);
+      } else if (Date.now() - startTime > 4000) {
+        setGsiError(true);
         clearInterval(interval);
       }
     }, 200);
@@ -851,7 +872,13 @@ export default function App() {
         <div style={{ fontSize: 60, marginBottom: 20 }}>💰</div>
         <h1 style={{ fontSize: 32, fontWeight: 900, color: C.text }}>Expense tracker</h1>
         <p style={{ color: C.sub, marginBottom: 32 }}>Your private financial command center.</p>
-        <div id="googleBtn"></div>
+        <div id="googleBtn" style={{ minHeight: 44, display: "flex", justifyContent: "center", alignItems: "center" }}>
+          {gsiError && (
+             <div style={{ color: "#ff6b6b", fontSize: 13, background: "#ff6b6b15", padding: "10px 16px", borderRadius: 12, border: "1px solid #ff6b6b40" }}>
+               Google Sign-In script blocked.<br/>Disable tracking protection/ad-blockers to login.
+             </div>
+          )}
+        </div>
         {canInstall && (
           <button
             onClick={install}

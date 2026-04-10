@@ -5,6 +5,7 @@ import { ASSET_TYPES } from "../constants/assetTypes.js";
 import { Ico } from "../../components/ui/Ico.jsx";
 import { fmtAmt } from "../../utils/format.js";
 import { calcHoldingValue } from "../utils/valuation.js";
+import { getLivePriceSmart } from "../services/priceEngine.js";
 
 const OverallCard = ({ overall, theme: C }) => (
   <div style={{
@@ -31,7 +32,7 @@ const OverallCard = ({ overall, theme: C }) => (
        <div>
          <div style={{ color: C.sub, fontSize: 10, fontWeight: 600 }}>Overall P/L</div>
          <div style={{ color: overall.gain >= 0 ? C.income : C.expense, fontSize: 14, fontWeight: 800 }}>
-           {overall.gain > 0 ? "+" : ""}{fmtAmt(overall.gain)} ({overall.gain > 0 ? "+" : ""}{overall.pct.toFixed(2)}%)
+           {overall.gain > 0 ? "+" : ""}{fmtAmt(overall.gain)} ({overall.gain > 0 ? "+" : ""}{overall.pct.toFixed(1)}%)
          </div>
        </div>
     </div>
@@ -87,31 +88,31 @@ const HoldingCard = ({ h, onEdit, onDelete, theme: C }) => {
   return (
     <div style={{
       background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 18,
-      padding: 14, display: "flex", alignItems: "center", gap: 12, boxShadow: C.shadow,
+      padding: "12px 10px", display: "flex", alignItems: "center", gap: 8, boxShadow: C.shadow,
     }}>
-      <div style={{ width: 40, height: 40, borderRadius: 12, background: at.color + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+      <div style={{ width: 36, height: 36, borderRadius: 12, background: at.color + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
         {at.icon}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ color: C.text, fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.name}</div>
-        <div style={{ color: C.sub, fontSize: 11, fontWeight: 600, marginTop: 2 }}>
-          {h.qty ? `${h.qty} units @ ₹${(h.principal/h.qty).toFixed(1)}` : `Invested: ${fmtAmt(h.principal || 0)}`}
+        <div style={{ color: C.text, fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.name}</div>
+        <div style={{ color: C.sub, fontSize: 10, fontWeight: 600, marginTop: 2, whiteSpace: "nowrap" }}>
+          {h.qty && h.principal ? `${h.qty} @ ₹${(h.principal/h.qty).toFixed(2)}` : `Invested: ${fmtAmt(h.principal || 0)}`}
         </div>
       </div>
-      <div style={{ textAlign: "right", marginRight: 8 }}>
-         <div style={{ color: C.text, fontSize: 14, fontWeight: 800 }}>{fmtAmt(val)}</div>
+      <div style={{ textAlign: "right", marginRight: 4, flexShrink: 0 }}>
+         <div style={{ color: C.text, fontSize: 13, fontWeight: 800 }}>{fmtAmt(val)}</div>
          {gain !== 0 && (
-           <div style={{ color: gain > 0 ? C.income : C.expense, fontSize: 11, fontWeight: 700 }}>
+           <div style={{ color: gain > 0 ? C.income : C.expense, fontSize: 10, fontWeight: 700 }}>
              {gain > 0 ? "+" : ""}{fmtAmt(gain)} ({gain > 0 ? "+" : ""}{pct.toFixed(1)}%)
            </div>
          )}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <button onClick={onEdit} style={{ background: C.input, border: "none", width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          <Ico n="edit" sz={14} c={C.text} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
+        <button onClick={onEdit} style={{ background: C.input, border: "none", width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <Ico n="edit" sz={12} c={C.text} />
         </button>
-        <button onClick={onDelete} style={{ background: C.expense + "15", border: "none", width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          <Ico n="trash" sz={14} c={C.expense} />
+        <button onClick={onDelete} style={{ background: C.expense + "15", border: "none", width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <Ico n="trash" sz={12} c={C.expense} />
         </button>
       </div>
     </div>
@@ -129,14 +130,23 @@ const EmptyState = ({ type, theme: C }) => {
   );
 };
 
-export const HoldingsPage = ({ investData, theme, onEditHolding, onDeleteHolding }) => {
+export const HoldingsPage = ({ investData, setInvestData, theme, onEditHolding, onDeleteHolding }) => {
   const C = theme;
   const [activeType, setActiveType] = useState("all"); // "all" | "stock" | "mf" | ...
   const [sortBy, setSortBy] = useState("value");
+  const [searchQuery, setSearchQuery] = useState("");
   
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const all = (investData.holdings || []).filter(h => !h.deleted);
+
+  // Automatically reset active tab if the active type is now empty (NEW-11)
+  React.useEffect(() => {
+    if (activeType !== "all") {
+      const typeCount = all.filter(h => h.type === activeType).length;
+      if (typeCount === 0) setActiveType("all");
+    }
+  }, [all.length, activeType]);
 
   // Group by type once
   const byType = useMemo(() => {
@@ -167,9 +177,12 @@ export const HoldingsPage = ({ investData, theme, onEditHolding, onDeleteHolding
              pct: invested ? ((value - invested) / invested) * 100 : 0 };
   }, [typeSummary]);
 
-  const visibleHoldings = activeType === "all"
-    ? all
-    : (byType[activeType] || []);
+  const visibleHoldings = (activeType === "all" ? all : (byType[activeType] || []))
+    .filter(h => {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return (h.name && h.name.toLowerCase().includes(q)) || (h.symbol && h.symbol.toLowerCase().includes(q));
+    });
 
   const sorted = [...visibleHoldings].sort((a, b) => {
      if (sortBy === "value") {
@@ -199,10 +212,17 @@ export const HoldingsPage = ({ investData, theme, onEditHolding, onDeleteHolding
       {/* OVERALL SUMMARY CARD */}
       <OverallCard overall={overall} theme={C} />
       
-      {/* ACTION ROW */}
-      <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 4px" }}>
-        <button onClick={handleRefreshAll} disabled={isRefreshing} style={{ background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "6px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: C.shadow }}>
-          {isRefreshing ? "⏳ Refreshing..." : "↻ Refresh Prices"}
+      {/* ACTION ROW & SEARCH */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 4px", gap: 8 }}>
+        <input 
+          type="text" 
+          placeholder="Search name or symbol..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ flex: 1, background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "8px 12px", fontSize: 13, outline: "none", width: "100%" }}
+        />
+        <button onClick={handleRefreshAll} disabled={isRefreshing} style={{ background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "8px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: C.shadow, flexShrink: 0 }}>
+          {isRefreshing ? "⏳" : "↻ Refresh"}
         </button>
       </div>
 

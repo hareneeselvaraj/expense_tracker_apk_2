@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Ico } from "./Ico.jsx";
 
-export const Modal = ({open,onClose,title,children,theme}) => {
+export const Modal = ({ open, onClose, title, children, theme, maxWidth = 600 }) => {
   const [active, setActive] = useState(false);
   const [vpHeight, setVpHeight] = useState(window.visualViewport?.height || window.innerHeight);
   const C = theme;
@@ -15,15 +15,27 @@ export const Modal = ({open,onClose,title,children,theme}) => {
     return () => vv.removeEventListener("resize", onResize);
   }, []);
 
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
   useEffect(() => {
     if (!open) return;
     const handleFocus = (e) => {
       if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+        setIsKeyboardOpen(true);
         setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
       }
     };
+    const handleBlur = (e) => {
+      if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+        setIsKeyboardOpen(false);
+      }
+    };
     window.addEventListener("focusin", handleFocus);
-    return () => window.removeEventListener("focusin", handleFocus);
+    window.addEventListener("focusout", handleBlur);
+    return () => {
+      window.removeEventListener("focusin", handleFocus);
+      window.removeEventListener("focusout", handleBlur);
+    };
   }, [open]);
 
   if(!open) return null;
@@ -31,7 +43,7 @@ export const Modal = ({open,onClose,title,children,theme}) => {
   return (
     <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:5000,display:"flex",alignItems:isMobile?"flex-end":"center",justifyContent:"center",transition:"opacity .3s ease",opacity:active?1:0, padding:isMobile?0:20}}>
       <div className="premium-scroll" onClick={e=>e.stopPropagation()} style={{
-        background:C.surface, borderRadius:isMobile?"32px 32px 0 0":"24px", width:"100%", maxWidth:600, maxHeight:isMobile?`${vpHeight * 0.92}px`:"85vh", overflow:"auto",
+        background:C.surface, borderRadius:isMobile?"32px 32px 0 0":"24px", width:"100%", maxWidth, maxHeight:isMobile?`${vpHeight * (isKeyboardOpen ? 0.6 : 0.92)}px`:"85vh", overflow:"auto",
         boxShadow:C.shadow, transform:active?"translateY(0)":"translateY(100%)", transition:"transform .4s cubic-bezier(0.16, 1, 0.3, 1)", scrollPaddingBottom: "120px"
       }}>
         {isMobile && <div style={{width: 40, height: 4, background: C.border, borderRadius: 2, margin: "12px auto 0"}} />}

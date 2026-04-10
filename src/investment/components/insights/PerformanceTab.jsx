@@ -1,9 +1,10 @@
 import React, { useMemo } from "react";
-import { fmtAmt, fmtDate } from "../../utils/format.js";
-import { ASSET_TYPES } from "../constants/assetTypes.js";
-import { calcHoldingValue } from "../utils/valuation.js";
+import { fmtAmt, fmtDate } from "../../../utils/format.js";
+import { ASSET_TYPES } from "../../constants/assetTypes.js";
+import { calcHoldingValue } from "../../utils/valuation.js";
+import { getTopMovers, detectDrift } from "../../utils/performance.js";
 
-export const InvestReportsPage = ({ investData, theme }) => {
+export const PerformanceTab = ({ investData, theme }) => {
   const C = theme;
   
   const activeHoldings = useMemo(() => (investData?.holdings || []).filter(h => !h.deleted), [investData]);
@@ -25,20 +26,24 @@ export const InvestReportsPage = ({ investData, theme }) => {
     return { principal, currentVal, profit, roi };
   }, [activeHoldings]);
 
+  const prefs = investData?.prefs || {};
+  const targetAllocation = prefs.targetAllocation || { equity: 60, debt: 30, gold: 10, cash: 0 };
+  
+  const driftAnalysis = useMemo(() => detectDrift(activeHoldings, targetAllocation), [activeHoldings, targetAllocation]);
+  const movers = useMemo(() => getTopMovers(activeHoldings), [activeHoldings]);
+
   if (activeHoldings.length === 0 && activeTxs.length === 0) {
     return (
-      <div className="page-enter" style={{ padding: "12px 12px 100px", display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: 40, textAlign: "center", boxShadow: C.shadow }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
-          <div style={{ color: C.text, fontSize: 18, fontWeight: 800, marginBottom: 8 }}>No Data Yet</div>
-          <div style={{ color: C.sub, fontSize: 13, lineHeight: 1.5 }}>Add your first investment to see performance reports and transaction history here.</div>
-        </div>
+      <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: 40, textAlign: "center", boxShadow: C.shadow }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
+        <div style={{ color: C.text, fontSize: 18, fontWeight: 800, marginBottom: 8 }}>No Data Yet</div>
+        <div style={{ color: C.sub, fontSize: 13, lineHeight: 1.5 }}>Add your first investment to see performance reports and transaction history here.</div>
       </div>
     );
   }
 
   return (
-    <div className="page-enter" style={{ padding: "12px 12px 100px", display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       
       {/* Performance Card */}
       <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: 20, boxShadow: C.shadow }}>
@@ -57,6 +62,46 @@ export const InvestReportsPage = ({ investData, theme }) => {
                 </div>
              </div>
           </div>
+      </div>
+
+      {/* Allocation Drift Alert */}
+      {driftAnalysis && driftAnalysis.drifts.length > 0 && (
+        <div style={{ background: C.expense + "15", border: `1px solid ${C.expense}44`, borderRadius: 20, padding: 16, display: "flex", gap: 12, alignItems: "flex-start" }}>
+           <div style={{ fontSize: 20 }}>⚖️</div>
+           <div>
+             <div style={{ color: C.expense, fontSize: 13, fontWeight: 800 }}>Rebalance Suggested</div>
+             <div style={{ color: C.sub, fontSize: 12, marginTop: 4, lineHeight: 1.4 }}>
+               Your portfolio has drifted from your target allocation. 
+               {driftAnalysis.drifts.map(d => (
+                 <div key={d.bucket} style={{ marginTop: 4, fontWeight: 600 }}>
+                   • {d.bucket.toUpperCase()} is {d.actual.toFixed(1)}% (Target: {d.target}%)
+                 </div>
+               ))}
+             </div>
+           </div>
+        </div>
+      )}
+
+      {/* Best & Worst Performers */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+         <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 20, padding: 16 }}>
+            <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 12 }}>🚀 Top Performers</div>
+            {movers.best.length ? movers.best.map((m, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 12 }}>
+                 <div style={{ color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{m.symbol || m.name}</div>
+                 <div style={{ color: C.income, fontWeight: 800 }}>+{m.pctGain.toFixed(1)}%</div>
+              </div>
+            )) : <div style={{ color: C.sub, fontSize: 11 }}>No gains yet.</div>}
+         </div>
+         <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 20, padding: 16 }}>
+            <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 12 }}>⚓ Underperformers</div>
+            {movers.worst.length ? movers.worst.map((m, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 12 }}>
+                 <div style={{ color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{m.symbol || m.name}</div>
+                 <div style={{ color: C.expense, fontWeight: 800 }}>{m.pctGain.toFixed(1)}%</div>
+              </div>
+            )) : <div style={{ color: C.sub, fontSize: 11 }}>No losses.</div>}
+         </div>
       </div>
 
       {/* Transaction History Ledger */}

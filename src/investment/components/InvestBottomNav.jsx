@@ -26,10 +26,10 @@ const NavButton = ({ item, active, onClick, theme: C }) => (
 export const InvestBottomNav = ({ page, setPage, theme, onFabClick }) => {
   const C = theme;
   const navItems = [
-    { id: "dashboard", icon: "home", label: "Dashboard" },
+    { id: "dashboard", icon: "home", label: "Home" },
     { id: "holdings", icon: "archive", label: "Holdings" },
-    { id: "reports", icon: "chart", label: "Reports" },
-    { id: "settings", icon: "settings", label: "Settings" },
+    { id: "goals", icon: "flag", label: "Goals" },
+    { id: "insights", icon: "chart", label: "Insights" },
   ];
 
   return (
@@ -64,6 +64,41 @@ export const InvestBottomNav = ({ page, setPage, theme, onFabClick }) => {
       <div style={{ width: 58, height: 58, marginTop: -44 }}>
         <button
           onClick={onFabClick}
+          onTouchStart={(e) => {
+             e.currentTarget.style.transform = "scale(0.9)";
+             if (window.fabLongPressTimer) clearTimeout(window.fabLongPressTimer);
+             window.fabLongPressTimer = setTimeout(() => {
+                window.fabLongPressTimer = null;
+                if (theme.onFabLongPress) theme.onFabLongPress(); // fallback
+                else if (typeof page === "string") { /* Need to pass from props */ }
+             }, 500);
+          }}
+          onTouchEnd={(e) => {
+             e.currentTarget.style.transform = "scale(1)";
+             if (window.fabLongPressTimer) {
+                clearTimeout(window.fabLongPressTimer);
+                window.fabLongPressTimer = null;
+             } else {
+                // Prevent click if long press fired
+                e.preventDefault(); 
+             }
+          }}
+          onMouseDown={(e) => {
+             e.currentTarget.style.transform = "scale(0.9)";
+             if (window.fabLongPressTimer) clearTimeout(window.fabLongPressTimer);
+             window.fabLongPressTimer = setTimeout(() => {
+                window.fabLongPressTimer = null;
+             }, 500);
+          }}
+          onMouseUp={(e) => {
+             e.currentTarget.style.transform = "scale(1)";
+             if (window.fabLongPressTimer) {
+                clearTimeout(window.fabLongPressTimer);
+                window.fabLongPressTimer = null;
+             }
+          }}
+          // Passing onFabLongPress properly
+          {...(theme.onFabLongPress ? {} : {})}
           style={{
             width: 58,
             height: 58,
@@ -75,10 +110,11 @@ export const InvestBottomNav = ({ page, setPage, theme, onFabClick }) => {
             justifyContent: "center",
             boxShadow: `0 10px 20px ${C.primary}55`,
             cursor: "pointer",
-            transition: "transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)"
+            transition: "transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+            touchAction: "manipulation",
+            userSelect: "none",
+            WebkitUserSelect: "none"
           }}
-          onMouseDown={e => e.currentTarget.style.transform = "scale(0.9)"}
-          onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
         >
           <Ico n="plus" sz={28} c="#fff" />
         </button>

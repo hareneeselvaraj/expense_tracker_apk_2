@@ -1,112 +1,82 @@
 // src/investment/services/priceEngine.js
 
 const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+const IS_DEV = import.meta.env.DEV;
 
-const PROXIES = [
-  { name: "codetabs",   build: url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}` },
-  { name: "allorigins", build: url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` },
-  { name: "corsproxy",  build: url => `https://corsproxy.io/?${encodeURIComponent(url)}` },
-  { name: "direct",     build: url => url } // 4th fallback: direct fetch
-];
+// Build the URL for our OWN proxy — Vite in dev, Netlify Function in prod
+function chartUrl(symbol) {
+  return IS_DEV
+    ? `/yahoo/chart/${encodeURIComponent(symbol)}`
+    : `/.netlify/functions/yahoo-proxy?path=chart/${encodeURIComponent(symbol)}`;
+}
 
-async function fetchWithTimeout(url, ms = 7000) {
+function searchUrl(query) {
+  return IS_DEV
+    ? `/yahoo/search?q=${encodeURIComponent(query)}`
+    : `/.netlify/functions/yahoo-proxy?path=search&query=q=${encodeURIComponent(query)}`;
+}
+
+async function fetchWithTimeout(url, ms = 10000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
   try {
     const res = await fetch(url, {
       signal: ctrl.signal,
-      headers: { "Accept": "application/json" }
+      headers: { "Accept": "application/json" },
     });
-    return res;
+    if (!res.ok) {
+      const err = new Error(`HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    return await res.json();
   } finally {
     clearTimeout(t);
   }
 }
 
-async function resilientFetch(targetUrl) {
-  const errors = [];
-  for (const proxy of PROXIES) {
-    try {
-      const res = await fetchWithTimeout(proxy.build(targetUrl));
-      if (!res.ok) { errors.push(`${proxy.name}: HTTP ${res.status}`); continue; }
-      const text = await res.text();
-      let json;
-      try { json = JSON.parse(text); }
-      catch { errors.push(`${proxy.name}: non-JSON`); continue; }
-      if (json.chart?.result || json.quotes) return json;
-      if (json.chart?.error) { errors.push(`yahoo: ${json.chart.error.description}`); continue; }
-      errors.push(`${proxy.name}: unexpected shape`);
-    } catch (err) {
-      errors.push(`${proxy.name}: ${err.name === 'AbortError' ? 'timeout' : err.message}`);
-    }
-  }
-  const e = new Error("All proxies failed");
-  e.details = errors;
-  throw e;
-}
-
-/**
- * Searches Yahoo Finance for a symbol using a name or ISIN.
- * Used when the exact Yahoo ticker is unknown.
- */
 export async function searchYahooSymbol(query) {
   try {
-    const targetUrl = `https://query2.finance.yahoo.com/v1/finance/search?q=${query}`;
-    const data = await resilientFetch(targetUrl);
-    
+    const data = await fetchWithTimeout(searchUrl(query));
     if (data.quotes && data.quotes.length > 0) {
-      // Prioritize NSE/BSE if multiple
       const ind = data.quotes.find(q => q.exchange === "NSI" || q.exchange === "BSE");
       return ind ? ind.symbol : data.quotes[0].symbol;
     }
   } catch (err) {
-    console.warn("Yahoo search failed:", err);
+    console.warn("Yahoo search failed:", err.message);
+    throw err;
   }
   return null;
 }
 
-/**
- * Fetches the live price for a given explicit Yahoo Finance symbol (e.g. RELIANCE.NS)
- */
 export async function fetchLivePrice(symbol, force = false) {
   if (!symbol) return null;
-  
-  // 1. Check local cache
+
   const cacheKey = `price_cache_${symbol}`;
   if (force) localStorage.removeItem(cacheKey);
   const cached = localStorage.getItem(cacheKey);
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
-      if (Date.now() - parsed.timestamp < CACHE_EXPIRY_MS) {
-        return parsed.price;
-      }
-    } catch(e) {}
+      if (Date.now() - parsed.timestamp < CACHE_EXPIRY_MS) return parsed.price;
+    } catch (e) {}
   }
 
-  // 2. Fetch from Yahoo Finance chart endpoint via resilient proxy
   try {
-    const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-    const data = await resilientFetch(targetUrl);
-    
+    const data = await fetchWithTimeout(chartUrl(symbol));
     const result = data.chart?.result?.[0];
-    if (result && result.meta && result.meta.regularMarketPrice) {
+    if (result?.meta?.regularMarketPrice) {
       const price = result.meta.regularMarketPrice;
-      
-      // Save cache
-      localStorage.setItem(cacheKey, JSON.stringify({
-        price,
-        symbol,
-        timestamp: Date.now()
-      }));
-      
+      localStorage.setItem(cacheKey, JSON.stringify({ price, symbol, timestamp: Date.now() }));
       return price;
     }
+    if (data.chart?.error) {
+      console.warn(`Yahoo error for ${symbol}:`, data.chart.error.description);
+    }
   } catch (err) {
-    console.warn(`Live price fetch failed for ${symbol}:`, err);
+    console.warn(`Live price fetch failed for ${symbol}:`, err.message);
+    throw err;
   }
-  
-  // 3. Fallback: return null
   return null;
 }
 
@@ -173,13 +143,11 @@ export async function fetchGoldPricePerGram(purity = "24k") {
 
   try {
     // Fetch gold in USD per troy ounce
-    const goldUrl = `https://query1.finance.yahoo.com/v8/finance/chart/GC=F`;
-    const goldData = await resilientFetch(goldUrl);
+    const goldData = await fetchWithTimeout(chartUrl("GC=F"));
     const goldPriceUSD = goldData?.chart?.result?.[0]?.meta?.regularMarketPrice;
 
     // Fetch USD/INR exchange rate
-    const fxUrl = `https://query1.finance.yahoo.com/v8/finance/chart/USDINR=X`;
-    const fxData = await resilientFetch(fxUrl);
+    const fxData = await fetchWithTimeout(chartUrl("USDINR=X"));
     const usdInr = fxData?.chart?.result?.[0]?.meta?.regularMarketPrice;
 
     if (goldPriceUSD && usdInr) {
@@ -201,7 +169,8 @@ export async function fetchGoldPricePerGram(purity = "24k") {
       };
     }
   } catch (err) {
-    console.warn("Gold price fetch failed:", err);
+    console.warn("Gold price fetch failed:", err.message);
+    throw err;
   }
 
   return null;

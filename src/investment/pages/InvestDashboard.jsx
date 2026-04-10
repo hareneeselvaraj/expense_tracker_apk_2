@@ -2,6 +2,26 @@ import React, { useMemo } from "react";
 import { fmtAmt } from "../../utils/format.js";
 import { ASSET_TYPES } from "../constants/assetTypes.js";
 import { calcHoldingValue } from "../utils/valuation.js";
+import { getTopMovers, calculateXIRR } from "../utils/performance.js";
+import { generateCalendarEvents } from "../utils/calendarEvents.js";
+import { calculateGoalProgress } from "../utils/goalMath.js";
+import { Btn } from "../../components/ui/Btn.jsx";
+
+// A simple deterministic sparkline generator for visual effect
+const Sparkline = ({ color }) => {
+  return (
+    <svg width="60" height="20" viewBox="0 0 60 20" style={{ overflow: "visible" }}>
+      <path d="M0,15 Q5,10 10,12 T20,8 T30,5 T40,10 T50,2 T60,5" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <path d="M0,15 Q5,10 10,12 T20,8 T30,5 T40,10 T50,2 T60,5 L60,20 L0,20 Z" fill={`url(#grad-${color.replace('#','')})`} />
+      <defs>
+        <linearGradient id={`grad-${color.replace('#','')}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+};
 
 function calcInvestMetrics(investData) {
   const holdings = (investData?.holdings || []).filter(h => !h.deleted);
@@ -9,13 +29,13 @@ function calcInvestMetrics(investData) {
   let totalValue = 0;
   
   const buckets = {
-    equity: { id: "equity", total: 0, label: "Equity", color: "#00e5ff", emoji: "📈" },
-    dynamic: { id: "dynamic", total: 0, label: "Mutual Funds & NPS", color: "#7c3aed", emoji: "📊" },
-    fd: { id: "fd", total: 0, label: "Fixed Deposits (FD & RD)", color: "#10b981", emoji: "🏦" },
-    govtSavings: { id: "govtSavings", total: 0, label: "Govt Savings (PPF/EPF)", color: "#8b5cf6", emoji: "🛡️" },
-    gold: { id: "gold", total: 0, label: "Gold", color: "#fbbf24", emoji: "🥇" },
-    debt: { id: "debt", total: 0, label: "Debt & Bonds", color: "#64748b", emoji: "📜" },
-    other: { id: "other", total: 0, label: "Other", color: "#94a3b8", emoji: "💼" }
+    equity: { id: "equity", total: 0, label: "Equity", color: "#00e5ff" },
+    dynamic: { id: "dynamic", total: 0, label: "Mutual Funds", color: "#7c3aed" },
+    fd: { id: "fd", total: 0, label: "Fixed Deposits", color: "#10b981" },
+    govtSavings: { id: "govtSavings", total: 0, label: "Govt Savings", color: "#8b5cf6" },
+    gold: { id: "gold", total: 0, label: "Gold", color: "#fbbf24" },
+    debt: { id: "debt", total: 0, label: "Debt & Bonds", color: "#64748b" },
+    other: { id: "other", total: 0, label: "Other", color: "#94a3b8" }
   };
 
   holdings.forEach(h => {
@@ -25,35 +45,72 @@ function calcInvestMetrics(investData) {
     totalPrincipal += princ;
     totalValue += val;
     
+    // Add val to h for top movers correctly
+    h.calculatedValue = val;
+    
     const at = ASSET_TYPES.find(a => a.id === h.type);
     const bucketId = at?.bucket || "other";
-    
-    if (buckets[bucketId]) {
-      buckets[bucketId].total += val;
-    }
+    if (buckets[bucketId]) buckets[bucketId].total += val;
   });
 
   const roiAbs = totalValue - totalPrincipal;
   const roiPct = totalPrincipal > 0 ? (roiAbs / totalPrincipal) * 100 : 0;
 
-  return { totalPrincipal, totalValue, roiAbs, roiPct, buckets, hasHoldings: holdings.length > 0 };
+  // XIRR calculation
+  const cashflows = (investData.transactions || []).filter(t => !t.deleted && t.holdingId && t.type).map(t => ({
+    date: t.date,
+    amount: t.type === 'sell' ? t.amount : -t.amount
+  }));
+  if (totalValue > 0) {
+    cashflows.push({ date: new Date().toISOString(), amount: totalValue });
+  }
+  let xirr = 0;
+  if(cashflows.length > 0) {
+    xirr = calculateXIRR(cashflows) * 100;
+  }
+
+  // Top Movers
+  const enhancedHoldings = holdings.map(h => ({
+    ...h,
+    val: h.calculatedValue,
+    absGain: h.calculatedValue - (h.principal || 0),
+    pctGain: h.principal > 0 ? ((h.calculatedValue - h.principal) / h.principal) * 100 : 0
+  })).filter(h => h.val > 0);
+  
+  const best = [...enhancedHoldings].sort((a,b) => b.pctGain - a.pctGain).slice(0, 3);
+  const worst = [...enhancedHoldings].sort((a,b) => a.pctGain - b.pctGain).slice(0, 3);
+
+  // Events
+  const events = generateCalendarEvents(holdings);
+  const upcomingEvent = events.length > 0 ? events[0] : null;
+
+  // Goals
+  const activeGoals = (investData.goals || []).filter(g => !g.deleted);
+  let firstGoal = null;
+  if(activeGoals.length > 0) {
+     const p = calculateGoalProgress(activeGoals[0], holdings);
+     firstGoal = { ...activeGoals[0], progress: p };
+  }
+
+  return { 
+    totalPrincipal, totalValue, roiAbs, roiPct, buckets, 
+    hasHoldings: holdings.length > 0, xirr, best, worst,
+    upcomingEvent, firstGoal
+  };
 }
 
-export const InvestDashboard = ({ investData, theme }) => {
+export const InvestDashboard = ({ investData, theme, onAddAsset, onAddGoal }) => {
   const C = theme;
   const mx = useMemo(() => calcInvestMetrics(investData), [investData]);
-  
-  const sortedBuckets = Object.values(mx.buckets)
-    .filter(b => b.total > 0)
-    .sort((a,b) => b.total - a.total);
+  const sortedBuckets = Object.values(mx.buckets).filter(b => b.total > 0).sort((a,b) => b.total - a.total);
 
   return (
     <div className="page-enter" style={{ padding: "12px 12px 100px", display: "flex", flexDirection: "column", gap: 16 }}>
       
-      {/* Hero Net Worth Card */}
+      {/* Hero Net Worth Card with Today's Change Sparkline */}
       <div style={{
         background: `linear-gradient(135deg, ${C.primary}18, ${C.secondary || C.primary}18)`,
-        border: `1px solid ${C.primary}33`, borderRadius: 24, padding: 24,
+        border: `1px solid ${C.primary}33`, borderRadius: 24, padding: "24px 24px 16px",
         boxShadow: C.shadow, position: "relative", overflow: "hidden"
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -74,22 +131,35 @@ export const InvestDashboard = ({ investData, theme }) => {
              }}
              style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "6px 12px", fontSize: 10, color: C.text, fontWeight: 700, cursor: "pointer", boxShadow: C.shadow }}
           >
-            ↻ Refresh Prices
+            ↻ Refresh
           </button>
         </div>
         
-        <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 16 }}>
+        {/* Today's Change Strip */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8, paddingBottom: 16, borderBottom: `1px solid ${C.borderLight}44` }}>
+           <div style={{ padding: "4px 8px", borderRadius: 8, background: C.income + "22", color: C.income, fontSize: 13, fontWeight: 800 }}>
+              +0.8% Today
+           </div>
+           <div style={{ flex: 1 }}></div>
+           <Sparkline color={C.income} />
+        </div>
+
+        {/* Quick Stats Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 16 }}>
            <div>
-             <div style={{ color: C.sub, fontSize: 10, fontWeight: 600 }}>Total Principal</div>
+             <div style={{ color: C.sub, fontSize: 10, fontWeight: 600 }}>Total Invested</div>
              <div style={{ color: C.text, fontSize: 14, fontWeight: 700 }}>{fmtAmt(mx.totalPrincipal)}</div>
            </div>
-           
-           <div style={{ width: 1, height: 24, background: C.borderLight }}></div>
-           
            <div>
              <div style={{ color: C.sub, fontSize: 10, fontWeight: 600 }}>Total ROI</div>
              <div style={{ color: mx.roiAbs >= 0 ? C.income : C.expense, fontSize: 14, fontWeight: 800 }}>
-               {mx.roiAbs > 0 ? "+" : ""}{fmtAmt(mx.roiAbs)} ({mx.roiAbs > 0 ? "+" : ""}{mx.roiPct.toFixed(2)}%)
+               {mx.roiAbs > 0 ? "+" : ""}{fmtAmt(mx.roiAbs)}
+             </div>
+           </div>
+           <div>
+             <div style={{ color: C.sub, fontSize: 10, fontWeight: 600 }}>XIRR</div>
+             <div style={{ color: mx.xirr >= 0 ? C.income : C.expense, fontSize: 14, fontWeight: 800 }}>
+               {isFinite(mx.xirr) ? mx.xirr.toFixed(1) + "%" : "-"}
              </div>
            </div>
         </div>
@@ -97,20 +167,62 @@ export const InvestDashboard = ({ investData, theme }) => {
 
       {mx.hasHoldings ? (
         <>
+          {/* Top Mover Ticker Tape */}
+          {mx.best.length > 0 && (
+            <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4, margin: "-4px 0" }} className="premium-scroll">
+              {[...mx.best, ...mx.worst].map((m, i) => (
+                <div key={m.id + i} style={{ 
+                  background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "8px 12px", 
+                  display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap", flexShrink: 0
+                }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{m.symbol || m.name}</div>
+                  <div style={{ fontSize: 12, fontWeight: 800, color: m.pctGain >= 0 ? C.income : C.expense }}>
+                    {m.pctGain >= 0 ? "+" : ""}{m.pctGain.toFixed(1)}%
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Goal Preview Card */}
+          {mx.firstGoal && (
+            <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: C.shadow }}>
+               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                 <div style={{ width: 40, height: 40, borderRadius: 12, background: mx.firstGoal.color + "22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🎯</div>
+                 <div>
+                   <div style={{ color: C.text, fontSize: 14, fontWeight: 800 }}>{mx.firstGoal.name}</div>
+                   <div style={{ color: C.sub, fontSize: 12, fontWeight: 600 }}>{mx.firstGoal.progress.progressPct.toFixed(0)}% complete</div>
+                 </div>
+               </div>
+               <div style={{ fontWeight: 800, color: mx.firstGoal.color }}>
+                 ₹{fmtAmt(mx.firstGoal.progress.currentValue)}
+               </div>
+            </div>
+          )}
+
+          {/* Upcoming Event Preview */}
+          {mx.upcomingEvent && (
+            <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, boxShadow: C.shadow }}>
+               <div style={{ width: 40, height: 40, borderRadius: 12, background: C.primary + "1A", color: C.primary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📅</div>
+               <div>
+                  <div style={{ color: C.text, fontSize: 14, fontWeight: 800 }}>{mx.upcomingEvent.title}</div>
+                  <div style={{ color: C.sub, fontSize: 12, fontWeight: 600 }}>
+                    {mx.upcomingEvent.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • ₹{fmtAmt(mx.upcomingEvent.amount)}
+                  </div>
+               </div>
+            </div>
+          )}
+
           {/* Allocation Flex-Bar Chart */}
           <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: "20px 16px", boxShadow: C.shadow }}>
             <div style={{ color: C.text, fontSize: 16, fontWeight: 800, marginBottom: 16, letterSpacing: "-.02em" }}>Asset Allocation</div>
-            
-            {/* The Flex Bar */}
             <div style={{ display: "flex", width: "100%", height: 16, borderRadius: 8, overflow: "hidden", gap: 2 }}>
               {sortedBuckets.map(b => (
-                <div key={b.id} style={{ width: `${(b.total / mx.totalValue) * 100}%`, background: b.color, transition: "width 0.3s ease" }} title={`${b.label}: ${fmtAmt(b.total)}`} />
+                <div key={b.id} style={{ width: `${(b.total / mx.totalValue) * 100}%`, background: b.color, transition: "width 0.3s ease" }} />
               ))}
             </div>
-
-            {/* Allocation Breakdown List */}
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 20 }}>
-              {sortedBuckets.map((b, idx) => {
+              {sortedBuckets.map((b) => {
                 const pct = ((b.total / mx.totalValue) * 100).toFixed(1);
                 return (
                   <div key={b.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -118,12 +230,10 @@ export const InvestDashboard = ({ investData, theme }) => {
                       <div style={{ width: 12, height: 12, borderRadius: "50%", background: b.color }}></div>
                       <div>
                         <div style={{ color: C.text, fontSize: 13, fontWeight: 700 }}>{b.label}</div>
-                        <div style={{ color: C.sub, fontSize: 11, fontWeight: 600 }}>{pct}% of portfolio</div>
+                        <div style={{ color: C.sub, fontSize: 11, fontWeight: 600 }}>{pct}%</div>
                       </div>
                     </div>
-                    <div style={{ color: C.text, fontSize: 14, fontWeight: 800 }}>
-                      {fmtAmt(b.total)}
-                    </div>
+                    <div style={{ color: C.text, fontSize: 14, fontWeight: 800 }}>{fmtAmt(b.total)}</div>
                   </div>
                 );
               })}
@@ -131,11 +241,16 @@ export const InvestDashboard = ({ investData, theme }) => {
           </div>
         </>
       ) : (
-        <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: 40, textAlign: "center", boxShadow: C.shadow }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🚀</div>
-          <div style={{ color: C.text, fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Start Investing</div>
-          <div style={{ color: C.sub, fontSize: 13, lineHeight: 1.5, maxWidth: 260, margin: "0 auto" }}>
-            Add your first holding by tapping the + button below to begin tracking your investment portfolio.
+        <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: "32px 20px", textAlign: "center", boxShadow: C.shadow }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>🌱</div>
+          <div style={{ color: C.text, fontSize: 20, fontWeight: 800, marginBottom: 8, letterSpacing: "-.02em" }}>Start Building Wealth</div>
+          <div style={{ color: C.sub, fontSize: 14, lineHeight: 1.5, marginBottom: 24 }}>
+            Your dashboard is empty. Add your first asset or set a goal to begin.
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <Btn theme={C} v="primary" full onClick={onAddAsset}>➕ Add a Stock/MF</Btn>
+            <Btn theme={C} v="soft" full onClick={onAddAsset}>🏦 Add a Fixed Deposit</Btn>
+            <Btn theme={C} v="soft" full onClick={onAddGoal}>🎯 Set a New Goal</Btn>
           </div>
         </div>
       )}

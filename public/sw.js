@@ -1,4 +1,4 @@
-const CACHE_NAME = "expense-tracker-v4";
+const CACHE_NAME = "expense-tracker-v5";
 const PRECACHE = [
   "/",
   "/index.html",
@@ -26,14 +26,17 @@ self.addEventListener("activate", e => {
 // Fetch: network-first for navigation/HTML, cache-first for static assets
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
-  
-  // Never cache Google API calls or sign-in scripts
-  if (url.hostname.includes("googleapis.com") || url.hostname.includes("google.com") || url.hostname.includes("gstatic.com")) {
-    return;
-  }
-  
-  // Network-first for navigation requests (HTML pages)
-  // This ensures users always get the latest app version
+
+  // ONLY handle same-origin GET requests.
+  // Cross-origin (Yahoo, proxies, Google APIs, CDNs) → let the browser handle it natively.
+  if (url.origin !== self.location.origin) return;
+  if (e.request.method !== "GET") return;
+
+  // Never cache our own function endpoints
+  if (url.pathname.startsWith("/.netlify/functions/")) return;
+  if (url.pathname.startsWith("/yahoo/")) return; // Vite dev proxy path
+
+  // Network-first for navigation requests (HTML)
   if (e.request.mode === "navigate") {
     e.respondWith(
       fetch(e.request)
@@ -47,7 +50,7 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // Cache-first for static assets (JS, CSS, images, fonts)
+  // Cache-first for static assets
   e.respondWith(
     caches.match(e.request).then(cached => {
       const fetched = fetch(e.request).then(response => {
