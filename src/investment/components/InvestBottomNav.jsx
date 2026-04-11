@@ -23,7 +23,7 @@ const NavButton = ({ item, active, onClick, theme: C }) => (
   </button>
 );
 
-export const InvestBottomNav = ({ page, setPage, theme, onFabClick }) => {
+export const InvestBottomNav = ({ page, setPage, theme, onFabClick, onFabLongPress }) => {
   const C = theme;
   const navItems = [
     { id: "dashboard", icon: "home", label: "Home" },
@@ -69,8 +69,7 @@ export const InvestBottomNav = ({ page, setPage, theme, onFabClick }) => {
              if (window.fabLongPressTimer) clearTimeout(window.fabLongPressTimer);
              window.fabLongPressTimer = setTimeout(() => {
                 window.fabLongPressTimer = null;
-                if (theme.onFabLongPress) theme.onFabLongPress(); // fallback
-                else if (typeof page === "string") { /* Need to pass from props */ }
+                if (onFabLongPress) onFabLongPress();
              }, 500);
           }}
           onTouchEnd={(e) => {

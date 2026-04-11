@@ -48,6 +48,7 @@ import OrganizePage from "./pages/Organize.jsx";
 import VaultPage from "./pages/Vault.jsx";
 import SettingsPage from "./pages/Settings.jsx";
 import InvestApp from "./investment/InvestApp.jsx";
+import { migrateInvestData } from "./investment/utils/migrations.js";
 
 // Forms
 import { TxForm } from "./components/forms/TxForm.jsx";
@@ -251,23 +252,22 @@ export default function App() {
       // Load investment data + app mode
       const savedMode = await getAppMode();
       setAppMode(savedMode);
-      const savedInvest = await getInvestData() || {};
+      const savedInvest = await getInvestData();
+      const migratedInvest = migrateInvestData(savedInvest);
       
-      setInvestData(prev => ({
-        ...savedInvest,
-        holdings: savedInvest.holdings || [],
-        transactions: savedInvest.transactions || [],
-        goals: savedInvest.goals || [],
+      setInvestData(migratedInvest || {
+        holdings: [],
+        transactions: [],
+        goals: [],
         prefs: { 
           defaultExchange: "NS", 
           displayCurrency: "INR", 
           xirrAssumption: 12,
           refreshMode: "manual",
-          targetAllocation: { equity: 60, debt: 30, gold: 10, cash: 0 },
-          ...savedInvest.prefs 
+          targetAllocation: { equity: 60, debt: 30, gold: 10, cash: 0 }
         },
         meta: { version: 2 }
-      }));
+      });
 
       setReady(true);
     };

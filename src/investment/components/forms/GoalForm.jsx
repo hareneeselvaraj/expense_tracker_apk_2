@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Modal } from "../../../components/ui/Modal.jsx";
 import { FInput, FLabel } from "../../../components/ui/FInput.jsx";
 import { Btn } from "../../../components/ui/Btn.jsx";
+import { Ico } from "../../../components/ui/Ico.jsx";
 import { uid } from "../../../utils/id.js";
 import { todayISO } from "../../../utils/format.js";
 
 const COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f43f5e", "#f59e0b"];
+const ICONS = ["flag", "home", "wallet", "trendUp", "stars"];
 
 export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) => {
   const C = theme;
@@ -15,6 +17,7 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
   const [monthlyContribution, setMonthlyContribution] = useState("");
   const [priority, setPriority] = useState("medium");
   const [color, setColor] = useState(COLORS[0]);
+  const [icon, setIcon] = useState("flag");
   const [linked, setLinked] = useState([]);
 
   useEffect(() => {
@@ -25,6 +28,7 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
       setMonthlyContribution(init.monthlyContribution || "");
       setPriority(init.priority || "medium");
       setColor(init.color || COLORS[0]);
+      setIcon(init.icon || "flag");
       setLinked(init.linkedHoldingIds || []);
     } else {
       setName("");
@@ -33,6 +37,7 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
       setMonthlyContribution("");
       setPriority("medium");
       setColor(COLORS[0]);
+      setIcon("flag");
       setLinked([]);
     }
   }, [init, open]);
@@ -42,7 +47,7 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
     const g = {
       id: init?.id || "goal_" + uid(),
       name,
-      icon: "flag",
+      icon,
       color,
       targetAmount: parseFloat(targetAmount),
       targetDate,
@@ -90,6 +95,17 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
            <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
              {COLORS.map(c => (
                <button key={c} onClick={() => setColor(c)} style={{ width: 32, height: 32, borderRadius: "50%", background: c, border: color === c ? `3px solid #fff` : "none", outline: color === c ? `2px solid ${c}` : "none", cursor: "pointer" }} />
+             ))}
+           </div>
+        </div>
+        
+        <div>
+           <FLabel theme={C}>Icon</FLabel>
+           <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+             {ICONS.map(ic => (
+               <button key={ic} onClick={() => setIcon(ic)} type="button" style={{ width: 36, height: 36, borderRadius: 12, background: icon === ic ? C.primary + "33" : C.surface, border: `1px solid ${icon === ic ? C.primary : C.borderLight}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: icon === ic ? C.primary : C.sub, padding: 0 }}>
+                 <Ico n={ic} sz={18} c={icon === ic ? C.primary : C.sub} />
+               </button>
              ))}
            </div>
         </div>

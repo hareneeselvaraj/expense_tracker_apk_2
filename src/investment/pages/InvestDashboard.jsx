@@ -23,7 +23,7 @@ const Sparkline = ({ color }) => {
   );
 };
 
-function calcInvestMetrics(investData) {
+function calcInvestMetrics(investData, todayISO) {
   const holdings = (investData?.holdings || []).filter(h => !h.deleted);
   let totalPrincipal = 0;
   let totalValue = 0;
@@ -61,8 +61,16 @@ function calcInvestMetrics(investData) {
     date: t.date,
     amount: t.type === 'sell' ? t.amount : -t.amount
   }));
+
+  // Add synthetic cashflows for holdings with no recorded transactions
+  const txnHoldingIds = new Set((investData.transactions || []).filter(t => !t.deleted).map(t => t.holdingId));
+  holdings.forEach(h => {
+    if (!txnHoldingIds.has(h.id) && h.principal > 0) {
+      cashflows.push({ date: h.startDate || todayISO, amount: -h.principal });
+    }
+  });
   if (totalValue > 0) {
-    cashflows.push({ date: new Date().toISOString(), amount: totalValue });
+    cashflows.push({ date: todayISO, amount: totalValue });
   }
   let xirr = 0;
   if(cashflows.length > 0) {
@@ -77,8 +85,9 @@ function calcInvestMetrics(investData) {
     pctGain: h.principal > 0 ? ((h.calculatedValue - h.principal) / h.principal) * 100 : 0
   })).filter(h => h.val > 0);
   
-  const best = [...enhancedHoldings].sort((a,b) => b.pctGain - a.pctGain).slice(0, 3);
-  const worst = [...enhancedHoldings].sort((a,b) => a.pctGain - b.pctGain).slice(0, 3);
+  const ESILON = 0.001;
+  const best = [...enhancedHoldings].filter(h => h.pctGain > ESILON).sort((a,b) => (b.pctGain - a.pctGain) || (b.absGain - a.absGain) || a.id.localeCompare(b.id)).slice(0, 3);
+  const worst = [...enhancedHoldings].filter(h => h.pctGain < -ESILON).sort((a,b) => (a.pctGain - b.pctGain) || (a.absGain - b.absGain) || a.id.localeCompare(b.id)).slice(0, 3);
 
   // Events
   const events = generateCalendarEvents(holdings);
@@ -86,22 +95,19 @@ function calcInvestMetrics(investData) {
 
   // Goals
   const activeGoals = (investData.goals || []).filter(g => !g.deleted);
-  let firstGoal = null;
-  if(activeGoals.length > 0) {
-     const p = calculateGoalProgress(activeGoals[0], holdings);
-     firstGoal = { ...activeGoals[0], progress: p };
-  }
+  const dashboardGoals = activeGoals.slice(0, 3).map(g => ({ ...g, progress: calculateGoalProgress(g, holdings) }));
 
   return { 
     totalPrincipal, totalValue, roiAbs, roiPct, buckets, 
     hasHoldings: holdings.length > 0, xirr, best, worst,
-    upcomingEvent, firstGoal
+    upcomingEvent, dashboardGoals
   };
 }
 
 export const InvestDashboard = ({ investData, theme, onAddAsset, onAddGoal }) => {
   const C = theme;
-  const mx = useMemo(() => calcInvestMetrics(investData), [investData]);
+  const todayISO = useMemo(() => new Date().toISOString(), []);
+  const mx = useMemo(() => calcInvestMetrics(investData, todayISO), [investData, todayISO]);
   const sortedBuckets = Object.values(mx.buckets).filter(b => b.total > 0).sort((a,b) => b.total - a.total);
 
   return (
@@ -184,19 +190,22 @@ export const InvestDashboard = ({ investData, theme, onAddAsset, onAddGoal }) =>
             </div>
           )}
 
-          {/* Goal Preview Card */}
-          {mx.firstGoal && (
-            <div style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: C.shadow }}>
-               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                 <div style={{ width: 40, height: 40, borderRadius: 12, background: mx.firstGoal.color + "22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🎯</div>
-                 <div>
-                   <div style={{ color: C.text, fontSize: 14, fontWeight: 800 }}>{mx.firstGoal.name}</div>
-                   <div style={{ color: C.sub, fontSize: 12, fontWeight: 600 }}>{mx.firstGoal.progress.progressPct.toFixed(0)}% complete</div>
-                 </div>
-               </div>
-               <div style={{ fontWeight: 800, color: mx.firstGoal.color }}>
-                 ₹{fmtAmt(mx.firstGoal.progress.currentValue)}
-               </div>
+          {/* Goal Preview Cards */}
+          {mx.dashboardGoals && mx.dashboardGoals.length > 0 && (
+            <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4, margin: "-4px 0" }} className="premium-scroll">
+              {mx.dashboardGoals.map(g => (
+                <div key={g.id} style={{ minWidth: 200, background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: C.shadow }}>
+                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                     <div style={{ width: 40, height: 40, borderRadius: 12, background: g.color + "22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
+                       <Ico n={g.icon || "flag"} sz={20} c={g.color} />
+                     </div>
+                     <div>
+                       <div style={{ color: C.text, fontSize: 14, fontWeight: 800 }}>{g.name}</div>
+                       <div style={{ color: C.sub, fontSize: 12, fontWeight: 600 }}>{g.progress.progressPct.toFixed(0)}%</div>
+                     </div>
+                   </div>
+                </div>
+              ))}
             </div>
           )}
 

@@ -135,8 +135,14 @@ export const HoldingsPage = ({ investData, setInvestData, theme, onEditHolding, 
   const [activeType, setActiveType] = useState("all"); // "all" | "stock" | "mf" | ...
   const [sortBy, setSortBy] = useState("value");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => setDebouncedQuery(searchQuery), 150);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   const all = (investData.holdings || []).filter(h => !h.deleted);
 
@@ -179,8 +185,8 @@ export const HoldingsPage = ({ investData, setInvestData, theme, onEditHolding, 
 
   const visibleHoldings = (activeType === "all" ? all : (byType[activeType] || []))
     .filter(h => {
-      if (!searchQuery) return true;
-      const q = searchQuery.toLowerCase();
+      if (!debouncedQuery) return true;
+      const q = debouncedQuery.toLowerCase();
       return (h.name && h.name.toLowerCase().includes(q)) || (h.symbol && h.symbol.toLowerCase().includes(q));
     });
 
@@ -190,7 +196,7 @@ export const HoldingsPage = ({ investData, setInvestData, theme, onEditHolding, 
      } else if (sortBy === "gain") {
         return (calcHoldingValue(b) - (b.principal || 0)) - (calcHoldingValue(a) - (a.principal || 0));
      } else if (sortBy === "name") {
-        return a.name.localeCompare(b.name);
+        return (a.name || "").localeCompare(b.name || "");
      } else {
         return new Date(b.startDate || 0) - new Date(a.startDate || 0);
      }
@@ -203,7 +209,10 @@ export const HoldingsPage = ({ investData, setInvestData, theme, onEditHolding, 
        localStorage.removeItem(`price_cache_${sym}`);
      }
      localStorage.removeItem(`gold_price_cache`);
-     window.location.reload();
+     setIsRefreshing(false);
+     if (typeof setInvestData === "function") {
+       setInvestData(prev => ({ ...prev }));
+     }
   };
 
   return (

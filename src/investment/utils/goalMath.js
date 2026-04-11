@@ -3,8 +3,8 @@ export const calculateGoalProgress = (goal, activeHoldings) => {
   
   // Calculate current value of linked holdings
   const currentValue = linked.reduce((sum, h) => {
+    if (h.calculatedValue !== undefined) return sum + h.calculatedValue;
     if (h.qty !== undefined && h.currentPrice !== undefined) return sum + (h.qty * h.currentPrice);
-    if (h.currentPrice !== undefined) return sum + h.currentPrice;
     return sum + (h.principal || 0);
   }, 0);
 
@@ -12,12 +12,15 @@ export const calculateGoalProgress = (goal, activeHoldings) => {
   
   // Calculate months remaining
   const today = new Date();
-  const target = new Date(goal.targetDate);
+  today.setHours(0, 0, 0, 0);
+  const ts = goal.targetDate.split("-");
+  const target = new Date(ts[0], ts[1] - 1, ts[2]);
   const diffTime = target.getTime() - today.getTime();
   const monthsRemaining = diffTime > 0 ? diffTime / (1000 * 60 * 60 * 24 * 30.44) : 0;
   
   const requiredMonthly = monthsRemaining > 0 ? (goal.targetAmount - currentValue) / monthsRemaining : 0;
-  const onTrack = (goal.monthlyContribution || 0) >= requiredMonthly;
+  const isComplete = currentValue >= (goal.targetAmount || 1);
+  const onTrack = isComplete ? true : ((goal.monthlyContribution || 0) > 0 && (goal.monthlyContribution || 0) >= (requiredMonthly * 0.95));
 
   return {
     currentValue,

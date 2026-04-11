@@ -23,15 +23,24 @@ import { QuickActionsMenu } from "./components/QuickActionsMenu.jsx";
 import { Modal } from "../components/ui/Modal.jsx";
 import { Btn } from "../components/ui/Btn.jsx";
 
+// Hooks
+import { useInvestData } from "./hooks/useInvestData.js";
+import { useConfirm } from "./hooks/useConfirm.js";
+import { selectActiveHoldings } from "./utils/selectors.js";
+
 // ── Main InvestApp Shell ─────────────────────────────────────────────────────
 export default function InvestApp({ investData, setInvestData, onBackToExpense, theme }) {
   const [page, setPage] = useState("dashboard");
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [activeForm, setActiveForm] = useState(null); // e.g. { type: "fd", init: null }
-  const [activeGoalForm, setActiveGoalForm] = useState(false);
+  const [activeForm, setActiveForm] = useState(null);
+  const [activeGoalForm, setActiveGoalForm] = useState(null);
   const [duplicateLotPrompt, setDuplicateLotPrompt] = useState(null);
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const C = theme;
+
+  const { saveHolding, deleteHolding, saveGoal, deleteGoal } = useInvestData(investData, setInvestData);
+  const delConfirm = useConfirm();
 
   const handleFabClick = () => setPickerOpen(true);
   const handleFabLongPress = () => setQuickActionsOpen(true);
@@ -44,9 +53,10 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
       const symbols = (investData?.holdings || []).map(h => h.symbol).filter(Boolean);
       symbols.forEach(s => localStorage.removeItem(`price_cache_${s}`));
       localStorage.removeItem(`gold_price_cache`);
-      window.location.reload();
+      setInvestData(prev => ({ ...prev }));
+      setRefreshKey(k => k + 1);
     } else if (act === "sell") {
-      alert("Please go to the Holdings tab and select a holding to record a sell transaction.");
+      setPage("holdings");
     }
   };
 
@@ -55,65 +65,36 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
     setActiveForm({ type, init: null });
   };
 
-  const handleSaveGoal = (goal) => {
-    const isNew = !investData.goals?.some(g => g.id === goal.id);
-    setInvestData(prev => {
-      const goals = prev.goals || [];
-      return {
-        ...prev,
-        goals: isNew ? [goal, ...goals] : goals.map(g => g.id === goal.id ? goal : g)
-      };
-    });
-    setActiveGoalForm(false);
+  const handleSaveGoalWithClose = (goal) => {
+    saveGoal(goal);
+    setActiveGoalForm(null);
   };
 
-  const handleSaveHolding = (holding, initialTx, forceDuplicate = false) => {
-    const isNew = !investData.holdings.some(h => h.id === holding.id);
+  const handleSaveHoldingEx = (holding, initialTx, forceDuplicate = false) => {
+    const isNewCheck = !(investData.holdings || []).some(h => h.id === holding.id);
     
-    // Check for duplicate lot
-    if (!forceDuplicate && isNew && holding.symbol) {
-       const existingMatch = investData.holdings.find(h => !h.deleted && h.symbol === holding.symbol && h.type === holding.type);
+    if (!forceDuplicate && isNewCheck && holding.symbol) {
+       const existingMatch = (investData.holdings || []).find(h => !h.deleted && h.symbol === holding.symbol && h.type === holding.type);
        if (existingMatch) {
          setDuplicateLotPrompt({ pendingHolding: holding, pendingTx: initialTx, existingHolding: existingMatch });
          return;
        }
     }
     
-    setInvestData(prev => {
-      const newData = { ...prev };
-      
-      if (isNew) {
-        newData.holdings = [holding, ...prev.holdings];
-        if (initialTx) {
-          newData.transactions = [initialTx, ...prev.transactions];
-        }
-      } else {
-        newData.holdings = prev.holdings.map(h => h.id === holding.id ? holding : h);
-      }
-      return newData;
-    });
-    
+    saveHolding(holding, initialTx);
     setActiveForm(null);
   };
 
-  const handleDeleteHolding = (holdingId) => {
-    if (window.confirm("Are you sure you want to delete this holding?")) {
-      const now = new Date().toISOString();
-      setInvestData(prev => ({
-        ...prev,
-        holdings: prev.holdings.map(h => h.id === holdingId ? { ...h, deleted: true, updatedAt: now } : h),
-        transactions: prev.transactions.map(t => t.holdingId === holdingId ? { ...t, deleted: true, updatedAt: now } : t)
-      }));
-    }
+  const handleDeleteRequest = (holdingId) => {
+    delConfirm.confirm("Delete Holding", "Are you sure you want to delete this holding?", () => deleteHolding(holdingId));
   };
 
-  const activeHoldings = (investData.holdings || []).filter(h => !h.deleted);
 
   return (
     <div style={{ background: C.bg, minHeight: "100vh", color: C.text, paddingBottom: 100, maxWidth: 600, margin: "0 auto", position: "relative" }}>
       <InvestHeader theme={C} onOpenSettings={() => setPage("settings")} />
 
-      <main>
+      <main key={refreshKey}>
         {page === "dashboard" && <InvestDashboard investData={investData} theme={C} onAddAsset={() => setPickerOpen(true)} onAddGoal={() => setActiveGoalForm({})} />}
         {page === "holdings" && (
           <HoldingsPage 
@@ -121,7 +102,7 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
             setInvestData={setInvestData}
             theme={C} 
             onEditHolding={h => setActiveForm({ type: h.type, init: h })}
-            onDeleteHolding={h => handleDeleteHolding(h.id)}
+            onDeleteHolding={h => handleDeleteRequest(h.id)}
           />
         )}
         {page === "insights" && <InsightsPage investData={investData} theme={C} />}
@@ -152,18 +133,18 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
       />
 
       {/* Manual Forms Routing */}
-      {activeForm?.type === "fd" && <FDForm open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHolding} theme={C} />}
-      {activeForm?.type === "rd" && <RDForm open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHolding} theme={C} />}
-      {activeForm?.type === "gold" && <GoldForm open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHolding} theme={C} />}
-      {["ppf", "epf"].includes(activeForm?.type) && <GovtSchemeForm type={activeForm.type} open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHolding} theme={C} />}
-      {activeForm?.type === "nps" && <NPSForm open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHolding} theme={C} />}
-      {activeForm?.type === "bond" && <BondForm open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHolding} theme={C} />}
+      {activeForm?.type === "fd" && <FDForm open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHoldingEx} theme={C} />}
+      {activeForm?.type === "rd" && <RDForm open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHoldingEx} theme={C} />}
+      {activeForm?.type === "gold" && <GoldForm open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHoldingEx} theme={C} />}
+      {["ppf", "epf"].includes(activeForm?.type) && <GovtSchemeForm type={activeForm.type} open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHoldingEx} theme={C} />}
+      {activeForm?.type === "nps" && <NPSForm open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHoldingEx} theme={C} />}
+      {activeForm?.type === "bond" && <BondForm open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHoldingEx} theme={C} />}
       
       {/* Live Asset Forms */}
-      {["stock", "mf"].includes(activeForm?.type) && <LiveAssetForm type={activeForm.type} open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHolding} theme={C} />}
+      {["stock", "mf"].includes(activeForm?.type) && <LiveAssetForm type={activeForm.type} open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHoldingEx} theme={C} />}
 
       {/* Goal Form */}
-      {activeGoalForm && <GoalForm open={true} init={Object.keys(activeGoalForm).length ? activeGoalForm : null} onClose={() => setActiveGoalForm(false)} onSave={handleSaveGoal} theme={C} holdings={investData.holdings} />}
+      {activeGoalForm && <GoalForm open={true} init={Object.keys(activeGoalForm).length ? activeGoalForm : null} onClose={() => setActiveGoalForm(false)} onSave={handleSaveGoalWithClose} theme={C} holdings={investData.holdings || []} />}
 
       <Modal open={!!duplicateLotPrompt} onClose={() => setDuplicateLotPrompt(null)} title="Existing Holding Found" theme={C}>
         {duplicateLotPrompt && (
@@ -173,7 +154,7 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
              </p>
              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                <Btn theme={C} v="primary" onClick={() => {
-                 handleSaveHolding(duplicateLotPrompt.pendingHolding, duplicateLotPrompt.pendingTx, true);
+                 handleSaveHoldingEx(duplicateLotPrompt.pendingHolding, duplicateLotPrompt.pendingTx, true);
                  setDuplicateLotPrompt(null);
                }}>
                  Add as New Lot
@@ -190,6 +171,16 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
              </div>
            </div>
         )}
+      </Modal>
+
+      <Modal open={!!delConfirm.state} onClose={delConfirm.close} title={delConfirm.state?.title} theme={C}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p style={{ color: C.text, fontSize: 13, lineHeight: "1.5" }}>{delConfirm.state?.message}</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <Btn theme={C} v="primary" onClick={delConfirm.handleConfirm}>Confirm</Btn>
+            <Btn theme={C} v="soft" onClick={delConfirm.close} style={{ background: "transparent" }}>Cancel</Btn>
+          </div>
+        </div>
       </Modal>
     </div>
   );

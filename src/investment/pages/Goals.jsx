@@ -2,20 +2,30 @@ import React, { useState } from "react";
 import { Btn } from "../../components/ui/Btn.jsx";
 import { calculateGoalProgress } from "../utils/goalMath.js";
 import { fmtAmt } from "../../utils/format.js";
+import { Ico } from "../../components/ui/Ico.jsx";
 
 const GoalCard = ({ goal, activeHoldings, onClick, theme: C }) => {
   const { currentValue, progressPct, monthsRemaining, requiredMonthly, onTrack } = calculateGoalProgress(goal, activeHoldings);
+  
+  let timeLeftStr = "Overdue";
+  if (monthsRemaining >= 12) {
+    const y = Math.floor(monthsRemaining / 12);
+    const m = monthsRemaining % 12;
+    timeLeftStr = `${y}y${m > 0 ? ` ${m}m` : ""} left`;
+  } else if (monthsRemaining > 0) {
+    timeLeftStr = `${monthsRemaining}m left`;
+  }
   
   return (
     <div onClick={onClick} style={{ background: C.surface, borderRadius: 24, padding: 20, border: `1px solid ${C.borderLight}`, boxShadow: C.shadow, display: "flex", flexDirection: "column", gap: 16, cursor: "pointer" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <div style={{ width: 44, height: 44, borderRadius: 14, background: goal.color + "22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-            🎯
+            <Ico n={goal.icon || "flag"} sz={20} c={goal.color} />
           </div>
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: C.text }}>{goal.name}</div>
-            <div style={{ fontSize: 11, color: C.sub, fontWeight: 600, marginTop: 2 }}>{new Date(goal.targetDate).getFullYear()} ({monthsRemaining ? Math.ceil(monthsRemaining / 12) + "y left" : "Overdue"})</div>
+            <div style={{ fontSize: 11, color: C.sub, fontWeight: 600, marginTop: 2 }}>{new Date(goal.targetDate).getFullYear()} ({timeLeftStr})</div>
           </div>
         </div>
         <div style={{ textAlign: "right" }}>

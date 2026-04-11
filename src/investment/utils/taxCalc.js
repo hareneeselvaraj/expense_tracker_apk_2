@@ -14,6 +14,7 @@ export function getCurrentFY() {
 
 export function getFYForDate(dateStr) {
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) throw new Error("Invalid date provided for FY calculation");
   const year = d.getFullYear();
   const month = d.getMonth();
   if (month >= 3) {
@@ -25,7 +26,11 @@ export function getFYForDate(dateStr) {
 
 // Days between two dates
 function daysBetween(d1, d2) {
-  const diffTime = Math.abs(new Date(d2) - new Date(d1));
+  const date1 = new Date(d1);
+  const date2 = new Date(d2);
+  if (isNaN(date1.getTime()) || isNaN(date2.getTime())) throw new Error("Invalid date for daysBetween");
+  const diffTime = date2.getTime() - date1.getTime();
+  if (diffTime < 0) throw new Error("Sell date cannot be before buy date");
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
@@ -73,7 +78,7 @@ export function calculateTaxes(holdings, transactions, targetFY) {
     
     // Default to a 1 transaction buy if no specific buys exist (e.g., initial creation)
     if (buys.length === 0) {
-       buys.push({ date: holding.startDate, remainingQty: holding.qty + sellQty, price: holding.purchasePrice });
+       buys.push({ date: holding.startDate, remainingQty: holding.qty, price: holding.purchasePrice });
     }
 
     for (const buy of buys) {

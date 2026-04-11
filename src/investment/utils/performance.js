@@ -36,10 +36,11 @@ export const getTopMovers = (holdings) => {
     const absGain = val - cost;
     const pctGain = cost > 0 ? (absGain / cost) * 100 : 0;
     return { ...h, val, absGain, pctGain };
-  }).filter(h => h.val > 0 && h.cost > 0);
+  }).filter(h => h.val > 0 && (h.principal || 0) > 0);
 
-  const best = [...mapped].sort((a,b) => b.pctGain - a.pctGain).slice(0, 3);
-  const worst = [...mapped].sort((a,b) => a.pctGain - b.pctGain).slice(0, 3);
+  const ESILON = 0.001;
+  const best = [...mapped].filter(h => h.pctGain > ESILON).sort((a,b) => (b.pctGain - a.pctGain) || (b.absGain - a.absGain) || (a.id || "").localeCompare(b.id || "")).slice(0, 3);
+  const worst = [...mapped].filter(h => h.pctGain < -ESILON).sort((a,b) => (a.pctGain - b.pctGain) || (a.absGain - b.absGain) || (a.id || "").localeCompare(b.id || "")).slice(0, 3);
   return { best, worst };
 };
 

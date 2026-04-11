@@ -29,5 +29,5 @@ export function calcHoldingValue(h) {
     val = h.currentPrice;
   }
   
-  return val;
+  return Math.round(val * 100) / 100;
 }
