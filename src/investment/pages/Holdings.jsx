@@ -107,12 +107,12 @@ const HoldingCard = ({ h, onEdit, onDelete, theme: C }) => {
            </div>
          )}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 4, flexShrink: 0 }}>
-        <button onClick={onEdit} style={{ background: C.input, border: "none", width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          <Ico n="edit" sz={12} c={C.text} />
+      <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
+        <button onClick={onEdit} style={{ background: C.input, border: "none", width: 34, height: 34, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <Ico n="edit" sz={14} c={C.text} />
         </button>
-        <button onClick={onDelete} style={{ background: C.expense + "15", border: "none", width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          <Ico n="trash" sz={12} c={C.expense} />
+        <button onClick={onDelete} style={{ background: C.expense + "15", border: "none", width: 34, height: 34, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+          <Ico n="trash" sz={14} c={C.expense} />
         </button>
       </div>
     </div>
@@ -228,9 +228,9 @@ export const HoldingsPage = ({ investData, setInvestData, theme, onEditHolding, 
           placeholder="Search name or symbol..." 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ flex: 1, background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "8px 12px", fontSize: 13, outline: "none", width: "100%" }}
+          style={{ flex: 1, background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "10px 12px", fontSize: 14, outline: "none", width: "100%", minHeight: 44, boxSizing: "border-box", fontFamily: "inherit" }}
         />
-        <button onClick={handleRefreshAll} disabled={isRefreshing} style={{ background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "8px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: C.shadow, flexShrink: 0 }}>
+        <button onClick={handleRefreshAll} disabled={isRefreshing} style={{ background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "10px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, boxShadow: C.shadow, flexShrink: 0, minHeight: 44 }}>
           {isRefreshing ? "⏳" : "↻ Refresh"}
         </button>
       </div>
@@ -265,7 +265,7 @@ export const HoldingsPage = ({ investData, setInvestData, theme, onEditHolding, 
         <div style={{ color: C.sub, fontSize: 13, fontWeight: 600 }}>
           {sorted.length} {sorted.length === 1 ? "holding" : "holdings"}
         </div>
-        <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "6px 10px", fontSize: 12, fontWeight: 600, outline: "none", cursor: "pointer" }}>
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="form-select" style={{ background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "8px 12px", fontSize: 13, fontWeight: 600, outline: "none", cursor: "pointer", minHeight: 36 }}>
           <option value="value">Value</option>
           <option value="gain">Gain/Loss</option>
           <option value="name">Name</option>

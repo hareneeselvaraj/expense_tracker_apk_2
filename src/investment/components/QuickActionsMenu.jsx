@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Ico } from "./ui/Ico.jsx";
+import { Ico } from "../../components/ui/Ico.jsx";
 
 export const QuickActionsMenu = ({ open, onClose, onAction, theme: C }) => {
   useEffect(() => {

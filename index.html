@@ -163,6 +163,60 @@
           margin: 4px 0 !important;
         }
       }
+
+      /* ── Scrollbar hiding for horizontal scrolls ── */
+      .premium-scroll {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .premium-scroll::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* ── Form row: side-by-side on wide, stacked on narrow ── */
+      .form-row {
+        display: flex;
+        gap: 12px;
+      }
+
+      @media (max-width: 360px) {
+        .form-row {
+          flex-direction: column !important;
+          gap: 12px !important;
+        }
+        .form-row > div {
+          min-width: 0 !important;
+        }
+      }
+
+      /* ── Select consistency ── */
+      .form-select {
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23888'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 32px !important;
+      }
+
+      /* ── Modal bottom-sheet mobile tweaks ── */
+      .modal-sheet {
+        max-width: 100% !important;
+      }
+      @media (min-width: 481px) {
+        .modal-sheet {
+          max-width: 480px !important;
+          border-radius: 20px 20px 0 0 !important;
+        }
+      }
+
+      /* ── Investment mobile compact ── */
+      @media (max-width: 480px) {
+        /* Tighter input padding on very small phones */
+        input[type="date"] {
+          min-height: 44px;
+        }
+      }
     </style>
   </head>
   <body>

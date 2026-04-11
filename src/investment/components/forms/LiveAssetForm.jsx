@@ -154,14 +154,16 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal maxWidth={420} open={open} onClose={onClose} title={init ? `Edit ${isStock ? "Stock" : "Mutual Fund"}` : `Add ${isStock ? "Stock" : "Mutual Fund"}`} theme={C}>
+    <Modal maxWidth={480} open={open} onClose={onClose} title={init ? `Edit ${isStock ? "Stock" : "Mutual Fund"}` : `Add ${isStock ? "Stock" : "Mutual Fund"}`} theme={C}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
           <FLabel theme={C}>{isStock ? "Stock Ticker (e.g. RELIANCE.NS)" : "MF Name or ISIN (e.g. INF846K01EW2)"}</FLabel>
-          <div style={{ display: "flex", gap: 8 }}>
-            <FInput theme={C} value={symbol} onChange={e => setSymbol(e.target.value)} placeholder={isStock ? "TCS.NS" : "ISIN code..."} />
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <FInput theme={C} value={symbol} onChange={e => setSymbol(e.target.value)} placeholder={isStock ? "TCS.NS" : "ISIN code..."} />
+            </div>
             <Btn theme={C} v="soft" onClick={verifyLivePrice} disabled={isFetchingPrice || !symbol}>
-              {isFetchingPrice ? "⏳ Checking..." : livePrice && !fetchError ? "✓ Refresh" : (fetchError ? "↻ Retry" : "Verify")}
+              {isFetchingPrice ? "⏳ ..." : livePrice && !fetchError ? "✓ Refresh" : (fetchError ? "↻ Retry" : "Verify")}
             </Btn>
           </div>
           {fetchError && <div style={{ color: C.expense, fontSize: 11, marginTop: 4 }}>{fetchError}</div>}
@@ -173,32 +175,32 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
         </div>
 
         {livePrice && !manualPriceMode && (
-          <div style={{ background: C.primary + "18", border: `1px solid ${C.primary}33`, borderRadius: 12, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ background: C.primary + "18", border: `1px solid ${C.primary}33`, borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
             <div>
               <div style={{ fontSize: 11, color: C.sub, fontWeight: 700 }}>VERIFIED LIVE PRICE</div>
               <div style={{ fontSize: 16, color: C.text, fontWeight: 800 }}>{fmtAmt(livePrice)}</div>
             </div>
-            <button onClick={() => setManualPriceMode(true)} style={{ background: "transparent", border: "none", color: C.primary, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Edit Manually</button>
+            <button onClick={() => setManualPriceMode(true)} style={{ background: "transparent", border: "none", color: C.primary, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "6px 0", minHeight: 32 }}>Edit Manually</button>
           </div>
         )}
 
         {manualPriceMode && (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
               <FLabel theme={C}>Current Price (₹)</FLabel>
-              {livePrice && <button onClick={() => setManualPriceMode(false)} style={{ background: "none", border: "none", color: C.primary, fontSize: 10, cursor: "pointer" }}>Use Live Price ({fmtAmt(livePrice)})</button>}
+              {livePrice && <button onClick={() => setManualPriceMode(false)} style={{ background: "none", border: "none", color: C.primary, fontSize: 11, cursor: "pointer", padding: "4px 0", minHeight: 28 }}>Use Live ({fmtAmt(livePrice)})</button>}
             </div>
             <FInput theme={C} type="number" value={manualPrice} onChange={e => { userTouchedRef.current = true; setManualPrice(e.target.value); }} placeholder="Current market price" />
           </div>
         )}
-        
-        <div style={{ display: "flex", gap: 12 }}>
-          <div style={{ flex: 1 }}>
+
+        <div className="form-row">
+          <div style={{ flex: 1, minWidth: 130 }}>
             <FLabel theme={C}>{isStock ? "Quantity" : "Units"}</FLabel>
             <FInput theme={C} type="number" step="0.001" value={qty} onChange={e => setQty(e.target.value)} placeholder="10" />
           </div>
-          <div style={{ flex: 1 }}>
-             <FLabel theme={C}>Avg Purchase Price (₹)</FLabel>
+          <div style={{ flex: 1, minWidth: 130 }}>
+             <FLabel theme={C}>Avg Buy Price (₹)</FLabel>
              <FInput theme={C} type="number" step="0.01" value={purchasePrice} onChange={e => setPurchasePrice(e.target.value)} placeholder="Per unit cost" />
           </div>
         </div>
@@ -209,13 +211,13 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
         </div>
 
         {!isStock && (
-          <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.borderLight}`, padding: 12 }}>
+          <div style={{ background: C.input, borderRadius: 14, border: `1px solid ${C.borderLight}`, padding: 12 }}>
              <FLabel theme={C}>SIP Settings (Optional)</FLabel>
-             <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
-               <div style={{ flex: 1 }}>
+             <div className="form-row" style={{ marginTop: 8 }}>
+               <div style={{ flex: 1, minWidth: 130 }}>
                  <FInput theme={C} type="number" value={sipAmount} onChange={e => setSipAmount(e.target.value)} placeholder="SIP Amount (₹)" />
                </div>
-               <div style={{ width: 100 }}>
+               <div style={{ flex: 1, minWidth: 80 }}>
                  <FInput theme={C} type="number" value={sipDay} onChange={e => setSipDay(e.target.value)} placeholder="Day (1-31)" />
                </div>
              </div>
@@ -223,12 +225,12 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
         )}
 
         {qty && purchasePrice && (
-          <div style={{ fontSize: 12, color: C.sub, textAlign: "right" }}>
+          <div style={{ fontSize: 13, color: C.sub, textAlign: "right", padding: "4px 0" }}>
             Total Cost: <strong style={{ color: C.text }}>₹{totalCost.toFixed(2)}</strong>
           </div>
         )}
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 8 }} disabled={!priceValid || !qty || !purchasePrice}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 48 }} disabled={!priceValid || !qty || !purchasePrice}>
           {init ? "Save Details" : `Add ${isStock ? "Stock" : "Fund"}`}
         </Btn>
       </div>

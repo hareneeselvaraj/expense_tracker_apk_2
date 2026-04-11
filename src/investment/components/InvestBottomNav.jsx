@@ -87,6 +87,7 @@ export const InvestBottomNav = ({ page, setPage, theme, onFabClick, onFabLongPre
              if (window.fabLongPressTimer) clearTimeout(window.fabLongPressTimer);
              window.fabLongPressTimer = setTimeout(() => {
                 window.fabLongPressTimer = null;
+                if (onFabLongPress) onFabLongPress();
              }, 500);
           }}
           onMouseUp={(e) => {
@@ -96,8 +97,6 @@ export const InvestBottomNav = ({ page, setPage, theme, onFabClick, onFabLongPre
                 window.fabLongPressTimer = null;
              }
           }}
-          // Passing onFabLongPress properly
-          {...(theme.onFabLongPress ? {} : {})}
           style={{
             width: 58,
             height: 58,

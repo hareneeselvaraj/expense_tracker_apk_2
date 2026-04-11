@@ -39,7 +39,7 @@ const GoalCard = ({ goal, activeHoldings, onClick, theme: C }) => {
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12 }}>
         <div style={{ color: C.sub }}>
-           <span style={{ color: C.text, fontWeight: 700 }}>₹{fmtAmt(currentValue)}</span> of ₹{fmtAmt(goal.targetAmount)}
+           <span style={{ color: C.text, fontWeight: 700 }}>{fmtAmt(currentValue)}</span> of {fmtAmt(goal.targetAmount)}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, color: onTrack ? C.income : C.expense }}>
           {currentValue >= goal.targetAmount ? "✓ Achieved" : onTrack ? "✓ On track" : "⚠ Behind"}

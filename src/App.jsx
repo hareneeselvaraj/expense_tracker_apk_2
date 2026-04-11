@@ -162,6 +162,9 @@ export default function App() {
   // Active (non-deleted) categories for UI consumption
   const activeCategories = useMemo(() => categories.filter(c => !c.deleted), [categories]);
 
+  // Active (non-deleted) accounts for UI consumption
+  const activeAccounts = useMemo(() => accounts.filter(a => !a.deleted), [accounts]);
+
   // Phase 3B: Budget alerts
   const budgetAlerts = useMemo(
     () => getActiveAlerts(transactions, budgets, categories, tags),
@@ -640,6 +643,14 @@ export default function App() {
 
     const processed = txs.map(t => {
       let categoryId = t.category;
+
+      // The statement engine returns category as an object { name, color, type }
+      // instead of a string ID. Resolve it to a proper category ID by name-matching.
+      if (categoryId && typeof categoryId === "object" && categoryId.name) {
+        const matchedCat = categories.find(c => !c.deleted && c.name.toLowerCase() === categoryId.name.toLowerCase());
+        categoryId = matchedCat ? matchedCat.id : null;
+      }
+
       if (t._rawCategory) {
         categoryId = resolveCategoryName(t._rawCategory, t.txType) || categoryId;
       }
@@ -661,8 +672,10 @@ export default function App() {
       delete cleanTx._rawAccount;
 
       // Run through categorize+rules pipeline only if no explicit category from sheet
+      // AND if we didn't already resolve a valid category ID from the statement engine
       let categorized = cleanTx;
-      if (!t._rawCategory) {
+      const hasValidCatId = categoryId && typeof categoryId === "string" && categories.some(c => c.id === categoryId);
+      if (!t._rawCategory && !hasValidCatId) {
         categorized = categorizeTransaction(cleanTx, categories);
         const rulesPatch = applyRulesToTx(categorized);
         if (rulesPatch) categorized = { ...categorized, ...rulesPatch };
@@ -845,7 +858,7 @@ export default function App() {
     return { income, expense, invest, expCatMap, incCatMap, invCatMap };
   }, [transactions, categories, viewDate]);
 
-  const nw = getNetWorth(accounts, transactions);
+  const nw = getNetWorth(activeAccounts, transactions);
 
   const filteredTx = useMemo(() => {
     return transactions.filter(t => {
@@ -956,12 +969,12 @@ export default function App() {
 
 
       <main>
-        {page === "dashboard" && <Dashboard {...{ user, transactions: activeTransactions, categories, tags, accounts, budgets, stats, netWorth: getNetWorth(accounts, activeTransactions), getDayFlow: (d) => getDayFlow(activeTransactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
+        {page === "dashboard" && <Dashboard {...{ user, transactions: activeTransactions, categories, tags, accounts: activeAccounts, budgets, stats, netWorth: getNetWorth(activeAccounts, activeTransactions), getDayFlow: (d) => getDayFlow(activeTransactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
         {page === "transactions" && <TransactionsPage {...{
-            transactions, filteredTx, categories, tags, accounts, searchQ, setSearchQ, filters, setFilters,
+            transactions, filteredTx, categories, tags, accounts: activeAccounts, searchQ, setSearchQ, filters, setFilters,
             hasFilter: !!(filters.from || filters.to || filters.cats.length || filters.acc || filters.type || filters.cd || filters.tags.length),
             onShowFilters: () => setShowFilters(true), onShowUpload: () => setShowUpload(true),
-            onExportCSV: () => exportCSV(filteredTx, categories, tags, accounts), onExportPDF: () => exportTransactionsPDF(filteredTx, categories, accounts, (m) => notify(m)),
+            onExportCSV: () => exportCSV(filteredTx, categories, tags, activeAccounts), onExportPDF: () => exportTransactionsPDF(filteredTx, categories, activeAccounts, (m) => notify(m)),
             onEditTx: setEditTx, selectedTxIds, setSelectedTxIds,
             onDeleteBulk: () => {
               const now = new Date().toISOString();
@@ -1020,16 +1033,14 @@ export default function App() {
           theme: C
         }} />}
         {page === "vault" && <VaultPage {...{
-          accounts, transactions: activeTransactions,
+          accounts: activeAccounts, transactions: activeTransactions,
           onAddAcc: () => setAddAcc(true),
           onEditAcc: (acc) => setEditAcc(acc),
           onDeleteAcc: (id) => {
-            console.log("Deleting account:", id);
-            setAccounts(prev => {
-              const next = prev.filter(x => x.id !== id);
-              console.log("New accounts list length:", next.length);
-              return next;
-            });
+            const now = new Date().toISOString();
+            setAccounts(prev => prev.map(a =>
+              a.id === id ? { ...a, deleted: true, updatedAt: now } : a
+            ));
             notify("Account deleted successfully", "error");
           },
           vaultTab, setVaultTab,
@@ -1103,8 +1114,8 @@ export default function App() {
           },
           onClearData: () => {
             if (window.confirm("CLEAR EVERYTHING? (Including Investments)")) {
-              setTransactions([]); setAccounts([]); setBudgets([]); setRules([]);
-              setInvestData({ holdings: [], transactions: [], prefs: {}, meta: { version: 1 } });
+              setTransactions([]); setCategories(DEF_CATS); setTags(DEF_TAGS); setAccounts([]); setBudgets([]); setRules([]); setRecurring([]);
+              setInvestData({ holdings: [], transactions: [], goals: [], prefs: { defaultExchange: "NS", displayCurrency: "INR", xirrAssumption: 12, refreshMode: "manual", targetAllocation: { equity: 60, debt: 30, gold: 10, cash: 0 } }, meta: { version: 2 } });
               notify("Data Cleared");
             }
           },
@@ -1125,11 +1136,11 @@ export default function App() {
 
       <Modal open={addTx} onClose={() => setAddTx(false)} title="Add Transaction" theme={C}>
         <TxForm 
-          categories={categories} tags={activeTags} accounts={accounts} 
+          categories={categories} tags={activeTags} accounts={activeAccounts} 
           existingTransactions={transactions}
           onSave={tx => {
-            if (Array.isArray(tx)) { handleSaveTx(tx); }
-            else { handleSaveTx(tx); setAddTx(false); }
+            handleSaveTx(tx);
+            setAddTx(false);
           }} 
           onClose={() => setAddTx(false)} theme={C} 
         />
@@ -1138,7 +1149,7 @@ export default function App() {
       <Modal open={!!editTx} onClose={() => setEditTx(null)} title="Edit Transaction" theme={C}>
         {editTx && (
           <TxForm 
-            init={editTx} categories={categories} tags={activeTags} accounts={accounts} 
+            init={editTx} categories={categories} tags={activeTags} accounts={activeAccounts} 
             existingTransactions={transactions}
             onSave={tx => { handleSaveTx(tx); setEditTx(null); }} 
             onDelete={id => { handleDeleteTx(id); setEditTx(null); }} 
@@ -1254,7 +1265,7 @@ export default function App() {
         <RecurringForm
           init={editRecurring}
           categories={categories}
-          accounts={accounts}
+          accounts={activeAccounts}
           theme={C}
           onClose={() => { setAddRecurring(false); setEditRecurring(null); }}
           onDelete={(id) => {
@@ -1322,7 +1333,7 @@ export default function App() {
           setFilters={setFilters} 
           categories={categories} 
           tags={activeTags} 
-          accounts={accounts} 
+          accounts={activeAccounts} 
           onClose={() => setShowFilters(false)} 
           theme={C} 
         />

@@ -69,41 +69,41 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
   const activeHoldings = holdings.filter(h => !h.deleted);
 
   return (
-    <Modal maxWidth={420} open={open} onClose={onClose} title={init ? "Edit Goal" : "Add Goal"} theme={C}>
+    <Modal maxWidth={480} open={open} onClose={onClose} title={init ? "Edit Goal" : "Add Goal"} theme={C}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
           <FLabel theme={C}>Goal Name</FLabel>
           <FInput theme={C} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. House Downpayment" />
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <div style={{ flex: 1 }}>
+        <div className="form-row">
+          <div style={{ flex: 1, minWidth: 130 }}>
             <FLabel theme={C}>Target Amount (₹)</FLabel>
             <FInput theme={C} type="number" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} placeholder="5000000" />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 130 }}>
              <FLabel theme={C}>Target Date</FLabel>
              <FInput theme={C} type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)} />
           </div>
         </div>
         <div>
-          <FLabel theme={C}>Monthly Contribution Plan (₹)</FLabel>
+          <FLabel theme={C}>Monthly Contribution (₹)</FLabel>
           <FInput theme={C} type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(e.target.value)} placeholder="SIP amount" />
         </div>
-        
+
         <div>
            <FLabel theme={C}>Color Accent</FLabel>
-           <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+           <div style={{ display: "flex", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
              {COLORS.map(c => (
-               <button key={c} onClick={() => setColor(c)} style={{ width: 32, height: 32, borderRadius: "50%", background: c, border: color === c ? `3px solid #fff` : "none", outline: color === c ? `2px solid ${c}` : "none", cursor: "pointer" }} />
+               <button key={c} onClick={() => setColor(c)} style={{ width: 36, height: 36, borderRadius: "50%", background: c, border: color === c ? `3px solid #fff` : "none", outline: color === c ? `2px solid ${c}` : "none", cursor: "pointer", flexShrink: 0 }} />
              ))}
            </div>
         </div>
-        
+
         <div>
            <FLabel theme={C}>Icon</FLabel>
-           <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+           <div style={{ display: "flex", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
              {ICONS.map(ic => (
-               <button key={ic} onClick={() => setIcon(ic)} type="button" style={{ width: 36, height: 36, borderRadius: 12, background: icon === ic ? C.primary + "33" : C.surface, border: `1px solid ${icon === ic ? C.primary : C.borderLight}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: icon === ic ? C.primary : C.sub, padding: 0 }}>
+               <button key={ic} onClick={() => setIcon(ic)} type="button" style={{ width: 40, height: 40, borderRadius: 12, background: icon === ic ? C.primary + "33" : C.surface, border: `1px solid ${icon === ic ? C.primary : C.borderLight}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: icon === ic ? C.primary : C.sub, padding: 0, flexShrink: 0 }}>
                  <Ico n={ic} sz={18} c={icon === ic ? C.primary : C.sub} />
                </button>
              ))}
@@ -113,18 +113,18 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
         {activeHoldings.length > 0 && (
           <div>
             <FLabel theme={C}>Link Holdings to this Goal</FLabel>
-            <div className="premium-scroll" style={{ background: C.input, borderRadius: 16, border: `1px solid ${C.borderLight}`, padding: 8, maxHeight: 150, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+            <div className="premium-scroll" style={{ background: C.input, borderRadius: 16, border: `1px solid ${C.borderLight}`, padding: 8, maxHeight: 180, overflowY: "auto", WebkitOverflowScrolling: "touch", display: "flex", flexDirection: "column", gap: 4 }}>
                {activeHoldings.map(h => {
                  const isSel = linked.includes(h.id);
                  const hVal = (h.qty !== undefined && h.currentPrice !== undefined) ? (h.qty * h.currentPrice) : (h.currentPrice !== undefined ? h.currentPrice : (h.principal || 0));
                  return (
-                   <div key={h.id} onClick={() => toggleLink(h.id)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: 12, background: isSel ? C.primary+"22" : "transparent", cursor: "pointer", transition: "all 0.2s" }}>
-                     <div>
-                       <div style={{ fontSize: 13, color: C.text, fontWeight: 700 }}>{h.name}</div>
-                       <div style={{ fontSize: 10, color: C.sub, marginTop: 2 }}>{h.symbol || h.type.toUpperCase()} • ₹{hVal.toLocaleString()}</div>
+                   <div key={h.id} onClick={() => toggleLink(h.id)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderRadius: 12, background: isSel ? C.primary+"22" : "transparent", cursor: "pointer", transition: "all 0.2s", minHeight: 44 }}>
+                     <div style={{ minWidth: 0, flex: 1 }}>
+                       <div style={{ fontSize: 13, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.name}</div>
+                       <div style={{ fontSize: 11, color: C.sub, marginTop: 2 }}>{h.symbol || h.type.toUpperCase()} | ₹{hVal.toLocaleString()}</div>
                      </div>
-                     <div style={{ width: 18, height: 18, borderRadius: 6, border: `2px solid ${isSel ? C.primary : C.sub}`, display: "flex", alignItems: "center", justifyContent: "center", background: isSel ? C.primary : "transparent" }}>
-                       {isSel && <div style={{ width: 8, height: 8, background: "#fff", borderRadius: 2 }} />}
+                     <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${isSel ? C.primary : C.sub}`, display: "flex", alignItems: "center", justifyContent: "center", background: isSel ? C.primary : "transparent", flexShrink: 0, marginLeft: 8 }}>
+                       {isSel && <div style={{ width: 10, height: 10, background: "#fff", borderRadius: 2 }} />}
                      </div>
                    </div>
                  );
@@ -133,7 +133,7 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
           </div>
         )}
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 8 }} disabled={!name || !targetAmount || !targetDate}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 48 }} disabled={!name || !targetAmount || !targetDate}>
           {init ? "Save Goal" : "Create Goal"}
         </Btn>
       </div>

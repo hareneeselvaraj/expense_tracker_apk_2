@@ -209,7 +209,6 @@ export default function VaultPage({
                          <div 
                            onClick={(e)=>{
                              e.stopPropagation();
-                             console.log("Vault: Trash icon explicitly clicked for:", acc.id);
                              setConfirmDeleteId(acc.id);
                            }} 
                            style={{background:C.input, color:C.expense, cursor:"pointer", width:36, height:36, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", transition:"all .2s", pointerEvents:"auto"}} 

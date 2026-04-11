@@ -6,6 +6,7 @@ import { getTopMovers, calculateXIRR } from "../utils/performance.js";
 import { generateCalendarEvents } from "../utils/calendarEvents.js";
 import { calculateGoalProgress } from "../utils/goalMath.js";
 import { Btn } from "../../components/ui/Btn.jsx";
+import { Ico } from "../../components/ui/Ico.jsx";
 
 // A simple deterministic sparkline generator for visual effect
 const Sparkline = ({ color }) => {
@@ -128,26 +129,28 @@ export const InvestDashboard = ({ investData, theme, onAddAsset, onAddGoal }) =>
               {fmtAmt(mx.totalValue)}
             </div>
           </div>
-          <button 
-             onClick={() => {
+          <button
+             onClick={onAddAsset ? () => {
                 const symbols = (investData?.holdings || []).map(h => h.symbol).filter(Boolean);
                 symbols.forEach(s => localStorage.removeItem(`price_cache_${s}`));
                 localStorage.removeItem(`gold_price_cache`);
-                window.location.reload();
-             }}
-             style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "6px 12px", fontSize: 10, color: C.text, fontWeight: 700, cursor: "pointer", boxShadow: C.shadow }}
+                // Force re-render instead of full page reload
+                if (typeof onAddAsset._refresh === 'function') onAddAsset._refresh();
+                else window.location.reload();
+             } : undefined}
+             style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "8px 14px", fontSize: 11, color: C.text, fontWeight: 700, cursor: "pointer", boxShadow: C.shadow, minHeight: 36 }}
           >
             ↻ Refresh
           </button>
         </div>
         
-        {/* Today's Change Strip */}
+        {/* ROI Strip */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8, paddingBottom: 16, borderBottom: `1px solid ${C.borderLight}44` }}>
-           <div style={{ padding: "4px 8px", borderRadius: 8, background: C.income + "22", color: C.income, fontSize: 13, fontWeight: 800 }}>
-              +0.8% Today
+           <div style={{ padding: "4px 8px", borderRadius: 8, background: (mx.roiPct >= 0 ? C.income : C.expense) + "22", color: mx.roiPct >= 0 ? C.income : C.expense, fontSize: 13, fontWeight: 800 }}>
+              {mx.roiPct >= 0 ? "+" : ""}{mx.roiPct.toFixed(1)}% ROI
            </div>
            <div style={{ flex: 1 }}></div>
-           <Sparkline color={C.income} />
+           <Sparkline color={mx.roiPct >= 0 ? C.income : C.expense} />
         </div>
 
         {/* Quick Stats Grid */}
@@ -216,7 +219,7 @@ export const InvestDashboard = ({ investData, theme, onAddAsset, onAddGoal }) =>
                <div>
                   <div style={{ color: C.text, fontSize: 14, fontWeight: 800 }}>{mx.upcomingEvent.title}</div>
                   <div style={{ color: C.sub, fontSize: 12, fontWeight: 600 }}>
-                    {mx.upcomingEvent.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • ₹{fmtAmt(mx.upcomingEvent.amount)}
+                    {mx.upcomingEvent.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {fmtAmt(mx.upcomingEvent.amount)}
                   </div>
                </div>
             </div>

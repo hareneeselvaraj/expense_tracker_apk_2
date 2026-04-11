@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Ico } from "./Ico.jsx";
 
-export const Modal = ({ open, onClose, title, children, theme, maxWidth = 600 }) => {
+export const Modal = ({ open, onClose, title, children, theme, maxWidth = 440 }) => {
   const [active, setActive] = useState(false);
   const [vpHeight, setVpHeight] = useState(window.visualViewport?.height || window.innerHeight);
   const C = theme;
+  const scrollRef = useRef(null);
   useEffect(() => { if(open) setTimeout(()=>setActive(true), 10); else setActive(false); }, [open]);
 
   useEffect(() => {
@@ -22,12 +23,20 @@ export const Modal = ({ open, onClose, title, children, theme, maxWidth = 600 })
     const handleFocus = (e) => {
       if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
         setIsKeyboardOpen(true);
-        setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
+        setTimeout(() => {
+          if (scrollRef.current && e.target) {
+            const scrollContainer = scrollRef.current;
+            const rect = e.target.getBoundingClientRect();
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const offset = rect.top - containerRect.top - 60;
+            scrollContainer.scrollBy({ top: offset, behavior: "smooth" });
+          }
+        }, 300);
       }
     };
     const handleBlur = (e) => {
       if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
-        setIsKeyboardOpen(false);
+        setTimeout(() => setIsKeyboardOpen(false), 100);
       }
     };
     window.addEventListener("focusin", handleFocus);
@@ -38,20 +47,87 @@ export const Modal = ({ open, onClose, title, children, theme, maxWidth = 600 })
     };
   }, [open]);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [open]);
+
   if(!open) return null;
-  const isMobile = window.innerWidth < 600;
+
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:5000,display:"flex",alignItems:isMobile?"flex-end":"center",justifyContent:"center",transition:"opacity .3s ease",opacity:active?1:0, padding:isMobile?0:20}}>
-      <div className="premium-scroll" onClick={e=>e.stopPropagation()} style={{
-        background:C.surface, borderRadius:isMobile?"32px 32px 0 0":"24px", width:"100%", maxWidth, maxHeight:isMobile?`${vpHeight * (isKeyboardOpen ? 0.6 : 0.92)}px`:"85vh", overflow:"auto",
-        boxShadow:C.shadow, transform:active?"translateY(0)":"translateY(100%)", transition:"transform .4s cubic-bezier(0.16, 1, 0.3, 1)", scrollPaddingBottom: "120px"
+    <div onClick={onClose} style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,.55)",
+      backdropFilter: "blur(6px)",
+      WebkitBackdropFilter: "blur(6px)",
+      zIndex: 5000,
+      display: "flex",
+      alignItems: "flex-end",
+      justifyContent: "center",
+      padding: 0,
+      transition: "opacity .25s ease",
+      opacity: active ? 1 : 0
+    }}>
+      <div className="premium-scroll modal-sheet" onClick={e=>e.stopPropagation()} style={{
+        background: C.surface,
+        borderRadius: "20px 20px 0 0",
+        width: "100%",
+        maxWidth,
+        maxHeight: isKeyboardOpen ? `${vpHeight - 20}px` : `${Math.min(vpHeight * 0.92, vpHeight - 20)}px`,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: `0 -10px 40px rgba(0,0,0,.4), 0 0 0 1px ${C.border}44`,
+        transform: active ? "translateY(0)" : "translateY(100%)",
+        opacity: active ? 1 : 0,
+        transition: "transform .3s cubic-bezier(0.32, 0.72, 0, 1), opacity .2s ease",
       }}>
-        {isMobile && <div style={{width: 40, height: 4, background: C.border, borderRadius: 2, margin: "12px auto 0"}} />}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"20px 24px 16px",borderBottom:`1px solid ${C.borderLight}`,position:"sticky",top:0,background:C.surface,zIndex:1}}>
-          <span style={{color:C.text,fontSize:18,fontWeight:700}}>{title}</span>
-          <button onClick={onClose} style={{background:C.input,border:"none",borderRadius:"50%",color:C.text,cursor:"pointer",padding:8,display:"flex",transition:"background .2s"}} onMouseOver={e=>e.currentTarget.style.background=C.muted} onMouseOut={e=>e.currentTarget.style.background=C.input}><Ico n="close" sz={20}/></button>
+        {/* Drag handle for mobile */}
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 8, flexShrink: 0 }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: C.border }} />
         </div>
-        <div style={{padding:"20px 24px max(40px, calc(20px + env(safe-area-inset-bottom)))"}}>{children}</div>
+        {/* Header */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "8px 16px 12px",
+          borderBottom: `1px solid ${C.borderLight || C.border}`,
+          background: C.surface,
+          flexShrink: 0,
+        }}>
+          <span style={{ color: C.text, fontSize: 17, fontWeight: 800, letterSpacing: "-0.01em" }}>{title}</span>
+          <button onClick={onClose} style={{
+            background: C.input,
+            border: "none",
+            borderRadius: "50%",
+            color: C.text,
+            cursor: "pointer",
+            padding: 6,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background .2s",
+            width: 32,
+            height: 32,
+            flexShrink: 0,
+            minWidth: 32,
+            minHeight: 32,
+          }}>
+            <Ico n="close" sz={16}/>
+          </button>
+        </div>
+        {/* Scrollable content area */}
+        <div ref={scrollRef} className="premium-scroll" style={{
+          padding: "16px 16px 32px",
+          overflowY: "auto",
+          flex: 1,
+          WebkitOverflowScrolling: "touch",
+        }}>{children}</div>
       </div>
     </div>
   );

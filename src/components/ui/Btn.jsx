@@ -1,7 +1,7 @@
 import React from "react";
 import { Ico } from "./Ico.jsx";
 
-export const Btn = ({children,onClick,v="primary",icon,disabled,full,sm,theme}) => {
+export const Btn = ({children,onClick,v="primary",icon,disabled,full,sm,theme,style:xStyle}) => {
   const C = theme;
   const vs={
     primary:{bg:C.primary,co:"#fff",bo:"none"},
@@ -13,10 +13,12 @@ export const Btn = ({children,onClick,v="primary",icon,disabled,full,sm,theme}) 
   return (
     <button onClick={onClick} disabled={disabled} style={{
       backgroundColor: s.bg,
-      color:s.co,borderWidth:s.bo==="none"?0:1,borderStyle:"solid",borderColor:s.bo==="none"?"transparent":C.border,borderRadius:14,padding:sm?"6px 12px":"10px 18px",
+      color:s.co,borderWidth:s.bo==="none"?0:1,borderStyle:"solid",borderColor:s.bo==="none"?"transparent":C.border,borderRadius:14,padding:sm?"8px 14px":"12px 18px",
       fontSize:sm?12:14,fontWeight:600,cursor:disabled?"not-allowed":"pointer",opacity:disabled?0.5:1,
       display:"flex",alignItems:"center",gap:8,justifyContent:"center",
       width:full?"100%":"auto",fontFamily:"inherit",transition:"transform .15s ease",
+      minHeight:sm?36:44, touchAction:"manipulation", WebkitTapHighlightColor:"transparent",
+      ...xStyle,
     }} onMouseDown={e=>{if(!disabled)e.currentTarget.style.transform="scale(0.98)";}} onMouseUp={e=>{if(!disabled)e.currentTarget.style.transform="scale(1)";}} onMouseLeave={e=>{if(!disabled)e.currentTarget.style.transform="scale(1)";}}>
       {icon&&<Ico n={icon} sz={sm?14:16} c={s.co}/>}{children}
     </button>

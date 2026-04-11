@@ -124,34 +124,34 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal maxWidth={420} open={open} onClose={onClose} title={init ? "Edit Gold Holding" : "Add Physical Gold"} theme={C}>
+    <Modal maxWidth={480} open={open} onClose={onClose} title={init ? "Edit Gold Holding" : "Add Physical Gold"} theme={C}>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div>
           <FLabel theme={C}>Item Name / Jeweller</FLabel>
           <FInput theme={C} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Gold Coins, Malabar..." />
         </div>
-        
-        <div style={{ display: "flex", gap: 12 }}>
-          <div style={{ flex: 1 }}>
+
+        <div className="form-row">
+          <div style={{ flex: 1, minWidth: 130 }}>
             <FLabel theme={C}>Weight (Grams)</FLabel>
             <FInput theme={C} type="number" step="0.01" value={grams} onChange={e => setGrams(e.target.value)} placeholder="10.5" />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 130 }}>
             <FLabel theme={C}>Purity</FLabel>
-            <select value={purity} onChange={e => setPurity(e.target.value)} style={{ width: "100%", padding: "8px 12px", fontSize: "16px", borderRadius: 10, background: C.input, color: C.text, border: `1px solid ${C.border}`, outline: "none" }}>
-              <option value="24k">24K (99.9%) - Coins/Bars</option>
-              <option value="22k">22K (91.6%) - Jewellery</option>
+            <select value={purity} onChange={e => setPurity(e.target.value)} className="form-select" style={{ width: "100%", padding: "10px 12px", fontSize: 16, borderRadius: 12, background: C.input, color: C.text, border: `1px solid ${C.border}`, outline: "none", minHeight: 44, boxSizing: "border-box" }}>
+              <option value="24k">24K (99.9%)</option>
+              <option value="22k">22K (91.6%)</option>
               <option value="18k">18K (75.0%)</option>
             </select>
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <FLabel theme={C}>Total Purchase Price (₹)</FLabel>
+        <div className="form-row">
+          <div style={{ flex: 1, minWidth: 130 }}>
+            <FLabel theme={C}>Purchase Price (₹)</FLabel>
             <FInput theme={C} type="number" value={purchasePrice} onChange={e => setPurchasePrice(e.target.value)} placeholder="Total cost paid" />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 130 }}>
             <FLabel theme={C}>Purchase Date</FLabel>
             <FInput theme={C} type="date" value={date} onChange={e => setDate(e.target.value)} />
           </div>
@@ -159,27 +159,27 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
 
         {/* Live Gold Price Section */}
         <div style={{ borderTop: `1px dashed ${C.border}`, paddingTop: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
             <FLabel theme={C} style={{ margin: 0 }}>Today's Gold Rate</FLabel>
-            <Btn theme={C} v="soft" onClick={fetchPrice} disabled={isFetchingGold} style={{ padding: "4px 12px", fontSize: 11 }}>
-              {isFetchingGold ? "Fetching..." : liveGold ? "Refresh" : "🥇 Get Live Price"}
+            <Btn theme={C} v="soft" onClick={fetchPrice} disabled={isFetchingGold} style={{ padding: "6px 12px", fontSize: 12, minHeight: 36 }}>
+              {isFetchingGold ? "Fetching..." : liveGold ? "Refresh" : "Get Live Price"}
             </Btn>
           </div>
 
-          {goldError && <div style={{ color: C.expense, fontSize: 11, marginBottom: 8 }}>{goldError}</div>}
+          {goldError && <div style={{ color: C.expense, fontSize: 12, marginBottom: 8 }}>{goldError}</div>}
 
           {displayLiveGold && !manualMode && (
-            <div style={{ background: "#fbbf2415", border: "1px solid #fbbf2433", borderRadius: 14, padding: "12px 16px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ background: "#fbbf2415", border: "1px solid #fbbf2433", borderRadius: 14, padding: "12px 14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
                 <div>
-                  <div style={{ fontSize: 10, color: C.sub, fontWeight: 700 }}>LIVE {purity.toUpperCase()} GOLD</div>
-                  <div style={{ fontSize: 20, color: C.text, fontWeight: 800 }}>₹{displayLiveGold.pricePerGram.toLocaleString()}<span style={{ fontSize: 11, color: C.sub, fontWeight: 600 }}>/gram</span></div>
+                  <div style={{ fontSize: 11, color: C.sub, fontWeight: 700 }}>LIVE {purity.toUpperCase()} GOLD</div>
+                  <div style={{ fontSize: 18, color: C.text, fontWeight: 800 }}>₹{displayLiveGold.pricePerGram.toLocaleString()}<span style={{ fontSize: 12, color: C.sub, fontWeight: 600 }}>/gram</span></div>
                 </div>
-                <button onClick={() => setManualMode(true)} style={{ background: "transparent", border: "none", color: C.primary, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Edit</button>
+                <button onClick={() => setManualMode(true)} style={{ background: "transparent", border: "none", color: C.primary, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "6px 0", minHeight: 32 }}>Edit</button>
               </div>
               {displayLiveGold.usdInr && (
-                <div style={{ fontSize: 10, color: C.sub, marginTop: 4 }}>
-                  24K base: ₹{displayLiveGold.pricePerGram24k}/g • USD/INR: {displayLiveGold.usdInr}
+                <div style={{ fontSize: 11, color: C.sub, marginTop: 4 }}>
+                  24K base: ₹{displayLiveGold.pricePerGram24k}/g | USD/INR: {displayLiveGold.usdInr}
                 </div>
               )}
             </div>
@@ -187,9 +187,9 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
 
           {manualMode && (
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <FLabel theme={C}>Current Price per Gram (₹)</FLabel>
-                {displayLiveGold && <button onClick={() => setManualMode(false)} style={{ background: "none", border: "none", color: C.primary, fontSize: 10, cursor: "pointer", fontWeight: 700 }}>Use Live (₹{displayLiveGold.pricePerGram})</button>}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
+                <FLabel theme={C}>Current Price/Gram (₹)</FLabel>
+                {displayLiveGold && <button onClick={() => setManualMode(false)} style={{ background: "none", border: "none", color: C.primary, fontSize: 11, cursor: "pointer", fontWeight: 700, padding: "4px 0", minHeight: 28 }}>Use Live (₹{displayLiveGold.pricePerGram})</button>}
               </div>
               <FInput theme={C} type="number" value={manualCurrentPrice} onChange={e => setManualCurrentPrice(e.target.value)} placeholder="₹/gram today" />
             </div>
@@ -198,14 +198,14 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
 
         {/* Valuation Summary */}
         {gramsNum > 0 && currentPricePerGram > 0 && (
-          <div style={{ background: C.input, borderRadius: 14, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ background: C.input, borderRadius: 14, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
             <div>
-              <div style={{ color: C.sub, fontSize: 10, fontWeight: 600 }}>Current Value</div>
+              <div style={{ color: C.sub, fontSize: 11, fontWeight: 600 }}>Current Value</div>
               <div style={{ color: C.text, fontSize: 16, fontWeight: 800 }}>{fmtAmt(currentValue)}</div>
             </div>
             {totalCost > 0 && (
               <div style={{ textAlign: "right" }}>
-                <div style={{ color: C.sub, fontSize: 10, fontWeight: 600 }}>Gain/Loss</div>
+                <div style={{ color: C.sub, fontSize: 11, fontWeight: 600 }}>Gain/Loss</div>
                 <div style={{ color: gainLoss >= 0 ? C.income : C.expense, fontSize: 14, fontWeight: 800 }}>
                   {gainLoss > 0 ? "+" : ""}{fmtAmt(gainLoss)}
                 </div>
@@ -214,7 +214,7 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
           </div>
         )}
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 8 }}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 48 }}>
           {init ? "Save Details" : "Add Gold"}
         </Btn>
       </div>
