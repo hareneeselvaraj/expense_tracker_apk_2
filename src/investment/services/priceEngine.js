@@ -13,7 +13,7 @@ function chartUrl(symbol) {
 function searchUrl(query) {
   return IS_DEV
     ? `/yahoo/search?q=${encodeURIComponent(query)}`
-    : `/.netlify/functions/yahoo-proxy?path=search&query=q=${encodeURIComponent(query)}`;
+    : `/.netlify/functions/yahoo-proxy?path=search&q=${encodeURIComponent(query)}`;
 }
 
 async function fetchWithTimeout(url, ms = 10000) {

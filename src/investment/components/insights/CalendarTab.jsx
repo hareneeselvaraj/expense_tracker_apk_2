@@ -44,7 +44,7 @@ export const CalendarTab = ({ investData, theme }) => {
                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                         <div style={{ color: C.text, fontSize: 14, fontWeight: 800, lineHeight: 1.2 }}>{ev.title}</div>
                         <div style={{ color: ev.type === "sip" ? C.expense : C.income, fontSize: 14, fontWeight: 800 }}>
-                           {ev.type === "sip" ? "-" : "+"}₹{fmtAmt(ev.amount || 0)}
+                           {ev.type === "sip" ? "−" : "+"}{fmtAmt(ev.amount || 0)}
                         </div>
                      </div>
                      <div style={{ color: C.sub, fontSize: 11, fontWeight: 600, marginTop: 4 }}>

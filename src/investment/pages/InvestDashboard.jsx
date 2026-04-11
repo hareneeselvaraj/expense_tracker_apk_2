@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { fmtAmt } from "../../utils/format.js";
 import { ASSET_TYPES } from "../constants/assetTypes.js";
 import { calcHoldingValue } from "../utils/valuation.js";
-import { getTopMovers, calculateXIRR } from "../utils/performance.js";
+import { calculateXIRR } from "../utils/performance.js";
 import { generateCalendarEvents } from "../utils/calendarEvents.js";
 import { calculateGoalProgress } from "../utils/goalMath.js";
 import { Btn } from "../../components/ui/Btn.jsx";
@@ -39,15 +39,14 @@ function calcInvestMetrics(investData, todayISO) {
     other: { id: "other", total: 0, label: "Other", color: "#94a3b8" }
   };
 
+  const holdingValues = new Map();
   holdings.forEach(h => {
     const princ = h.principal || 0;
     const val = calcHoldingValue(h);
 
     totalPrincipal += princ;
     totalValue += val;
-    
-    // Add val to h for top movers correctly
-    h.calculatedValue = val;
+    holdingValues.set(h.id, val);
     
     const at = ASSET_TYPES.find(a => a.id === h.type);
     const bucketId = at?.bucket || "other";
@@ -79,12 +78,15 @@ function calcInvestMetrics(investData, todayISO) {
   }
 
   // Top Movers
-  const enhancedHoldings = holdings.map(h => ({
-    ...h,
-    val: h.calculatedValue,
-    absGain: h.calculatedValue - (h.principal || 0),
-    pctGain: h.principal > 0 ? ((h.calculatedValue - h.principal) / h.principal) * 100 : 0
-  })).filter(h => h.val > 0);
+  const enhancedHoldings = holdings.map(h => {
+    const hVal = holdingValues.get(h.id) || 0;
+    return {
+      ...h,
+      val: hVal,
+      absGain: hVal - (h.principal || 0),
+      pctGain: h.principal > 0 ? ((hVal - h.principal) / h.principal) * 100 : 0
+    };
+  }).filter(h => h.val > 0);
   
   const ESILON = 0.001;
   const best = [...enhancedHoldings].filter(h => h.pctGain > ESILON).sort((a,b) => (b.pctGain - a.pctGain) || (b.absGain - a.absGain) || a.id.localeCompare(b.id)).slice(0, 3);
@@ -105,7 +107,7 @@ function calcInvestMetrics(investData, todayISO) {
   };
 }
 
-export const InvestDashboard = ({ investData, theme, onAddAsset, onAddGoal }) => {
+export const InvestDashboard = ({ investData, theme, onAddAsset, onAddGoal, onRefresh }) => {
   const C = theme;
   const todayISO = useMemo(() => new Date().toISOString(), []);
   const mx = useMemo(() => calcInvestMetrics(investData, todayISO), [investData, todayISO]);
@@ -130,14 +132,7 @@ export const InvestDashboard = ({ investData, theme, onAddAsset, onAddGoal }) =>
             </div>
           </div>
           <button
-             onClick={onAddAsset ? () => {
-                const symbols = (investData?.holdings || []).map(h => h.symbol).filter(Boolean);
-                symbols.forEach(s => localStorage.removeItem(`price_cache_${s}`));
-                localStorage.removeItem(`gold_price_cache`);
-                // Force re-render instead of full page reload
-                if (typeof onAddAsset._refresh === 'function') onAddAsset._refresh();
-                else window.location.reload();
-             } : undefined}
+             onClick={onRefresh}
              style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: "8px 14px", fontSize: 11, color: C.text, fontWeight: 700, cursor: "pointer", boxShadow: C.shadow, minHeight: 36 }}
           >
             ↻ Refresh

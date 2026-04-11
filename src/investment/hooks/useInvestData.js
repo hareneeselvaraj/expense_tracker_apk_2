@@ -5,13 +5,14 @@ export function useInvestData(investData, setInvestData) {
   
   const saveHolding = useCallback((holding, initialTx) => {
     setInvestData(prev => {
-      const isNew = !prev.holdings.some(h => h.id === holding.id);
+      const holdings = prev.holdings || [];
+      const isNew = !holdings.some(h => h.id === holding.id);
       const newData = { ...prev };
       if (isNew) {
-        newData.holdings = [holding, ...(prev.holdings || [])];
+        newData.holdings = [holding, ...holdings];
         if (initialTx) newData.transactions = [initialTx, ...(prev.transactions || [])];
       } else {
-        newData.holdings = prev.holdings.map(h => h.id === holding.id ? holding : h);
+        newData.holdings = holdings.map(h => h.id === holding.id ? holding : h);
       }
       return newData;
     });

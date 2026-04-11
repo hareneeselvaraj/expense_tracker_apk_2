@@ -95,7 +95,7 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
       <InvestHeader theme={C} onOpenSettings={() => setPage("settings")} />
 
       <main key={refreshKey}>
-        {page === "dashboard" && <InvestDashboard investData={investData} theme={C} onAddAsset={() => setPickerOpen(true)} onAddGoal={() => setActiveGoalForm({})} />}
+        {page === "dashboard" && <InvestDashboard investData={investData} theme={C} onAddAsset={() => setPickerOpen(true)} onAddGoal={() => setActiveGoalForm({})} onRefresh={() => handleQuickAction("refresh")} />}
         {page === "holdings" && (
           <HoldingsPage 
             investData={investData} 
@@ -106,7 +106,7 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
           />
         )}
         {page === "insights" && <InsightsPage investData={investData} theme={C} />}
-        {page === "goals" && <GoalsPage investData={investData} theme={C} onAddGoal={() => setActiveGoalForm({})} onEditGoal={(g) => setActiveGoalForm(g)} />}
+        {page === "goals" && <GoalsPage investData={investData} theme={C} onAddGoal={() => setActiveGoalForm({})} onEditGoal={(g) => setActiveGoalForm(g)} onDeleteGoal={(id) => deleteGoal(id)} />}
         {page === "settings" && <InvestSettingsPage investData={investData} setInvestData={setInvestData} onBackToExpense={onBackToExpense} theme={C} />}
       </main>
 
@@ -144,7 +144,7 @@ export default function InvestApp({ investData, setInvestData, onBackToExpense, 
       {["stock", "mf"].includes(activeForm?.type) && <LiveAssetForm type={activeForm.type} open={!!activeForm} init={activeForm.init} onClose={() => setActiveForm(null)} onSave={handleSaveHoldingEx} theme={C} />}
 
       {/* Goal Form */}
-      {activeGoalForm && <GoalForm open={true} init={Object.keys(activeGoalForm).length ? activeGoalForm : null} onClose={() => setActiveGoalForm(false)} onSave={handleSaveGoalWithClose} theme={C} holdings={investData.holdings || []} />}
+      {activeGoalForm && <GoalForm open={true} init={Object.keys(activeGoalForm).length ? activeGoalForm : null} onClose={() => setActiveGoalForm(null)} onSave={handleSaveGoalWithClose} theme={C} holdings={investData.holdings || []} />}
 
       <Modal open={!!duplicateLotPrompt} onClose={() => setDuplicateLotPrompt(null)} title="Existing Holding Found" theme={C}>
         {duplicateLotPrompt && (

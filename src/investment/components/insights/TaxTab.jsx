@@ -23,21 +23,21 @@ export const TaxTab = ({ investData, theme }) => {
            <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 8, borderBottom: `1px dashed ${C.borderLight}` }}>
               <div style={{ color: C.sub, fontSize: 13, fontWeight: 600 }}>STCG (Equity)</div>
               <div style={{ color: taxSummary.stcgEquity >= 0 ? C.income : C.expense, fontSize: 14, fontWeight: 800 }}>
-                 {taxSummary.stcgEquity > 0 ? "+" : ""}{fmtAmt(taxSummary.stcgEquity)}
+                 {taxSummary.stcgEquity >= 0 ? "+" : "−"}{fmtAmt(taxSummary.stcgEquity)}
               </div>
            </div>
            
            <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 8, borderBottom: `1px dashed ${C.borderLight}` }}>
               <div style={{ color: C.sub, fontSize: 13, fontWeight: 600 }}>LTCG (Equity)</div>
               <div style={{ color: taxSummary.ltcgEquity >= 0 ? C.income : C.expense, fontSize: 14, fontWeight: 800 }}>
-                 {taxSummary.ltcgEquity > 0 ? "+" : ""}{fmtAmt(taxSummary.ltcgEquity)}
+                 {taxSummary.ltcgEquity >= 0 ? "+" : "−"}{fmtAmt(taxSummary.ltcgEquity)}
               </div>
            </div>
            
            <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: 8, borderBottom: `1px dashed ${C.borderLight}` }}>
               <div style={{ color: C.sub, fontSize: 13, fontWeight: 600 }}>Debt Gains</div>
               <div style={{ color: taxSummary.debtGains >= 0 ? C.income : C.expense, fontSize: 14, fontWeight: 800 }}>
-                 {taxSummary.debtGains > 0 ? "+" : ""}{fmtAmt(taxSummary.debtGains)}
+                 {taxSummary.debtGains >= 0 ? "+" : "−"}{fmtAmt(taxSummary.debtGains)}
               </div>
            </div>
 
@@ -63,7 +63,7 @@ export const TaxTab = ({ investData, theme }) => {
             <div key={opp.id} style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 16, padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: C.shadow }}>
                <div>
                  <div style={{ color: C.text, fontSize: 14, fontWeight: 800 }}>{opp.symbol || opp.name}</div>
-                 <div style={{ color: C.sub, fontSize: 12, marginTop: 4 }}>Unrealized loss: <span style={{ color: C.expense, fontWeight: 700 }}>₹{opp.unrealizedLoss.toFixed(0)}</span></div>
+                 <div style={{ color: C.sub, fontSize: 12, marginTop: 4 }}>Unrealized loss: <span style={{ color: C.expense, fontWeight: 700 }}>-{fmtAmt(Math.abs(opp.unrealizedLoss))}</span></div>
                </div>
                <div style={{ color: C.primary, fontSize: 11, fontWeight: 700, padding: "6px 12px", background: C.primary + "1A", borderRadius: 12 }}>
                  Sell & Rebuy

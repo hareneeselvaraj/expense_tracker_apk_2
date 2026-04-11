@@ -97,7 +97,7 @@ export default function App() {
   // ── Dual-mode: Expense / Investment ─────────────────────────────────────
   const [appMode, setAppMode] = useState("expense");
   const [investData, setInvestData] = useState({
-    holdings: [], transactions: [], prefs: {}, meta: { version: 1 }
+    holdings: [], transactions: [], goals: [], prefs: {}, meta: { version: 1 }
   });
 
   // Notification Center state

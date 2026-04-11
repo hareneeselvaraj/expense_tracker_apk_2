@@ -49,7 +49,7 @@ const GoalCard = ({ goal, activeHoldings, onClick, theme: C }) => {
   );
 };
 
-export const GoalsPage = ({ investData, theme, onEditGoal, onAddGoal }) => {
+export const GoalsPage = ({ investData, theme, onEditGoal, onAddGoal, onDeleteGoal }) => {
   const C = theme;
   const activeGoals = (investData.goals || []).filter(g => !g.deleted);
   const activeHoldings = (investData.holdings || []).filter(h => !h.deleted);
@@ -74,7 +74,17 @@ export const GoalsPage = ({ investData, theme, onEditGoal, onAddGoal }) => {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
           {activeGoals.map(g => (
-            <GoalCard key={g.id} goal={g} activeHoldings={activeHoldings} onClick={() => onEditGoal(g)} theme={C} />
+            <div key={g.id} style={{ position: "relative" }}>
+              <GoalCard goal={g} activeHoldings={activeHoldings} onClick={() => onEditGoal(g)} theme={C} />
+              {onDeleteGoal && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); if (window.confirm(`Delete goal "${g.name}"?`)) onDeleteGoal(g.id); }}
+                  style={{ position: "absolute", top: 16, right: 16, background: C.input, border: `1px solid ${C.borderLight}`, borderRadius: 10, padding: "6px 10px", cursor: "pointer", color: C.expense, fontSize: 11, fontWeight: 700, zIndex: 2 }}
+                >
+                  <Ico n="trash" sz={14} c={C.expense} />
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}

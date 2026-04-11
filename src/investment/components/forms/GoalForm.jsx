@@ -5,6 +5,7 @@ import { Btn } from "../../../components/ui/Btn.jsx";
 import { Ico } from "../../../components/ui/Ico.jsx";
 import { uid } from "../../../utils/id.js";
 import { todayISO } from "../../../utils/format.js";
+import { calcHoldingValue } from "../../utils/valuation.js";
 
 const COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f43f5e", "#f59e0b"];
 const ICONS = ["flag", "home", "wallet", "trendUp", "stars"];
@@ -116,7 +117,7 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
             <div className="premium-scroll" style={{ background: C.input, borderRadius: 16, border: `1px solid ${C.borderLight}`, padding: 8, maxHeight: 180, overflowY: "auto", WebkitOverflowScrolling: "touch", display: "flex", flexDirection: "column", gap: 4 }}>
                {activeHoldings.map(h => {
                  const isSel = linked.includes(h.id);
-                 const hVal = (h.qty !== undefined && h.currentPrice !== undefined) ? (h.qty * h.currentPrice) : (h.currentPrice !== undefined ? h.currentPrice : (h.principal || 0));
+                 const hVal = calcHoldingValue(h);
                  return (
                    <div key={h.id} onClick={() => toggleLink(h.id)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderRadius: 12, background: isSel ? C.primary+"22" : "transparent", cursor: "pointer", transition: "all 0.2s", minHeight: 44 }}>
                      <div style={{ minWidth: 0, flex: 1 }}>

@@ -1,4 +1,5 @@
 import { ASSET_TYPES } from "../constants/assetTypes.js";
+import { calcHoldingValue } from "./valuation.js";
 
 // Financial Year starts April 1st, ends March 31st
 export function getCurrentFY() {
@@ -110,9 +111,9 @@ export function calculateTaxes(holdings, transactions, targetFY) {
   // Harvesting opportunities
   const opportunities = [];
   holdings.filter(h => !h.deleted && (h.type === "stock" || h.type === "mf")).forEach(h => {
-    // Basic overall unrealised approx:
-    const currentValue = h.qty * (h.currentPrice || h.purchasePrice);
-    const unrealized = currentValue - h.principal;
+    // Use calcHoldingValue for accurate value across all types
+    const currentValue = calcHoldingValue(h);
+    const unrealized = currentValue - (h.principal || 0);
     if (unrealized < -500) { // arbitrary threshold to suggest harvesting
       opportunities.push({
         id: h.id,
