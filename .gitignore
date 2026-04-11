@@ -21,3 +21,5 @@ Thumbs.db
 # IDE files
 .vscode/
 .idea/
+
+dist_deploy_*.zip
