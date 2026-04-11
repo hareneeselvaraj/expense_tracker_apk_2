@@ -53,9 +53,15 @@ export const FilterModal = ({ filters, setFilters, categories, tags, accounts, o
       {/* Date Range — compact row */}
       <div>
         <div style={lbl}>Date Range</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <input type="date" value={filters.from} onChange={e => setFilters(p => ({ ...p, from: e.target.value }))} style={selectStyle} placeholder="From" />
-          <input type="date" value={filters.to} onChange={e => setFilters(p => ({ ...p, to: e.target.value }))} style={selectStyle} placeholder="To" />
+        <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 9, color: C.sub, fontWeight: 600 }}>From</span>
+            <input type="date" value={filters.from} onChange={e => setFilters(p => ({ ...p, from: e.target.value }))} style={{ ...selectStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 9, color: C.sub, fontWeight: 600 }}>To</span>
+            <input type="date" value={filters.to} onChange={e => setFilters(p => ({ ...p, to: e.target.value }))} style={{ ...selectStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }} />
+          </div>
         </div>
       </div>
 

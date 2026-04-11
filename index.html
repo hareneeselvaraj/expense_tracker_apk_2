@@ -188,6 +188,9 @@
           min-width: 0 !important;
         }
       }
+      .form-row > div {
+        overflow: hidden;
+      }
 
       /* ── Select consistency ── */
       .form-select {
@@ -201,10 +204,19 @@
 
 
 
-      /* ── Investment mobile compact ── */
+      /* ── Date input mobile compact ── */
+      input[type="date"] {
+        min-height: 36px;
+        max-width: 100%;
+        box-sizing: border-box;
+        font-size: 13px !important;
+        -webkit-appearance: none;
+        appearance: none;
+      }
       @media (max-width: 480px) {
         input[type="date"] {
-          min-height: 36px;
+          font-size: 12px !important;
+          padding: 6px 8px !important;
         }
       }
     </style>

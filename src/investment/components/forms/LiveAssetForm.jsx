@@ -196,18 +196,17 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
 
         <div className="form-row">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <FLabel theme={C}>{isStock ? "Quantity" : "Units"}</FLabel>
+            <FLabel theme={C}>{isStock ? "Qty" : "Units"}</FLabel>
             <FInput theme={C} type="number" step="0.001" value={qty} onChange={e => setQty(e.target.value)} placeholder="10" />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-             <FLabel theme={C}>Avg Buy Price (₹)</FLabel>
-             <FInput theme={C} type="number" step="0.01" value={purchasePrice} onChange={e => setPurchasePrice(e.target.value)} placeholder="Per unit cost" />
+             <FLabel theme={C}>Avg Price (₹)</FLabel>
+             <FInput theme={C} type="number" step="0.01" value={purchasePrice} onChange={e => setPurchasePrice(e.target.value)} placeholder="Cost" />
           </div>
-        </div>
-
-        <div>
-           <FLabel theme={C}>Purchase Date</FLabel>
-           <FInput theme={C} type="date" value={date} onChange={e => setDate(e.target.value)} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+             <FLabel theme={C}>Buy Date</FLabel>
+             <FInput theme={C} type="date" value={date} onChange={e => setDate(e.target.value)} />
+          </div>
         </div>
 
         {!isStock && (

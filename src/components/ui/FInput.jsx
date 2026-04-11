@@ -10,8 +10,8 @@ export const FInput = ({value,onChange,placeholder,type="text",step,style:x, the
   return (
     <input value={value} onChange={onChange} placeholder={placeholder} type={type} step={step} style={{
       background:C.input,borderWidth:1,borderStyle:"solid",borderColor:C.border,borderRadius:10,padding:"8px 10px",
-      color:C.text,fontSize:14,outline:"none",width:"100%",boxSizing:"border-box",fontFamily:"inherit",
-      minHeight:36,...x
+      color:C.text,fontSize:14,outline:"none",width:"100%",maxWidth:"100%",boxSizing:"border-box",fontFamily:"inherit",
+      minHeight:36,overflow:"hidden",...x
     }}/>
   );
 };

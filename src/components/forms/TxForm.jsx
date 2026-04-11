@@ -27,13 +27,13 @@ export const TxForm = ({init, categories, tags, accounts, existingTransactions, 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
 
-      {/* Row 1: Date + Credit/Debit side by side */}
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10}}>
-        <div>
+      {/* Row 1: Date + Credit/Debit */}
+      <div style={{display:"flex", gap:8, alignItems:"flex-end"}}>
+        <div style={{flex:"0 0 auto", minWidth:0}}>
           <FLabel theme={C}>Date</FLabel>
-          <FInput theme={C} value={tx.date} onChange={fEv("date")} type="date"/>
+          <FInput theme={C} value={tx.date} onChange={fEv("date")} type="date" style={{width:"auto", minWidth:0}}/>
         </div>
-        <div>
+        <div style={{flex:1, minWidth:0}}>
           <FLabel theme={C}>Credit / Debit</FLabel>
           <CdToggle theme={C} value={tx.creditDebit} onChange={v=>{
             setTx(p=>({...p, creditDebit:v, txType:v==="Credit"?"Income":"Expense"}));
