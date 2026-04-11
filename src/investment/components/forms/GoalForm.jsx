@@ -70,18 +70,18 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
   const activeHoldings = holdings.filter(h => !h.deleted);
 
   return (
-    <Modal maxWidth={480} open={open} onClose={onClose} title={init ? "Edit Goal" : "Add Goal"} theme={C}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <Modal maxWidth={400} open={open} onClose={onClose} title={init ? "Edit Goal" : "Add Goal"} theme={C}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div>
           <FLabel theme={C}>Goal Name</FLabel>
           <FInput theme={C} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. House Downpayment" />
         </div>
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Target Amount (₹)</FLabel>
             <FInput theme={C} type="number" value={targetAmount} onChange={e => setTargetAmount(e.target.value)} placeholder="5000000" />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
              <FLabel theme={C}>Target Date</FLabel>
              <FInput theme={C} type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)} />
           </div>
@@ -119,7 +119,7 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
                  const isSel = linked.includes(h.id);
                  const hVal = calcHoldingValue(h);
                  return (
-                   <div key={h.id} onClick={() => toggleLink(h.id)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderRadius: 12, background: isSel ? C.primary+"22" : "transparent", cursor: "pointer", transition: "all 0.2s", minHeight: 44 }}>
+                   <div key={h.id} onClick={() => toggleLink(h.id)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", borderRadius: 12, background: isSel ? C.primary+"22" : "transparent", cursor: "pointer", transition: "all 0.2s", minHeight: 36 }}>
                      <div style={{ minWidth: 0, flex: 1 }}>
                        <div style={{ fontSize: 13, color: C.text, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.name}</div>
                        <div style={{ fontSize: 11, color: C.sub, marginTop: 2 }}>{h.symbol || h.type.toUpperCase()} | ₹{hVal.toLocaleString()}</div>
@@ -134,7 +134,7 @@ export const GoalForm = ({ open, init, onClose, onSave, theme, holdings = [] }) 
           </div>
         )}
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 48 }} disabled={!name || !targetAmount || !targetDate}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 40 }} disabled={!name || !targetAmount || !targetDate}>
           {init ? "Save Goal" : "Create Goal"}
         </Btn>
       </div>

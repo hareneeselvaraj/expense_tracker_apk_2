@@ -65,21 +65,21 @@ export const NPSForm = ({ open, init, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal maxWidth={480} open={open} onClose={onClose} title={init ? "Edit NPS Holding" : "Add NPS"} theme={C}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <Modal maxWidth={400} open={open} onClose={onClose} title={init ? "Edit NPS Holding" : "Add NPS"} theme={C}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div>
           <FLabel theme={C}>Custom Name (Optional)</FLabel>
           <FInput theme={C} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. My NPS" />
         </div>
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>PRAN</FLabel>
             <FInput theme={C} value={pran} onChange={e => setPran(e.target.value)} placeholder="12 digit PRAN" />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Tier Type</FLabel>
-            <select value={tierType} onChange={e => setTierType(e.target.value)} className="form-select" style={{ width: "100%", padding: "10px 12px", fontSize: 16, borderRadius: 12, background: C.input, color: C.text, border: `1px solid ${C.border}`, outline: "none", minHeight: 44, boxSizing: "border-box" }}>
+            <select value={tierType} onChange={e => setTierType(e.target.value)} className="form-select" style={{ width: "100%", padding: "8px 10px", fontSize: 13, borderRadius: 10, background: C.input, color: C.text, border: `1px solid ${C.border}`, outline: "none", minHeight: 36, boxSizing: "border-box" }}>
               <option value="tier1">Tier I (Retirement)</option>
               <option value="tier2">Tier II (Voluntary)</option>
             </select>
@@ -87,17 +87,17 @@ export const NPSForm = ({ open, init, onClose, onSave, theme }) => {
         </div>
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Current Value (₹)</FLabel>
             <FInput theme={C} type="number" value={currentCorpus} onChange={e => setCurrentCorpus(e.target.value)} placeholder="Total Corpus" />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
              <FLabel theme={C}>Start Date</FLabel>
              <FInput theme={C} type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
           </div>
         </div>
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 48 }}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 40 }}>
           {init ? "Save Details" : "Add NPS"}
         </Btn>
       </div>

@@ -124,21 +124,21 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal maxWidth={480} open={open} onClose={onClose} title={init ? "Edit Gold Holding" : "Add Physical Gold"} theme={C}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <Modal maxWidth={400} open={open} onClose={onClose} title={init ? "Edit Gold Holding" : "Add Physical Gold"} theme={C}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div>
           <FLabel theme={C}>Item Name / Jeweller</FLabel>
           <FInput theme={C} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Gold Coins, Malabar..." />
         </div>
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Weight (Grams)</FLabel>
             <FInput theme={C} type="number" step="0.01" value={grams} onChange={e => setGrams(e.target.value)} placeholder="10.5" />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Purity</FLabel>
-            <select value={purity} onChange={e => setPurity(e.target.value)} className="form-select" style={{ width: "100%", padding: "10px 12px", fontSize: 16, borderRadius: 12, background: C.input, color: C.text, border: `1px solid ${C.border}`, outline: "none", minHeight: 44, boxSizing: "border-box" }}>
+            <select value={purity} onChange={e => setPurity(e.target.value)} className="form-select" style={{ width: "100%", padding: "8px 10px", fontSize: 13, borderRadius: 10, background: C.input, color: C.text, border: `1px solid ${C.border}`, outline: "none", minHeight: 36, boxSizing: "border-box" }}>
               <option value="24k">24K (99.9%)</option>
               <option value="22k">22K (91.6%)</option>
               <option value="18k">18K (75.0%)</option>
@@ -147,11 +147,11 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
         </div>
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Purchase Price (₹)</FLabel>
             <FInput theme={C} type="number" value={purchasePrice} onChange={e => setPurchasePrice(e.target.value)} placeholder="Total cost paid" />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Purchase Date</FLabel>
             <FInput theme={C} type="date" value={date} onChange={e => setDate(e.target.value)} />
           </div>
@@ -214,7 +214,7 @@ export const GoldForm = ({ open, init, onClose, onSave, theme }) => {
           </div>
         )}
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 48 }}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 40 }}>
           {init ? "Save Details" : "Add Gold"}
         </Btn>
       </div>

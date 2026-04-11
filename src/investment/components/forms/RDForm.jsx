@@ -92,8 +92,8 @@ export const RDForm = ({ open, init, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal maxWidth={480} open={open} onClose={onClose} title={init ? "Edit Recurring Deposit" : "Add Recurring Deposit"} theme={C}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <Modal maxWidth={400} open={open} onClose={onClose} title={init ? "Edit Recurring Deposit" : "Add Recurring Deposit"} theme={C}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div>
           <FLabel theme={C}>Bank Name</FLabel>
           <FInput theme={C} value={bank} onChange={e => setBank(e.target.value)} placeholder="e.g. SBI" />
@@ -104,39 +104,39 @@ export const RDForm = ({ open, init, onClose, onSave, theme }) => {
         </div>
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Monthly Installment (₹)</FLabel>
             <FInput theme={C} type="number" value={installment} onChange={e => setInstallment(e.target.value)} placeholder="5000" />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Interest Rate (%)</FLabel>
             <FInput theme={C} type="number" value={interestRate} onChange={e => setInterestRate(e.target.value)} placeholder="6.5" />
           </div>
         </div>
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Start Date</FLabel>
             <FInput theme={C} type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Debit Day (1-28)</FLabel>
             <FInput theme={C} type="number" value={dayOfMonth} onChange={e => setDayOfMonth(e.target.value)} placeholder="1" />
           </div>
         </div>
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Tenure (Months)</FLabel>
             <FInput theme={C} type="number" value={tenureMonths} onChange={e => setTenureMonths(e.target.value)} placeholder="60" />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Maturity Date</FLabel>
             <FInput theme={C} type="date" value={maturityDate} onChange={e => setMaturityDate(e.target.value)} />
           </div>
         </div>
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 48 }}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 40 }}>
           {init ? "Save Changes" : "Create RD"}
         </Btn>
       </div>

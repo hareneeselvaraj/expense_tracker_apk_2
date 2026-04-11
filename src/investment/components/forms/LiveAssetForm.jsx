@@ -154,8 +154,8 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal maxWidth={480} open={open} onClose={onClose} title={init ? `Edit ${isStock ? "Stock" : "Mutual Fund"}` : `Add ${isStock ? "Stock" : "Mutual Fund"}`} theme={C}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <Modal maxWidth={400} open={open} onClose={onClose} title={init ? `Edit ${isStock ? "Stock" : "Mutual Fund"}` : `Add ${isStock ? "Stock" : "Mutual Fund"}`} theme={C}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div>
           <FLabel theme={C}>{isStock ? "Stock Ticker (e.g. RELIANCE.NS)" : "MF Name or ISIN (e.g. INF846K01EW2)"}</FLabel>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -195,11 +195,11 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
         )}
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>{isStock ? "Quantity" : "Units"}</FLabel>
             <FInput theme={C} type="number" step="0.001" value={qty} onChange={e => setQty(e.target.value)} placeholder="10" />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
              <FLabel theme={C}>Avg Buy Price (₹)</FLabel>
              <FInput theme={C} type="number" step="0.01" value={purchasePrice} onChange={e => setPurchasePrice(e.target.value)} placeholder="Per unit cost" />
           </div>
@@ -214,7 +214,7 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
           <div style={{ background: C.input, borderRadius: 14, border: `1px solid ${C.borderLight}`, padding: 12 }}>
              <FLabel theme={C}>SIP Settings (Optional)</FLabel>
              <div className="form-row" style={{ marginTop: 8 }}>
-               <div style={{ flex: 1, minWidth: 130 }}>
+               <div style={{ flex: 1, minWidth: 0 }}>
                  <FInput theme={C} type="number" value={sipAmount} onChange={e => setSipAmount(e.target.value)} placeholder="SIP Amount (₹)" />
                </div>
                <div style={{ flex: 1, minWidth: 80 }}>
@@ -230,7 +230,7 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
           </div>
         )}
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 48 }} disabled={!priceValid || !qty || !purchasePrice}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 40 }} disabled={!priceValid || !qty || !purchasePrice}>
           {init ? "Save Details" : `Add ${isStock ? "Stock" : "Fund"}`}
         </Btn>
       </div>

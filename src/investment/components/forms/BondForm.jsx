@@ -78,8 +78,8 @@ export const BondForm = ({ open, init, onClose, onSave, theme }) => {
   };
 
   return (
-    <Modal maxWidth={480} open={open} onClose={onClose} title={init ? "Edit Bond Holding" : "Add Bond"} theme={C}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <Modal maxWidth={400} open={open} onClose={onClose} title={init ? "Edit Bond Holding" : "Add Bond"} theme={C}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div>
           <FLabel theme={C}>Issuer Name</FLabel>
           <FInput theme={C} value={issuer} onChange={e => setIssuer(e.target.value)} placeholder="e.g. RBI, NHAI, SGB" />
@@ -90,11 +90,11 @@ export const BondForm = ({ open, init, onClose, onSave, theme }) => {
         </div>
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Face Value (₹)</FLabel>
             <FInput theme={C} type="number" value={faceValue} onChange={e => setFaceValue(e.target.value)} placeholder="10000" />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
              <FLabel theme={C}>Coupon Rate (%)</FLabel>
              <FInput theme={C} type="number" step="0.01" value={couponRate} onChange={e => setCouponRate(e.target.value)} placeholder="7.5" />
           </div>
@@ -106,11 +106,11 @@ export const BondForm = ({ open, init, onClose, onSave, theme }) => {
         </div>
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Purchase Date</FLabel>
             <FInput theme={C} type="date" value={date} onChange={e => setDate(e.target.value)} />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
              <FLabel theme={C}>Maturity Date</FLabel>
              <FInput theme={C} type="date" value={maturityDate} onChange={e => setMaturityDate(e.target.value)} />
           </div>
@@ -120,12 +120,12 @@ export const BondForm = ({ open, init, onClose, onSave, theme }) => {
            <FLabel theme={C}>Coupon Payouts</FLabel>
            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
              {["annual", "semi-annual", "quarterly"].map(fq => (
-               <button key={fq} onClick={() => setCouponFrequency(fq)} style={{ flex: 1, padding: "10px 6px", minHeight: 40, background: couponFrequency === fq ? C.primary : "transparent", color: couponFrequency === fq ? "#fff" : C.sub, border: `1px solid ${couponFrequency === fq ? C.primary : C.borderLight}`, borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", textTransform: "capitalize" }}>{fq}</button>
+               <button key={fq} onClick={() => setCouponFrequency(fq)} style={{ flex: 1, padding: "7px 4px", minHeight: 34, background: couponFrequency === fq ? C.primary : "transparent", color: couponFrequency === fq ? "#fff" : C.sub, border: `1px solid ${couponFrequency === fq ? C.primary : C.borderLight}`, borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", textTransform: "capitalize" }}>{fq}</button>
              ))}
            </div>
         </div>
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 48 }}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 40 }}>
           {init ? "Save Details" : "Add Bond"}
         </Btn>
       </div>

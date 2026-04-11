@@ -64,19 +64,19 @@ export const GovtSchemeForm = ({ open, init, type, onClose, onSave, theme }) => 
   };
 
   return (
-    <Modal maxWidth={480} open={open} onClose={onClose} title={init ? `Edit ${shortName}` : `Add ${title}`} theme={C}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <Modal maxWidth={400} open={open} onClose={onClose} title={init ? `Edit ${shortName}` : `Add ${title}`} theme={C}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div>
           <FLabel theme={C}>Custom Name (Optional)</FLabel>
           <FInput theme={C} value={name} onChange={e => setName(e.target.value)} placeholder={`e.g. My ${shortName}`} />
         </div>
 
         <div className="form-row">
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>{shortName} Account No.</FLabel>
             <FInput theme={C} value={accountNo} onChange={e => setAccountNo(e.target.value)} placeholder={type === 'ppf' ? "Account number" : "UAN number"} />
           </div>
-          <div style={{ flex: 1, minWidth: 130 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <FLabel theme={C}>Current Balance (₹)</FLabel>
             <FInput theme={C} type="number" value={currentBalance} onChange={e => setCurrentBalance(e.target.value)} placeholder="Total accumulated" />
           </div>
@@ -87,7 +87,7 @@ export const GovtSchemeForm = ({ open, init, type, onClose, onSave, theme }) => 
            <FInput theme={C} type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
         </div>
 
-        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 48 }}>
+        <Btn theme={C} v="primary" full onClick={handleSave} style={{ marginTop: 4, minHeight: 40 }}>
           {init ? "Save Details" : `Add ${shortName}`}
         </Btn>
       </div>

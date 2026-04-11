@@ -110,7 +110,7 @@ export const Modal = ({ open, onClose, title, children, theme, maxWidth = 400 })
 
         {/* Scrollable content */}
         <div ref={scrollRef} className="premium-scroll" style={{
-          padding: "14px 16px 20px",
+          padding: "12px 14px 16px",
           overflowY: "auto",
           flex: 1,
           WebkitOverflowScrolling: "touch",

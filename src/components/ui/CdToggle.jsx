@@ -3,7 +3,7 @@ import React from "react";
 export const CdToggle = ({value,onChange,theme}) => {
   const C = theme;
   return (
-    <div style={{display:"flex",background:C.input,borderWidth:1,borderStyle:"solid",borderColor:C.border,borderRadius:10,overflow:"hidden",height:42}}>
+    <div style={{display:"flex",background:C.input,borderWidth:1,borderStyle:"solid",borderColor:C.border,borderRadius:10,overflow:"hidden",height:36}}>
       {["Credit","Debit"].map(opt => (
         <button key={opt} onClick={()=>onChange(opt)} style={{
           flex:1,border:"none",fontFamily:"inherit",fontSize:13,fontWeight:700,cursor:"pointer",
