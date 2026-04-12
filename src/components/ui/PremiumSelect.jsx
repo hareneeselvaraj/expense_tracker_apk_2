@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Ico } from "./Ico.jsx";
+import Icon from "./Icon.jsx";
 import { FLabel } from "./FInput.jsx";
 
 export const PremiumSelect = ({ label, value, options, onChange, placeholder = "Select...", searchable = true, multi = false, theme }) => {
@@ -47,9 +48,9 @@ export const PremiumSelect = ({ label, value, options, onChange, placeholder = "
     return options.find(o => (o.id === value || o.name === value))?.color;
   };
 
-  const selectedEmoji = () => {
+  const selectedIcon = () => {
     if (multi) return null;
-    return options.find(o => (o.id === value || o.name === value))?.emoji;
+    return options.find(o => (o.id === value || o.name === value))?.icon || options.find(o => (o.id === value || o.name === value))?.emoji;
   };
 
   return (
@@ -63,8 +64,8 @@ export const PremiumSelect = ({ label, value, options, onChange, placeholder = "
         <div style={{ display: "flex", alignItems: "center", gap:8 }}>
           {selectedColor() ? (
              <div style={{ width: 8, height: 8, borderRadius: "50%", background: selectedColor(), boxShadow: `0 0 6px ${selectedColor()}44` }} />
-          ) : selectedEmoji() ? (
-             <span style={{ fontSize: 14 }}>{selectedEmoji()}</span>
+          ) : selectedIcon() ? (
+             <Icon name={selectedIcon()} size={14} />
           ) : multi && value?.length > 0 ? (
              <div style={{width:22, height:22, borderRadius:6, background:C.primary, color:"#000", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:900}}>{value.length}</div>
           ) : null}
@@ -106,8 +107,8 @@ export const PremiumSelect = ({ label, value, options, onChange, placeholder = "
                 }} onMouseEnter={e => e.currentTarget.style.background = C.muted} onMouseLeave={e => e.currentTarget.style.background = sel ? C.primary + "15" : "transparent"}>
                   {opt.color ? (
                     <div style={{ width: 8, height: 8, borderRadius: "50%", background: opt.color, boxShadow: `0 0 8px ${opt.color}33` }} />
-                  ) : opt.emoji ? (
-                    <span style={{ fontSize: 14 }}>{opt.emoji}</span>
+                  ) : opt.icon || opt.emoji ? (
+                    <Icon name={opt.icon || opt.emoji} size={14} />
                   ) : null}
                   <div style={{flex:1}}>
                     <div style={{ color: sel ? C.primary : C.text, fontSize: 12, fontWeight: 700 }}>{opt.name || opt.label}</div>

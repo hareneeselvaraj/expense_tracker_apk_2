@@ -99,7 +99,10 @@ export const LiveAssetForm = ({ open, init, type, onClose, onSave, theme }) => {
         setManualPriceMode(true);
       }
     } catch (e) {
-      setFetchError(`Live price unavailable (${e.details?.[0] || e.message}). Enter manually.`);
+      const hint = e.status === 404
+        ? `Ticker "${clean}" not found. Try: ${clean}.NS (NSE) or ${clean}.BO (BSE), or enter price manually.`
+        : `Live price unavailable (${e.message}). You can enter the price manually below.`;
+      setFetchError(hint);
       setManualPriceMode(true);
     }
     setIsFetchingPrice(false);

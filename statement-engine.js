@@ -18,7 +18,7 @@ export const CATEGORY_RULES = [
 
   // ── INVESTMENTS (checked second) ──
   { name: "Mutual Fund",   color: "#8b5cf6", type: "Investment", keywords: ["mutual fund", "mf/", "mfp/", "mf purchase", "sip", "bse/", "cams", "karvy", "kfintech", "mf-", "amfi", "nippon", "hdfc mf", "sbi mf", "axis mf", "icici pru", "kotak mf", "birla", "sundaram", "groww mf", "zerodha coin"] },
-  { name: "Stocks",        color: "#a78bfa", type: "Investment", keywords: ["zerodha", "groww", "upstox", "angel one", "angel broking", "kite", "nse/", "bse/", "eba/", "dp charges", "demat", "trading", "share", "equity", "sensibull", "dhan", "5paisa"] },
+  { name: "Stocks",        color: "#a78bfa", type: "Investment", keywords: ["zerodha", "groww", "upstox", "angel one", "angel broking", "kite", "nse/", "bse/", "eba/", "dp charges", "demat", "trading", "share market", "share trading", "equity", "sensibull", "dhan", "5paisa"] },
   { name: "Fixed Deposit",  color: "#7c3aed", type: "Investment", keywords: ["fd ", "fixed deposit", "fd/", "fd booking", "term deposit", "recurring deposit", "rd ", "rd/"] },
   { name: "Insurance",     color: "#6366f1", type: "Investment", keywords: ["insurance", "insur", "lic", "max life", "hdfc life", "sbi life", "icici lomb", "tata aia", "bajaj allianz", "premium", "star health", "digit insur", "policy"] },
 
@@ -196,6 +196,14 @@ export function autoDetectColumns(headers) {
     return ["credit", "deposit", " cr ", "cr amount"].some(p => l.includes(p));
   }) || "";
   
+  // Detect a separate "Transaction Type" column (Expense/Income/Investment)
+  // Must NOT match the Credit/Debit column
+  const txTypeCol = headers.find(h => {
+    const l = h.toLowerCase();
+    return (l.includes("transaction type") || l === "txtype" || l === "tx type")
+      && !l.includes("credit") && !l.includes("debit");
+  }) || "";
+
   return {
     date:        find(["date", "txn date", "transaction date", "value date", "posting date", "trans date"]),
     description: find(["narration", "description", "remarks", "particular", "detail", "transaction detail", "remark"]),
@@ -203,6 +211,7 @@ export function autoDetectColumns(headers) {
     debit,
     credit,
     creditDebit: creditDebitCol,
+    txType:      txTypeCol,
     balance:     find(["balance", "closing balance", "closing bal", "available balance", "running balance"]),
     category:    find(["category", "cat"]),
     tags:        find(["tag", "tags", "label", "labels"]),
@@ -269,10 +278,17 @@ export function processTransactions(rows, columnMap) {
         if (d) dateStr = `${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}`;
       }
 
-      // Determine txType: credits are always Income (unless category is Investment),
-      // debits use the category type
+      // ── Determine txType ──
+      // Priority 1: Explicit "Transaction Type" column from the CSV (e.g. the app's own export)
+      // Priority 2: Infer from credit/debit + category keyword matching
       let txType;
-      if (isCredit) {
+      const rawTxType = columnMap.txType ? String(row[columnMap.txType] || "").trim() : "";
+      const normalizedTxType = rawTxType.charAt(0).toUpperCase() + rawTxType.slice(1).toLowerCase();
+
+      if (["Expense", "Income", "Investment"].includes(normalizedTxType)) {
+        // Trust the explicit column value
+        txType = normalizedTxType;
+      } else if (isCredit) {
         txType = category.type === "Investment" ? "Investment" : "Income";
       } else {
         txType = category.type === "Income" ? "Income" : category.type === "Investment" ? "Investment" : "Expense";

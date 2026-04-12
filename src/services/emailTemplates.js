@@ -19,20 +19,18 @@ import { fmtAmt } from "../utils/format.js";
 export function buildBudgetAlertEmail(alert, userName) {
   const isExceeded = alert.type === "exceeded" || alert.type === "critical";
   const accentColor = isExceeded ? "#ff5252" : "#ffab00";
-  const emoji = isExceeded ? "🚨" : "⚠️";
   const title = isExceeded 
     ? `Budget Exceeded: ${alert.budgetName}` 
     : `Budget Warning: ${alert.budgetName}`;
 
   return {
-    subject: `${emoji} ${title} — Expense Tracker`,
+    subject: `${title} — Expense Tracker`,
     htmlBody: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0e1a; padding: 32px 16px; color: #e2e8f0;">
         <div style="max-width: 480px; margin: 0 auto;">
           
           <!-- Header -->
           <div style="text-align: center; margin-bottom: 32px;">
-            <div style="font-size: 40px; margin-bottom: 8px;">${emoji}</div>
             <h1 style="font-size: 22px; font-weight: 800; margin: 0; color: ${accentColor};">${title}</h1>
             <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0;">Hi ${userName || "there"}, your Expense Tracker flagged this:</p>
           </div>
@@ -131,14 +129,13 @@ export function buildYearEndSummaryEmail(summary, userName, year) {
   `).join("");
 
   return {
-    subject: `📊 Your ${year} Financial Year in Review — Expense Tracker`,
+    subject: `Your ${year} Financial Year in Review — Expense Tracker`,
     htmlBody: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0e1a; padding: 32px 16px; color: #e2e8f0;">
         <div style="max-width: 520px; margin: 0 auto;">
           
           <!-- Hero -->
           <div style="text-align: center; margin-bottom: 40px; padding: 40px 20px; background: linear-gradient(135deg, #111827, #0f172a); border-radius: 24px; border: 1px solid #1e293b;">
-            <div style="font-size: 56px; margin-bottom: 12px;">📊</div>
             <h1 style="font-size: 28px; font-weight: 900; margin: 0; color: #00e5ff; letter-spacing: -0.5px;">${year} Financial Summary</h1>
             <p style="color: #94a3b8; font-size: 14px; margin: 12px 0 0;">Hi ${userName || "there"}, here's your complete financial year in review.</p>
             <p style="color: #64748b; font-size: 12px; margin: 4px 0 0;">${summary.txCount} transactions tracked this year</p>
@@ -177,7 +174,6 @@ export function buildYearEndSummaryEmail(summary, userName, year) {
                 <div style="color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">Total Invested</div>
                 <div style="color: #b388ff; font-size: 20px; font-weight: 900; font-family: monospace; margin-top: 4px;">${fmtAmt(summary.totalInvest)}</div>
               </div>
-              <div style="font-size: 32px;">💎</div>
             </div>
           </div>
           ` : ''}

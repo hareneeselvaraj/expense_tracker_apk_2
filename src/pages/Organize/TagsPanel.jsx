@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Ico } from "../../components/ui/Ico.jsx";
+import Icon from "../../components/ui/Icon.jsx";
 import { Btn } from "../../components/ui/Btn.jsx";
 import { fmtAmt } from "../../utils/format.js";
 
@@ -38,7 +39,7 @@ export default function TagsPanel({ tags, transactions, onAddTag, onEditTag, onD
                 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div style={{ width: 44, height: 44, borderRadius: 14, background: `${tg.color}1a`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Ico n="tag" sz={20} c={tg.color} />
+                    {tg.icon ? <Icon name={tg.icon} size={20} color={tg.color} /> : <Ico n="tag" sz={20} c={tg.color} />}
                   </div>
                   <div style={{ display: "flex", gap: 6, background:C.input, borderRadius:12, padding:2 }}>
                     {confirmId === tg.id ? (

@@ -53,7 +53,7 @@ export default function ActionBuilder({ actions, onChange, categories, tags, the
               style={{ width: '100%', background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 8, padding: '10px 12px', fontSize: 13, outline: 'none' }}
             >
               <option value="">Select Category</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           )}
 

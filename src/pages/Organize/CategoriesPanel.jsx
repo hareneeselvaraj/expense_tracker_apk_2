@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Ico } from "../../components/ui/Ico.jsx";
+import Icon from "../../components/ui/Icon.jsx";
 import { Btn } from "../../components/ui/Btn.jsx";
 import { fmtAmt } from "../../utils/format.js";
 
@@ -37,8 +38,8 @@ export default function CategoriesPanel({ categories, transactions, DEF_CATS, on
                   }} onMouseEnter={e=>{e.currentTarget.style.borderColor=cat.color;e.currentTarget.style.transform="translateY(-4px)"}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.transform="translateY(0)"}}>
                     <div style={{position:"absolute",top:-20,right:-20,width:60,height:60,background:cat.color,filter:"blur(30px)",opacity:0.15}}/>
                     
-                      <div style={{width:48,height:48,borderRadius:16,background:`linear-gradient(135deg,${cat.color}33,${cat.color}11)`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${cat.color}55`, fontSize:24, boxShadow:`0 10px 20px ${cat.color}1a`, backdropFilter:"blur(10px)"}}>
-                        {cat.emoji || "📦"}
+                      <div style={{width:48,height:48,borderRadius:16,background:`linear-gradient(135deg,${cat.color}33,${cat.color}11)`,display:"flex",alignItems:"center",justifyContent:"center",border:`1px solid ${cat.color}55`, fontSize:24, boxShadow:`0 10px 20px ${cat.color}1a`, backdropFilter:"blur(10px)", color:cat.color}}>
+                        {cat.icon ? <Icon name={cat.icon} size={24} /> : "📦"}
                       </div>
                       <div style={{display:"flex",gap:4, background:C.surface+"66", borderRadius:12, padding:2, border:`1px solid ${C.border}`, backdropFilter:"blur(8px)"}}>
                         {confirmId === cat.id ? (

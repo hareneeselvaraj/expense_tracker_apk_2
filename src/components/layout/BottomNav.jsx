@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Ico } from "../ui/Ico.jsx";
+import Icon from "../ui/Icon.jsx";
 
 export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag, theme, hideFab }) => {
   const C = theme;
@@ -18,10 +19,10 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
   ];
 
   const fabActions = [
-    { label: "Transaction", emoji: "💰", action: onAddTx },
-    { label: "Account", emoji: "🏦", action: onAddAcc },
-    { label: "Category", emoji: "📂", action: onAddCat },
-    { label: "Tag", emoji: "🏷️", action: onAddTag }
+    { label: "Transaction", icon: "Banknote", action: onAddTx },
+    { label: "Account", icon: "Landmark", action: onAddAcc },
+    { label: "Category", icon: "FolderOpen", action: onAddCat },
+    { label: "Tag", icon: "Tag", action: onAddTag }
   ];
 
   const handleFabAction = (action) => {
@@ -102,7 +103,7 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
                   onMouseDown={e => e.currentTarget.style.transform = "scale(0.9)"}
                   onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
                 >
-                  {item.emoji}
+                  {item.icon ? <Icon name={item.icon} size={20} color="#fff" /> : item.emoji}
                 </div>
                 <span style={{
                   fontSize: 9, fontWeight: 700, color: "#fff",

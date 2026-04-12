@@ -15,6 +15,7 @@ import { processRecurring, getUpcoming } from "./services/recurringEngine.js";
 import { generateInsights } from "./services/insightsEngine.js";
 import { categorizeTransaction } from "./services/categorizationPipeline.js";
 import { checkImportBatch } from "./services/duplicateEngine.js";
+import { searchYahooSymbol, getLivePriceSmart } from "./investment/services/priceEngine.js";
 import { checkAndSendYearEndEmail, sendYearEndEmailManual } from "./services/yearEndService.js";
 import { processBudgetAlerts } from "./services/budgetEmailSender.js";
 import { createNotification, shouldAdd, pruneNotifications } from "./services/notificationService.js";
@@ -85,6 +86,55 @@ const globalStyles = `
     -moz-appearance: textfield;
   }
 `;
+
+// ── Auto-detect stock/MF ticker from expense description ─────────────────
+// Patterns: "bought TCS share", "TCS stock", "invested in RELIANCE", "SIP HDFC",
+//           "purchased INFY shares", "sold WIPRO", etc.
+const TICKER_PATTERNS = [
+  /\b(?:bought|buy|purchased|invest(?:ed)?(?:\s+in)?|sip(?:\s+in)?)\s+([A-Z][A-Z0-9&]{1,19})\b/i,
+  /\b([A-Z][A-Z0-9&]{1,19})\s+(?:share|shares|stock|stocks|equity|mf|mutual\s*fund|units?)\b/i,
+  /\b(?:sold|sell)\s+([A-Z][A-Z0-9&]{1,19})\b/i,
+];
+const TICKER_BLACKLIST = new Set([
+  "THE", "FOR", "AND", "BUY", "SELL", "SOLD", "SIP", "EMI", "TAX", "NET",
+  "INR", "USD", "VIA", "FROM", "WITH", "SOME", "MORE", "NEW", "OLD", "ALL",
+  "PAID", "COST", "FUND", "SHARE", "SHARES", "STOCK", "STOCKS", "INVEST",
+  "INVESTED", "BOUGHT", "PURCHASED", "MONTHLY", "AMOUNT", "TOTAL", "PRICE",
+]);
+
+function extractTickerCandidate(description) {
+  if (!description) return null;
+  for (const re of TICKER_PATTERNS) {
+    const m = description.match(re);
+    if (m && m[1]) {
+      const candidate = m[1].toUpperCase();
+      if (candidate.length >= 2 && !TICKER_BLACKLIST.has(candidate)) return candidate;
+    }
+  }
+  return null;
+}
+
+async function resolveTickerAndPrice(candidate) {
+  try {
+    const price = await getLivePriceSmart(candidate, { force: false });
+    if (price) {
+      // getLivePriceSmart auto-appends .NS for plain tickers
+      const symbol = /^[A-Z0-9&-]+$/.test(candidate) && !candidate.includes(".")
+        ? `${candidate}.NS` : candidate;
+      return { symbol, price };
+    }
+  } catch (e) { /* ignore — ticker not found */ }
+
+  // Fallback: try Yahoo search
+  try {
+    const symbol = await searchYahooSymbol(candidate);
+    if (symbol) {
+      const price = await getLivePriceSmart(symbol, { force: false });
+      return { symbol, price: price || 0 };
+    }
+  } catch (e) { /* ignore */ }
+  return null;
+}
 
 export default function App() {
   // ── STATE ──────────────────────────────────────────────────────────────────
@@ -257,14 +307,14 @@ export default function App() {
       setAppMode(savedMode);
       const savedInvest = await getInvestData();
       const migratedInvest = migrateInvestData(savedInvest);
-      
+
       setInvestData(migratedInvest || {
         holdings: [],
         transactions: [],
         goals: [],
-        prefs: { 
-          defaultExchange: "NS", 
-          displayCurrency: "INR", 
+        prefs: {
+          defaultExchange: "NS",
+          displayCurrency: "INR",
           xirrAssumption: 12,
           refreshMode: "manual",
           targetAllocation: { equity: 60, debt: 30, gold: 10, cash: 0 }
@@ -339,6 +389,73 @@ export default function App() {
           });
 
           notify(`${processed.length} recurring transaction${processed.length > 1 ? 's' : ''} posted`);
+
+          // Sync any investment-category recurring transactions to investData
+          const investTxs = processed.filter(tx => tx.category === "c11" && !tx.deleted);
+          if (investTxs.length > 0) {
+            const recNow = new Date().toISOString();
+            setInvestData(prevInvest => {
+              const newInvest = { ...prevInvest, transactions: [...prevInvest.transactions] };
+              investTxs.forEach(tx => {
+                const exists = newInvest.transactions.some(itx => itx.expenseTxId === tx.id);
+                if (!exists) {
+                  const isSell = /\b(sold|sell|redeem)\b/i.test(tx.description || "");
+                  newInvest.transactions.unshift({
+                    id: "itx_" + uid(),
+                    expenseTxId: tx.id,
+                    date: tx.date,
+                    amount: tx.amount,
+                    type: isSell ? "sell" : "buy",
+                    description: tx.description || "",
+                    updatedAt: recNow,
+                    deleted: false,
+                  });
+                }
+              });
+              return newInvest;
+            });
+
+            // Async: auto-detect tickers for recurring investment transactions
+            investTxs.forEach(tx => {
+              const candidate = extractTickerCandidate(tx.description);
+              if (!candidate) return;
+              resolveTickerAndPrice(candidate).then(result => {
+                if (!result) return;
+                const { symbol, price } = result;
+                const amt = tx.amount || 0;
+                const qty = price > 0 ? amt / price : 1;
+                const isSell = /\b(sold|sell|redeem)\b/i.test(tx.description || "");
+
+                setInvestData(prevInvest => {
+                  const ni = { ...prevInvest, holdings: [...(prevInvest.holdings || [])] };
+                  const existing = ni.holdings.find(h => !h.deleted && h.symbol === symbol);
+                  if (existing) {
+                    const hIdx = ni.holdings.indexOf(existing);
+                    const oldQty = existing.qty || 0;
+                    const oldP = existing.principal || 0;
+                    const newQty = isSell ? Math.max(0, oldQty - qty) : oldQty + qty;
+                    const newP = isSell ? oldP : oldP + amt;
+                    ni.holdings[hIdx] = {
+                      ...existing, qty: newQty, principal: newP,
+                      purchasePrice: newQty > 0 ? newP / newQty : existing.purchasePrice,
+                      currentPrice: price || existing.currentPrice,
+                      updatedAt: recNow,
+                    };
+                  } else if (!isSell) {
+                    ni.holdings.push({
+                      id: "hld_" + uid(), type: "stock", symbol,
+                      name: `${candidate} Stock`, qty, purchasePrice: price,
+                      principal: amt, currentPrice: price, startDate: tx.date,
+                      priceSource: "live", sipAmount: 0, sipDay: 0,
+                      createdAt: recNow, updatedAt: recNow, deleted: false,
+                    });
+                  }
+                  return ni;
+                });
+              }).catch(() => { });
+            });
+          }
+
           return [...processed, ...prev];
         });
       }
@@ -401,7 +518,7 @@ export default function App() {
   useEffect(() => {
     if (!budgetCheckPending.current || !ready || !emailPrefs.budgetAlerts) return;
     budgetCheckPending.current = false;
-    
+
     const getToken = () => googleService.getToken(CLIENT_ID, driveTokenRef);
     processBudgetAlerts(transactions, budgets, categories, tags, user, getToken)
       .catch(err => console.error("Process budget alerts failed", err));
@@ -410,9 +527,9 @@ export default function App() {
   // Year-end email auto-trigger
   useEffect(() => {
     if (!ready || !user || !emailPrefs.yearEndSummary) return;
-    
+
     const getToken = () => googleService.getToken(CLIENT_ID, driveTokenRef);
-    
+
     checkAndSendYearEndEmail(transactions, categories, tags, accounts, user, getToken)
       .then(sent => {
         if (sent) notify("📊 Your year-end financial summary has been emailed to you!");
@@ -420,14 +537,14 @@ export default function App() {
       .catch(err => console.error("Year-end email check failed:", err));
   }, [ready, user]); // Only run once on app load when user is available
 
-  // Repair categories (Inject missing emojis from DEF_CATS)
+  // Repair categories (Inject missing icons from DEF_CATS)
   useEffect(() => {
     if (!ready || !categories.length) return;
-    const hasMissing = categories.some(c => !c.emoji && DEF_CATS.find(d => d.id === c.id)?.emoji);
+    const hasMissing = categories.some(c => !c.icon && DEF_CATS.find(d => d.id === c.id)?.icon);
     if (hasMissing) {
       setCategories(prev => prev.map(c => {
         const def = DEF_CATS.find(d => d.id === c.id);
-        if (def && !c.emoji) return { ...c, emoji: def.emoji };
+        if (def && !c.icon) return { ...c, icon: def.icon };
         return c;
       }));
     }
@@ -505,19 +622,19 @@ export default function App() {
   const handleSaveTx = (data) => {
     const txs = Array.isArray(data) ? data : [data];
     const now = new Date().toISOString();
-    
+
     setTransactions(prev => {
       let next = [...prev];
       txs.forEach(t => {
         // Run through unification pipeline (smart engine and defaults)
         let categorizedTx = categorizeTransaction({ ...t, amount: parseFloat(t.amount) || 0 }, categories);
-        
+
         // Then apply user rules
         const rulesPatch = applyRulesToTx(categorizedTx);
         if (rulesPatch) categorizedTx = { ...categorizedTx, ...rulesPatch };
-        
+
         const sanitized = stampUpdated(categorizedTx);
-        
+
         const idx = next.findIndex(x => x.id === sanitized.id);
         if (idx > -1) {
           sanitized.deleted = next[idx].deleted || sanitized.deleted;
@@ -532,7 +649,7 @@ export default function App() {
             if (hasTx) {
               return {
                 ...prevInvest,
-                transactions: prevInvest.transactions.map(itx => 
+                transactions: prevInvest.transactions.map(itx =>
                   itx.expenseTxId === sanitized.id ? { ...itx, deleted: true, updatedAt: now } : itx
                 )
               };
@@ -540,19 +657,22 @@ export default function App() {
             return prevInvest;
           });
         }
-        
-        // If category is "Investment" (c11), sync to investData
+
+        // If category is "Investment" (c11), sync to investData + auto-detect holding
         if (sanitized.category === "c11" && !sanitized.deleted) {
+          const investTxId = "itx_" + uid();
+          const isSell = /\b(sold|sell|redeem)\b/i.test(sanitized.description || "");
+
           setInvestData(prevInvest => {
             const newInvest = { ...prevInvest };
             const existingIdx = newInvest.transactions.findIndex(itx => itx.expenseTxId === sanitized.id);
-            
+
             const investTx = {
-              id: existingIdx > -1 ? newInvest.transactions[existingIdx].id : "itx_" + uid(),
+              id: existingIdx > -1 ? newInvest.transactions[existingIdx].id : investTxId,
               expenseTxId: sanitized.id,
               date: sanitized.date,
               amount: sanitized.amount,
-              type: "buy", // default to buy for now
+              type: isSell ? "sell" : "buy",
               description: sanitized.description,
               updatedAt: now,
               deleted: false
@@ -565,11 +685,76 @@ export default function App() {
             }
             return newInvest;
           });
+
+          // Async: try to auto-detect ticker and create/update holding
+          const candidate = extractTickerCandidate(sanitized.description);
+          if (candidate) {
+            resolveTickerAndPrice(candidate).then(result => {
+              if (!result) return;
+              const { symbol, price } = result;
+              const amt = sanitized.amount || 0;
+              const qty = price > 0 ? amt / price : 1;
+
+              setInvestData(prevInvest => {
+                const newInvest = { ...prevInvest, holdings: [...(prevInvest.holdings || [])], transactions: [...prevInvest.transactions] };
+                const existingHolding = newInvest.holdings.find(h => !h.deleted && h.symbol === symbol);
+
+                if (existingHolding) {
+                  // Update existing holding: add qty and recalc avg price
+                  const hIdx = newInvest.holdings.indexOf(existingHolding);
+                  const oldQty = existingHolding.qty || 0;
+                  const oldPrincipal = existingHolding.principal || 0;
+                  const newQty = isSell ? Math.max(0, oldQty - qty) : oldQty + qty;
+                  const newPrincipal = isSell ? oldPrincipal : oldPrincipal + amt;
+                  newInvest.holdings[hIdx] = {
+                    ...existingHolding,
+                    qty: newQty,
+                    principal: newPrincipal,
+                    purchasePrice: newQty > 0 ? newPrincipal / newQty : existingHolding.purchasePrice,
+                    currentPrice: price || existingHolding.currentPrice,
+                    updatedAt: now,
+                  };
+                } else if (!isSell) {
+                  // Create new holding
+                  const hId = "hld_" + uid();
+                  newInvest.holdings.push({
+                    id: hId,
+                    type: "stock",
+                    symbol,
+                    name: `${candidate} Stock`,
+                    qty,
+                    purchasePrice: price,
+                    principal: amt,
+                    currentPrice: price,
+                    startDate: sanitized.date,
+                    priceSource: "live",
+                    sipAmount: 0,
+                    sipDay: 0,
+                    createdAt: now,
+                    updatedAt: now,
+                    deleted: false,
+                  });
+
+                  // Link the invest transaction to this holding
+                  const txIdx = newInvest.transactions.findIndex(itx => itx.expenseTxId === sanitized.id);
+                  if (txIdx > -1) {
+                    newInvest.transactions[txIdx] = {
+                      ...newInvest.transactions[txIdx],
+                      holdingId: hId,
+                      qty,
+                      price,
+                    };
+                  }
+                }
+                return newInvest;
+              });
+            }).catch(() => { /* silent — holding auto-detect is best-effort */ });
+          }
         } else if (sanitized.category === "c11" && sanitized.deleted) {
           // If it was an investment and now deleted, delete counterpart
           setInvestData(prevInvest => ({
             ...prevInvest,
-            transactions: prevInvest.transactions.map(itx => 
+            transactions: prevInvest.transactions.map(itx =>
               itx.expenseTxId === sanitized.id ? { ...itx, deleted: true, updatedAt: now } : itx
             )
           }));
@@ -586,17 +771,25 @@ export default function App() {
   const handleImportTx = (incoming) => {
     const txs = Array.isArray(incoming) ? incoming : [incoming];
 
+    // Local accumulators to track entities created within this batch
+    // (React setState is async, so subsequent txs in the same batch can't see newly created entities)
+    const batchNewCats = [];
+    const batchNewTags = [];
+    const batchNewAccs = [];
+
     // Resolve raw category name → ID, auto-create if missing
     const resolveCategoryName = (rawName, txType) => {
       if (!rawName) return null;
       const normalized = rawName.trim().toLowerCase();
       const existing = categories.find(c => !c.deleted && c.name.toLowerCase() === normalized);
       if (existing) return existing.id;
+      const batchHit = batchNewCats.find(c => c.name.toLowerCase() === normalized);
+      if (batchHit) return batchHit.id;
       const newCat = {
         id: uid(), name: rawName.trim(), type: txType || "Expense",
-        color: "#94a3b8", emoji: "📦", updatedAt: new Date().toISOString()
+        color: "#94a3b8", icon: "Package", updatedAt: new Date().toISOString()
       };
-      setCategories(prev => [...prev, newCat]);
+      batchNewCats.push(newCat);
       return newCat.id;
     };
 
@@ -605,22 +798,20 @@ export default function App() {
       if (!rawTagString) return [];
       const names = rawTagString.split(/[;,|]/).map(s => s.trim()).filter(Boolean);
       const ids = [];
-      const newTags = [];
       names.forEach(name => {
         const normalized = name.toLowerCase().replace(/^#/, "");
         const existing = tags.find(t => !t.deleted && t.name.toLowerCase() === normalized);
-        if (existing) { ids.push(existing.id); }
-        else {
-          const newTag = {
-            id: uid(), name: name.replace(/^#/, ""),
-            color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 55%)`,
-            updatedAt: new Date().toISOString()
-          };
-          newTags.push(newTag);
-          ids.push(newTag.id);
-        }
+        if (existing) { ids.push(existing.id); return; }
+        const batchHit = batchNewTags.find(t => t.name.toLowerCase() === normalized);
+        if (batchHit) { ids.push(batchHit.id); return; }
+        const newTag = {
+          id: uid(), name: name.replace(/^#/, ""),
+          color: `hsl(${Math.floor(Math.random() * 360)}, 70%, 55%)`,
+          updatedAt: new Date().toISOString()
+        };
+        batchNewTags.push(newTag);
+        ids.push(newTag.id);
       });
-      if (newTags.length > 0) setTags(prev => [...prev, ...newTags]);
       return ids;
     };
 
@@ -630,6 +821,8 @@ export default function App() {
       const normalized = rawName.trim().toLowerCase();
       const existing = accounts.find(a => !a.deleted && a.name.toLowerCase() === normalized);
       if (existing) return existing.id;
+      const batchHit = batchNewAccs.find(a => a.name.toLowerCase() === normalized);
+      if (batchHit) return batchHit.id;
       const newAcc = {
         id: uid(),
         name: rawName.trim(),
@@ -637,7 +830,7 @@ export default function App() {
         initialBalance: 0,
         updatedAt: new Date().toISOString()
       };
-      setAccounts(prev => [...prev, newAcc]);
+      batchNewAccs.push(newAcc);
       return newAcc.id;
     };
 
@@ -672,9 +865,13 @@ export default function App() {
       delete cleanTx._rawAccount;
 
       // Run through categorize+rules pipeline only if no explicit category from sheet
-      // AND if we didn't already resolve a valid category ID from the statement engine
+      // AND if we didn't already resolve a valid category ID from the statement engine or batch
       let categorized = cleanTx;
-      const hasValidCatId = categoryId && typeof categoryId === "string" && categories.some(c => c.id === categoryId);
+      const hasValidCatId = categoryId && typeof categoryId === "string" && (
+        categories.some(c => c.id === categoryId) ||
+        batchNewCats.some(c => c.id === categoryId) ||
+        batchReviveCatIds.has(categoryId)
+      );
       if (!t._rawCategory && !hasValidCatId) {
         categorized = categorizeTransaction(cleanTx, categories);
         const rulesPatch = applyRulesToTx(categorized);
@@ -682,6 +879,17 @@ export default function App() {
       }
       return stampUpdated(categorized);
     });
+
+    // Flush batch-created entities to React state in one shot
+    const now = new Date().toISOString();
+    if (batchNewCats.length) setCategories(prev => [...prev, ...batchNewCats]);
+    if (batchNewTags.length) setTags(prev => [...prev, ...batchNewTags]);
+    if (batchNewAccs.length) setAccounts(prev => [...prev, ...batchNewAccs]);
+
+    // Revive soft-deleted entities that the import references
+    if (batchReviveCatIds.size) setCategories(prev => prev.map(c => batchReviveCatIds.has(c.id) ? { ...c, deleted: false, updatedAt: now } : c));
+    if (batchReviveTagIds.size) setTags(prev => prev.map(t => batchReviveTagIds.has(t.id) ? { ...t, deleted: false, updatedAt: now } : t));
+    if (batchReviveAccIds.size) setAccounts(prev => prev.map(a => batchReviveAccIds.has(a.id) ? { ...a, deleted: false, updatedAt: now } : a));
 
     setTransactions(prev => {
       const { clean, duplicates } = checkImportBatch(processed, prev);
@@ -701,11 +909,11 @@ export default function App() {
     const wasInvestment = transactions.find(t => t.id === id)?.category === "c11";
 
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: now } : t));
-    
+
     if (wasInvestment) {
       setInvestData(prev => ({
         ...prev,
-        transactions: prev.transactions.map(itx => 
+        transactions: prev.transactions.map(itx =>
           itx.expenseTxId === id ? { ...itx, deleted: true, updatedAt: now } : itx
         )
       }));
@@ -719,7 +927,7 @@ export default function App() {
         if (wasInvestment) {
           setInvestData(prev => ({
             ...prev,
-            transactions: prev.transactions.map(itx => 
+            transactions: prev.transactions.map(itx =>
               itx.expenseTxId === id ? { ...itx, deleted: false, updatedAt: new Date().toISOString() } : itx
             )
           }));
@@ -768,7 +976,7 @@ export default function App() {
       const data = await googleService.restoreFromDrive(CLIENT_ID, driveTokenRef, file.id);
       const localData = { transactions, categories, tags, accounts, budgets, rules, recurring, investData };
       const merged = mergeDatasets(localData, data);
-      
+
       if (merged.transactions) setTransactions(merged.transactions);
       if (merged.categories) setCategories(merged.categories);
       if (merged.tags) setTags(merged.tags);
@@ -778,7 +986,7 @@ export default function App() {
       if (merged.recurring) setRecurring(merged.recurring);
       if (merged.investData) setInvestData(merged.investData);
       budgetCheckPending.current = true;
-      
+
       if (file.modifiedTime) localStorage.setItem("expense_last_sync", new Date(file.modifiedTime).getTime().toString());
       notify("Data restored & merged successfully");
       // Re-run rules on restored data
@@ -820,7 +1028,7 @@ export default function App() {
       notify(action === "merged" ? "Smart Merged & Synced ☁️" : "Saved to Cloud ☁️");
       addNotification({ type: "sync", severity: "success", title: "Sync complete", body: `Data backed up to Google Drive at ${new Date().toLocaleTimeString()}` });
       setSyncStatus("synced");
-    } catch(err) {
+    } catch (err) {
       notify(err.message, "error");
       addNotification({ type: "sync", severity: "critical", title: "Sync failed", body: err.message || "Could not reach Google Drive. Changes saved locally.", actionLabel: "Retry", actionRoute: "settings" });
       setSyncStatus("error");
@@ -887,9 +1095,9 @@ export default function App() {
         <p style={{ color: C.sub, marginBottom: 32 }}>Your private financial command center.</p>
         <div id="googleBtn" style={{ minHeight: 44, display: "flex", justifyContent: "center", alignItems: "center" }}>
           {gsiError && (
-             <div style={{ color: "#ff6b6b", fontSize: 13, background: "#ff6b6b15", padding: "10px 16px", borderRadius: 12, border: "1px solid #ff6b6b40" }}>
-               Google Sign-In script blocked.<br/>Disable tracking protection/ad-blockers to login.
-             </div>
+            <div style={{ color: "#ff6b6b", fontSize: 13, background: "#ff6b6b15", padding: "10px 16px", borderRadius: 12, border: "1px solid #ff6b6b40" }}>
+              Google Sign-In script blocked.<br />Disable tracking protection/ad-blockers to login.
+            </div>
           )}
         </div>
         {canInstall && (
@@ -971,26 +1179,26 @@ export default function App() {
       <main>
         {page === "dashboard" && <Dashboard {...{ user, transactions: activeTransactions, categories, tags, accounts: activeAccounts, budgets, stats, netWorth: getNetWorth(activeAccounts, activeTransactions), getDayFlow: (d) => getDayFlow(activeTransactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
         {page === "transactions" && <TransactionsPage {...{
-            transactions, filteredTx, categories, tags, accounts: activeAccounts, searchQ, setSearchQ, filters, setFilters,
-            hasFilter: !!(filters.from || filters.to || filters.cats.length || filters.acc || filters.type || filters.cd || filters.tags.length),
-            onShowFilters: () => setShowFilters(true), onShowUpload: () => setShowUpload(true),
-            onExportCSV: () => exportCSV(filteredTx, categories, tags, activeAccounts), onExportPDF: () => exportTransactionsPDF(filteredTx, categories, activeAccounts, (m) => notify(m)),
-            onEditTx: setEditTx, selectedTxIds, setSelectedTxIds,
-            onDeleteBulk: () => {
-              const now = new Date().toISOString();
-              setTransactions(p => p.map(t => selectedTxIds.includes(t.id) ? { ...t, deleted: true, updatedAt: now } : t));
-              setSelectedTxIds([]);
-              notify("Items deleted successfully", "error");
-            }, 
-            onSoftDeleteBulk: (ids) => {
-              const now = new Date().toISOString();
-              setTransactions(prev => prev.map(t => ids.includes(t.id) ? { ...t, deleted: true, updatedAt: now } : t));
-            },
-            onAdd: () => setAddTx(true), theme: C
-          }} />}
+          transactions, filteredTx, categories, tags, accounts: activeAccounts, searchQ, setSearchQ, filters, setFilters,
+          hasFilter: !!(filters.from || filters.to || filters.cats.length || filters.acc || filters.type || filters.cd || filters.tags.length),
+          onShowFilters: () => setShowFilters(true), onShowUpload: () => setShowUpload(true),
+          onExportCSV: () => exportCSV(filteredTx, categories, tags, activeAccounts), onExportPDF: () => exportTransactionsPDF(filteredTx, categories, activeAccounts, (m) => notify(m)),
+          onEditTx: setEditTx, selectedTxIds, setSelectedTxIds,
+          onDeleteBulk: () => {
+            const now = new Date().toISOString();
+            setTransactions(p => p.map(t => selectedTxIds.includes(t.id) ? { ...t, deleted: true, updatedAt: now } : t));
+            setSelectedTxIds([]);
+            notify("Items deleted successfully", "error");
+          },
+          onSoftDeleteBulk: (ids) => {
+            const now = new Date().toISOString();
+            setTransactions(prev => prev.map(t => ids.includes(t.id) ? { ...t, deleted: true, updatedAt: now } : t));
+          },
+          onAdd: () => setAddTx(true), theme: C
+        }} />}
 
         {page === "organize" && <OrganizePage {...{
-          organizeTab, setOrganizeTab, 
+          organizeTab, setOrganizeTab,
           orgDate, setOrgDate, orgPeriodTab, setOrgPeriodTab,
           categories: activeCategories, transactions: activeTransactions, tags: activeTags, budgets, rules, DEF_CATS,
           onAddCat: () => setAddCat(true),
@@ -1021,14 +1229,14 @@ export default function App() {
             notify("Budget deleted successfully", "error");
           },
           onAddRule: (r) => setRules(p => {
-             const maxP = p.length ? Math.max(...p.map(x=>x.priority)) : 0;
-             return [{...r, priority: maxP + 1}, ...p]
+            const maxP = p.length ? Math.max(...p.map(x => x.priority)) : 0;
+            return [{ ...r, priority: maxP + 1 }, ...p]
           }),
           onEditRule: (r) => setRules(p => p.map(x => x.id === r.id ? r : x)),
           onDeleteRule: (id) => setRules(p => p.filter(x => x.id !== id)),
           onMagicWand: () => {
-             const count = runAllRules(activeTransactions);
-             notify(count > 0 ? `⚡ Rules applied to ${count} transaction${count !== 1 ? 's' : ''}` : '✅ No transactions matched any rules', count > 0 ? 'success' : 'warning');
+            const count = runAllRules(activeTransactions);
+            notify(count > 0 ? `⚡ Rules applied to ${count} transaction${count !== 1 ? 's' : ''}` : '✅ No transactions matched any rules', count > 0 ? 'success' : 'warning');
           },
           theme: C
         }} />}
@@ -1123,37 +1331,37 @@ export default function App() {
         }} />}
       </main>
 
-      <BottomNav 
-        page={page} 
-        setPage={setPage} 
-        onAddTx={() => setAddTx(true)} 
+      <BottomNav
+        page={page}
+        setPage={setPage}
+        onAddTx={() => setAddTx(true)}
         onAddAcc={() => setAddAcc(true)}
         onAddCat={() => setAddCat(true)}
         onAddTag={() => setAddTag(true)}
-        theme={C} 
+        theme={C}
         hideFab={isModalOpen}
       />
 
       <Modal open={addTx} onClose={() => setAddTx(false)} title="Add Transaction" theme={C}>
-        <TxForm 
-          categories={categories} tags={activeTags} accounts={activeAccounts} 
+        <TxForm
+          categories={categories} tags={activeTags} accounts={activeAccounts}
           existingTransactions={transactions}
           onSave={tx => {
             handleSaveTx(tx);
             setAddTx(false);
-          }} 
-          onClose={() => setAddTx(false)} theme={C} 
+          }}
+          onClose={() => setAddTx(false)} theme={C}
         />
       </Modal>
 
       <Modal open={!!editTx} onClose={() => setEditTx(null)} title="Edit Transaction" theme={C}>
         {editTx && (
-          <TxForm 
-            init={editTx} categories={categories} tags={activeTags} accounts={activeAccounts} 
+          <TxForm
+            init={editTx} categories={categories} tags={activeTags} accounts={activeAccounts}
             existingTransactions={transactions}
-            onSave={tx => { handleSaveTx(tx); setEditTx(null); }} 
-            onDelete={id => { handleDeleteTx(id); setEditTx(null); }} 
-            onClose={() => setEditTx(null)} theme={C} 
+            onSave={tx => { handleSaveTx(tx); setEditTx(null); }}
+            onDelete={id => { handleDeleteTx(id); setEditTx(null); }}
+            onClose={() => setEditTx(null)} theme={C}
           />
         )}
       </Modal>
@@ -1216,7 +1424,7 @@ export default function App() {
           <BudgetForm
             item={editBudget.type === "categories" ? categories.find(c => c.id === editBudget.categoryId) : tags.find(t => t.id === editBudget.tagId)}
             type={editBudget.type}
-            availables={editBudget.type === "categories" 
+            availables={editBudget.type === "categories"
               ? categories.filter(c => c.type === "Expense" && !budgets.some(b => b.categoryId === c.id))
               : activeTags.filter(t => !budgets.some(b => b.tagId === t.id))
             }
@@ -1226,11 +1434,11 @@ export default function App() {
             onSave={(targetId, amt) => {
               setBudgets(p => {
                 const idKey = editBudget.type === "categories" ? "categoryId" : "tagId";
-                
+
                 const idx = p.findIndex(b => b[idKey] === targetId);
-                if (idx > -1) { 
+                if (idx > -1) {
                   if (amt === 0) return p.filter(b => b[idKey] !== targetId);
-                  const n = [...p]; n[idx].amount = amt; return n; 
+                  const n = [...p]; n[idx].amount = amt; return n;
                 }
                 if (amt === 0) return p;
                 return [...p, { id: uid(), [idKey]: targetId, amount: amt }];
@@ -1277,7 +1485,7 @@ export default function App() {
             let finalTmpl = { ...tmpl, updatedAt: new Date().toISOString() };
             // If it's an edit, delete any previously auto-posted transactions for this recurringId that are strictly earlier than the new startDate.
             if (editRecurring && finalTmpl.startDate !== editRecurring.startDate) {
-              setTransactions(prev => prev.map(t => 
+              setTransactions(prev => prev.map(t =>
                 (t.recurringId === finalTmpl.id && t.date < finalTmpl.startDate)
                   ? { ...t, deleted: true, updatedAt: new Date().toISOString() }
                   : t
@@ -1317,9 +1525,9 @@ export default function App() {
         />
       </Modal>
 
-      <UploadModal 
-        open={showUpload} 
-        onClose={() => setShowUpload(false)} 
+      <UploadModal
+        open={showUpload}
+        onClose={() => setShowUpload(false)}
         onImport={handleImportTx}
         theme={C}
         categories={categories}
@@ -1328,14 +1536,14 @@ export default function App() {
       />
 
       <Modal theme={C} open={showFilters} onClose={() => setShowFilters(false)} title="Filter Transactions">
-        <FilterModal 
-          filters={filters} 
-          setFilters={setFilters} 
-          categories={categories} 
-          tags={activeTags} 
-          accounts={activeAccounts} 
-          onClose={() => setShowFilters(false)} 
-          theme={C} 
+        <FilterModal
+          filters={filters}
+          setFilters={setFilters}
+          categories={categories}
+          tags={activeTags}
+          accounts={activeAccounts}
+          onClose={() => setShowFilters(false)}
+          theme={C}
         />
       </Modal>
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { Ico } from "../ui/Ico.jsx";
+import Icon from "../ui/Icon.jsx";
 import { Btn } from "../ui/Btn.jsx";
 
 export const FilterModal = ({ filters, setFilters, categories, tags, accounts, onClose, theme }) => {
@@ -103,7 +104,7 @@ export const FilterModal = ({ filters, setFilters, categories, tags, accounts, o
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, maxHeight: 120, overflowY: "auto" }} className="premium-scroll">
           {categories.filter(c => !c.deleted).map(cat => (
             <button key={cat.id} onClick={() => toggleCat(cat.id)} style={chip((filters.cats || []).includes(cat.id), cat.color || C.primary)}>
-              <span style={{ fontSize: 13 }}>{cat.emoji}</span>{cat.name}
+              {cat.icon ? <Icon name={cat.icon} size={13} /> : <span style={{ fontSize: 13 }}>{cat.emoji}</span>}{cat.name}
             </button>
           ))}
         </div>
@@ -116,7 +117,7 @@ export const FilterModal = ({ filters, setFilters, categories, tags, accounts, o
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, maxHeight: 80, overflowY: "auto" }} className="premium-scroll">
             {tags.map(tag => (
               <button key={tag.id} onClick={() => toggleTag(tag.id)} style={chip((filters.tags || []).includes(tag.id), tag.color || C.secondary)}>
-                <Ico n="tag" sz={10} />{tag.name}
+                {tag.icon ? <Icon name={tag.icon} size={10} /> : <Ico n="tag" sz={10} />}{tag.name}
               </button>
             ))}
           </div>

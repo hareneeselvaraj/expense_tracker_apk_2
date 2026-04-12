@@ -90,7 +90,7 @@ export default function ConditionBuilder({ conditions, onChange, categories, the
               style={{ width: '100%', background: C.surface, color: C.text, border: `1px solid ${C.borderLight}`, borderRadius: 8, padding: '10px 12px', fontSize: 13, outline: 'none' }}
             >
               <option value="">Select Category</option>
-              {(categories || []).map(cat => <option key={cat.id} value={cat.id}>{cat.emoji} {cat.name}</option>)}
+              {(categories || []).map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
             </select>
           ) : c.type === 'recurring' ? (
             <select

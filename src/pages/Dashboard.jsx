@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import { Modal } from "../components/ui/Modal.jsx";
 import { Ico } from "../components/ui/Ico.jsx";
+import Icon from "../components/ui/Icon.jsx";
 import { Btn } from "../components/ui/Btn.jsx";
 import { TxRow } from "../components/cards/TxRow.jsx";
 import { fmtAmt, fmtDate, todayISO } from "../utils/format.js";
@@ -39,7 +41,7 @@ const QuickAdd = ({ categories, onSave, theme }) => {
         <input type="number" value={amt} onChange={e => setAmt(e.target.value)} placeholder="0.00" style={{ width: "100%", background: C.input, border: "none", borderRadius: 12, padding: "8px 8px 8px 22px", color: C.text, fontSize: 14, fontWeight: 700, fontFamily: "inherit" }} />
       </div>
       <select value={cat} onChange={e => setCat(e.target.value)} style={{ background: C.input, border: "none", borderRadius: 12, padding: "8px 10px", color: C.text, fontSize: 12, fontWeight: 600, outline: "none", cursor: "pointer" }}>
-        {categories.slice(0, 8).map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+        {categories.slice(0, 8).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
       </select>
       <button onClick={submit} style={{ width: 36, height: 36, borderRadius: 12, background: C.primary, color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform .15s" }} onMouseDown={e => e.currentTarget.style.transform = "scale(0.95)"} onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}><Ico n="plus" sz={18} /></button>
     </div>
@@ -53,6 +55,7 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
   const totalBudget = (budgets || []).filter(b => b.categoryId).reduce((acc, b) => acc + (parseFloat(b.amount) || 0), 0);
   const remainingBudget = totalBudget - s.expense;
   const [topTab, setTopTab] = useState("expense");
+  const [expandedCat, setExpandedCat] = useState(null);
 
   const [flipped, setFlipped] = React.useState(false);
 
@@ -67,12 +70,24 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
   const overallNetWorth = netWorth + investedValue;
 
   const tabConfig = [
-    { key: "expense", label: "Expense", map: s.expCatMap, total: s.expense, color: C.expense, emoji: "💸" },
-    { key: "income", label: "Income", map: s.incCatMap, total: s.income, color: C.income, emoji: "💰" },
-    { key: "invest", label: "Investment", map: s.invCatMap, total: s.invest, color: C.invest || C.primary, emoji: "📈" },
+    { key: "expense", label: "Expense", map: s.expCatMap, total: s.expense, color: C.expense, icon: "ArrowDownCircle" },
+    { key: "income", label: "Income", map: s.incCatMap, total: s.income, color: C.income, icon: "ArrowUpCircle" },
+    { key: "invest", label: "Investment", map: s.invCatMap, total: s.invest, color: C.invest || C.primary, icon: "TrendingUp" },
   ];
   const activeTab = tabConfig.find(t => t.key === topTab) || tabConfig[0];
   const hasAnyData = tabConfig.some(t => Object.keys(t.map).length > 0);
+
+  // Get the month's transactions for the expanded category
+  const getMonthTxForCat = (catName) => {
+    const month = `${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, "0")}`;
+    const cat = categories.find(c => c.name === catName);
+    if (!cat) return [];
+    return (transactions || [])
+      .filter(t => !t.deleted && t.category === cat.id && t.date?.startsWith(month))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  };
+  
+  const expandedTxs = expandedCat ? getMonthTxForCat(expandedCat) : [];
 
   return (
     <div className="page-enter" style={{ padding: "12px 12px 100px 12px", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -239,57 +254,83 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
         ))}
       </div>
 
-      {/* Top Categories by Type */}
+      {/* Categories Breakdown — Dynamic & Clickable */}
       {hasAnyData && (
         <div className="section-card" style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 18, padding: 12, boxShadow: C.shadow }}>
           
-          <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <h2 style={{ color: C.text, fontSize: 14, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>Top Categories</h2>
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
+            <h2 style={{ color: C.text, fontSize: 14, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>Categories</h2>
             <div style={{ color: C.sub, fontSize: 11, fontWeight: 600, marginTop: 2 }}>{viewDate.toLocaleString("en", { month: "long", year: "numeric" })}</div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 14 }}>
             {tabConfig.map(t => {
               if (Object.keys(t.map).length === 0) return null;
               const active = topTab === t.key;
+              const count = Object.keys(t.map).length;
               return (
                 <button
                   key={t.key}
-                  onClick={() => setTopTab(t.key)}
+                  onClick={() => { setTopTab(t.key); setExpandedCat(null); }}
                   style={{
                     background: active ? t.color + "22" : "transparent",
                     color: active ? t.color : C.sub,
                     border: `1px solid ${active ? t.color : C.borderLight}`,
-                    borderRadius: 20, padding: "6px 12px", fontSize: 11, fontWeight: 800,
-                    cursor: "pointer", transition: "all .2s", display: "flex", alignItems: "center", gap: 6
+                    borderRadius: 20, padding: "5px 10px", fontSize: 11, fontWeight: 800,
+                    cursor: "pointer", transition: "all .2s", display: "flex", alignItems: "center", gap: 5
                   }}
                 >
-                  <span>{t.emoji}</span> {t.label}
+                  <Icon name={t.icon} size={12} color={active ? t.color : C.sub} />
+                  {t.label}
+                  <span style={{ fontSize: 9, opacity: 0.7 }}>({count})</span>
                 </button>
               );
             })}
           </div>
 
           {Object.keys(activeTab.map).length > 0 ? (
-            <div className="cat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
-              {Object.entries(activeTab.map).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, amt], idx) => {
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+              {Object.entries(activeTab.map).sort((a, b) => b[1] - a[1]).map(([name, amt]) => {
                 const cat = categories.find(c => c.name === name);
                 const pct = activeTab.total > 0 ? Math.round((amt / activeTab.total) * 100) : 0;
-                const pastel = C.pastel || [];
-                const bgStr = pastel[idx % (pastel.length || 1)] || C.muted;
 
                 return (
-                  <div key={name} className="cat-tile" style={{
-                    background: bgStr, borderRadius: 16, padding: 10, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 6
-                  }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: C.surface, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
-                      {cat?.emoji || "📦"}
-                    </div>
-                    <div style={{ color: C.text, fontSize: 11, fontWeight: 700 }}>{name}</div>
-                    <div style={{ background: C.surface, borderRadius: 10, padding: "4px 8px", fontSize: 10, fontWeight: 800, color: C.text, display: "inline-flex", alignItems: "center", gap: 4, width: "100%", justifyContent: "center" }}>
-                      {fmtAmt(amt)}
-                      <span style={{ fontSize: 9, fontWeight: 700, opacity: 0.6 }}>{pct}%</span>
-                    </div>
+                  <div key={name} style={{ borderRadius: 14, overflow: "hidden", border: `1px solid ${C.borderLight}`, transition: "all .2s" }}>
+                    {/* Category Row — clickable */}
+                    <button
+                      onClick={() => setExpandedCat(name)}
+                      style={{
+                        width: "100%", background: "transparent",
+                        border: "none", padding: "10px 12px", cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 10, fontFamily: "inherit"
+                      }}
+                    >
+                      {/* Icon */}
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 10, flexShrink: 0,
+                        background: `${cat?.color || C.primary}15`,
+                        display: "flex", alignItems: "center", justifyContent: "center"
+                      }}>
+                        <Icon name={cat?.icon || "Package"} size={16} color={cat?.color || C.text} />
+                      </div>
+
+                      {/* Name + Percentage bar */}
+                      <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ color: C.text, fontSize: 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+                          <span style={{ color: C.text, fontSize: 12, fontWeight: 800, flexShrink: 0, marginLeft: 8 }}>{fmtAmt(amt)}</span>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                          <div style={{ flex: 1, height: 4, borderRadius: 2, background: C.input, overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${pct}%`, borderRadius: 2, background: cat?.color || C.primary, transition: "width .4s ease" }} />
+                          </div>
+                          <span style={{ fontSize: 9, fontWeight: 700, color: C.sub, flexShrink: 0, width: 28, textAlign: "right" }}>{pct}%</span>
+                        </div>
+                      </div>
+
+                      {/* Expand chevron */}
+                      <Ico n="chevronRight" sz={14} c={C.sub} />
+                    </button>
                   </div>
                 );
               })}
@@ -299,7 +340,7 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
           )}
 
           {activeTab.key === "expense" && (
-            <div className="budget-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: C.input, borderRadius: 16, padding: "10px 12px", marginBottom: 16 }}>
+            <div className="budget-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: C.input, borderRadius: 16, padding: "10px 12px", marginBottom: 12 }}>
               <div>
                 <div style={{ color: C.sub, fontSize: 9, fontWeight: 600 }}>Total Expense</div>
                 <div className="budget-amount" style={{ color: C.text, fontSize: 15, fontWeight: 800 }}>{fmtAmt(s.expense)}</div>
@@ -340,6 +381,45 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
           ))}
         </div>
       </div>
+
+      <Modal open={!!expandedCat} onClose={() => setExpandedCat(null)} title={expandedCat || ""} theme={C}>
+        {expandedTxs.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {expandedTxs.map((t) => (
+              <div
+                key={t.id}
+                onClick={() => { setExpandedCat(null); onEditTx(t); }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px", cursor: "pointer", borderRadius: 12,
+                  background: C.surface, border: `1px solid ${C.borderLight}`,
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
+                }}
+              >
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ color: C.text, fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {t.description || "—"}
+                  </div>
+                  <div style={{ color: C.sub, fontSize: 11, fontWeight: 600, marginTop: 4 }}>
+                    {fmtDate(t.date)}
+                    {t.accountId && accounts.find(a => a.id === t.accountId) && ` · ${accounts.find(a => a.id === t.accountId)?.name}`}
+                  </div>
+                </div>
+                <div style={{
+                  color: t.creditDebit === "Credit" ? C.income : C.expense,
+                  fontSize: 14, fontWeight: 800, flexShrink: 0, marginLeft: 10
+                }}>
+                  {t.creditDebit === "Credit" ? "+" : "−"}{fmtAmt(t.amount)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ padding: "24px", textAlign: "center", color: C.sub, fontSize: 13 }}>
+            No transactions found.
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Ico } from "../components/ui/Ico.jsx";
+import Icon from "../components/ui/Icon.jsx";
 import { Btn } from "../components/ui/Btn.jsx";
 import { fmtAmt } from "../utils/format.js";
 
@@ -113,7 +114,7 @@ export default function RecurringPanel({ recurring, categories, accounts, onAdd,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   border: `1px solid ${C.borderLight}`,
                 }}>
-                  {cat?.emoji ? <span style={{ fontSize: 20 }}>{cat.emoji}</span> : <Ico n="repeat" sz={20} c={C.primary} />}
+                  {cat?.icon ? <Icon name={cat.icon} size={20} color={C.text} /> : <Ico n="repeat" sz={20} c={C.primary} />}
                 </div>
                 <div>
                   <div style={{ color: C.text, fontSize: 15, fontWeight: 800, letterSpacing: "-0.01em" }}>{tmpl.templateTx?.description || "Untitled"}</div>

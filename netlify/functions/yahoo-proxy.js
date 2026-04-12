@@ -1,5 +1,6 @@
 export async function handler(event) {
-  const { path: targetPath, query } = event.queryStringParameters || {};
+  const params = event.queryStringParameters || {};
+  const targetPath = params.path;
 
   if (!targetPath) {
     return { statusCode: 400, body: JSON.stringify({ error: "Missing path param" }) };
@@ -17,7 +18,14 @@ export async function handler(event) {
   }
 
   const sym = targetPath.slice(match.prefix.length);
-  const qs = query ? `?${query}` : "";
+
+  // Build query string from all params except "path"
+  const qsParts = [];
+  for (const [k, v] of Object.entries(params)) {
+    if (k === "path") continue;
+    qsParts.push(`${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
+  }
+  const qs = qsParts.length > 0 ? `?${qsParts.join("&")}` : "";
   const url = `https://${match.host}${match.base}${sym}${qs}`;
 
   try {

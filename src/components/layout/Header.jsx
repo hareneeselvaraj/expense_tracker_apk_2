@@ -1,15 +1,16 @@
 import React, { useState } from "react";
 import { Ico } from "../ui/Ico.jsx";
+import Icon from "../ui/Icon.jsx";
 import { timeAgo } from "../../services/notificationService.js";
 
 const SEVERITY_CONFIG = (C) => ({
-  critical: { accent: C.expense, emoji: "🚨" },
-  warning:  { accent: "#f59e0b", emoji: "⚠️" },
-  info:     { accent: C.primary, emoji: "💡" },
-  success:  { accent: C.income,  emoji: "✅" },
+  critical: { accent: C.expense, icon: "AlertTriangle" },
+  warning:  { accent: "#f59e0b", icon: "AlertCircle" },
+  info:     { accent: C.primary, icon: "Lightbulb" },
+  success:  { accent: C.income,  icon: "CheckCircle" },
 });
 
-const TYPE_ICON = { budget: "📊", recurring: "🔄", insight: "💡", sync: "☁️", import: "📥", anomaly: "🔍", reminder: "⏰" };
+const TYPE_ICON = { budget: "BarChart3", recurring: "RefreshCw", insight: "Lightbulb", sync: "Cloud", import: "Download", anomaly: "Search", reminder: "Clock" };
 const TAB_MAP = { All: null, Budget: "budget", Recurring: "recurring", Sync: "sync", Insights: "insight" };
 
 const NotificationCard = ({ notification: n, theme: C, onRead, onAction, onDismiss }) => {
@@ -27,7 +28,7 @@ const NotificationCard = ({ notification: n, theme: C, onRead, onAction, onDismi
         background: `${config.accent}15`,
         display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15
       }}>
-        {TYPE_ICON[n.type] || config.emoji}
+        {TYPE_ICON[n.type] ? <Icon name={TYPE_ICON[n.type]} size={16} color={config.accent} /> : <Icon name={config.icon} size={16} color={config.accent} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 6 }}>
@@ -157,7 +158,7 @@ export const Header = ({
               {/* Notification list */}
               {filteredNotifs.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "32px 12px" }}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>🔔</div>
+                  <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}><Icon name="Bell" size={28} color={C.sub} /></div>
                   <div style={{ color: C.sub, fontSize: 13, fontWeight: 600 }}>No notifications yet</div>
                   <div style={{ color: C.sub, fontSize: 11, marginTop: 4 }}>Budget alerts, sync updates, and insights will appear here</div>
                 </div>
@@ -194,7 +195,9 @@ export const Header = ({
                   color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer",
                   marginTop: 4, textAlign: "center"
                 }}>
-                  🔔 Enable Push Notifications
+                  <div style={{display:"flex", alignItems:"center", justifyContent:"center", gap: 6}}>
+                    <Icon name="BellRing" size={14} /> Enable Push Notifications
+                  </div>
                 </button>
               )}
             </div>

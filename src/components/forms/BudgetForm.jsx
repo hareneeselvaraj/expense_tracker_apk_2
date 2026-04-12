@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Ico } from "../ui/Ico.jsx";
+import Icon from "../ui/Icon.jsx";
 import { Btn } from "../ui/Btn.jsx";
 
 export function BudgetForm({ item: initialItem, type, currentBudget, onSave, onCancel, theme, availables = [] }) {
@@ -25,7 +26,7 @@ export function BudgetForm({ item: initialItem, type, currentBudget, onSave, onC
               display:"flex", alignItems:"center", gap:10, transition:"all .2s", textAlign:"left"
             }} onMouseEnter={e => { e.currentTarget.style.borderColor = x.color; e.currentTarget.style.background = x.color + "11"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = C.card; }}>
               <div style={{width:32, height:32, borderRadius:8, background:x.color+"22", display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, color:x.color, flexShrink:0}}>
-                {isCat ? (x.emoji || "📦") : "#"}
+                {isCat ? (x.icon ? <Icon name={x.icon} size={16} /> : "📦") : "#"}
               </div>
               <div style={{color:C.text, fontSize:12, fontWeight:700, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
                 {isCat ? x.name : x.name}
@@ -48,7 +49,7 @@ export function BudgetForm({ item: initialItem, type, currentBudget, onSave, onC
           fontSize:28, boxShadow:`0 10px 20px ${selectedItem.color}22`, backdropFilter:"blur(10px)",
           color: isCat ? "inherit" : selectedItem.color
         }}>
-          {isCat ? (selectedItem.emoji || "📦") : "#"}
+          {isCat ? (selectedItem.icon ? <Icon name={selectedItem.icon} size={28} color={selectedItem.color} /> : "📦") : "#"}
         </div>
         <div>
           <div style={{color:C.text, fontSize:18, fontWeight:900}}>{isCat ? selectedItem.name : `#${selectedItem.name}`}</div>

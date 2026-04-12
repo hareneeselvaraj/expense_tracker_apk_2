@@ -94,15 +94,33 @@ export async function getLivePriceSmart(query, { force = false } = {}) {
     : clean;
 
   if (guess.endsWith(".NS") || guess.endsWith(".BO")) {
-    return await fetchLivePrice(guess, force);
+    try {
+      const price = await fetchLivePrice(guess, force);
+      if (price) return price;
+    } catch (err) {
+      // If direct chart fails (404/etc), fall through to search
+      console.warn(`Direct chart failed for ${guess}, trying search fallback...`);
+    }
   }
-  
-  // Otherwise, do a search to get the Yahoo symbol (e.g. for MFs via ISIN)
-  const symbol = await searchYahooSymbol(clean);
-  if (symbol) {
-    return await fetchLivePrice(symbol, force);
+
+  // Fallback: search Yahoo for the symbol, then fetch chart for the result
+  try {
+    const symbol = await searchYahooSymbol(clean);
+    if (symbol) {
+      return await fetchLivePrice(symbol, force);
+    }
+  } catch (e) {
+    console.warn("Search fallback also failed:", e.message);
   }
-  
+
+  // Last resort: try .BO if we tried .NS, or vice versa
+  if (guess.endsWith(".NS")) {
+    try {
+      const boPrice = await fetchLivePrice(clean + ".BO", force);
+      if (boPrice) return boPrice;
+    } catch (e) { /* exhausted all options */ }
+  }
+
   return null;
 }
 

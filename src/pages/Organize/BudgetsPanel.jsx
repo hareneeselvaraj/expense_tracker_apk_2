@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Ico } from "../../components/ui/Ico.jsx";
+import Icon from "../../components/ui/Icon.jsx";
 import { Btn } from "../../components/ui/Btn.jsx";
 import { fmtAmt } from "../../utils/format.js";
 
@@ -53,7 +54,7 @@ export default function BudgetsPanel({ categories, tags, budgets, transactions, 
       <div style={{display:"flex",flexDirection:"column",gap:16}}>
         {budgetedItems.length === 0 ? (
           <div style={{background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:32, padding:"50px 24px", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:14, boxShadow:C.shadow}}>
-            <div style={{width:70,height:70,borderRadius:20,background:C.input,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34}}>📊</div>
+            <div style={{width:70,height:70,borderRadius:20,background:C.input,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34}}><Icon name="BarChart" size={34} color={C.text} /></div>
             <div style={{color:C.sub, fontSize:13, maxWidth:260}}>No {isCat ? "category" : "tag"} budgets set yet. Tap <strong>+ Add</strong> above to start tracking.</div>
           </div>
         ) : budgetedItems.map(item => {
@@ -85,7 +86,9 @@ export default function BudgetsPanel({ categories, tags, budgets, transactions, 
                     width:44, height:44, borderRadius:14, background:`${item.color}1a`,
                     display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, color:item.color
                   }}>
-                    {isCat ? (item.emoji || "📦") : "#"}
+                    {isCat 
+                      ? (item.icon ? <Icon name={item.icon} size={22} color={item.color} /> : <Icon name="Package" size={22} color={item.color} />) 
+                      : (item.icon ? <Icon name={item.icon} size={22} color={item.color} /> : <Ico n="tag" sz={20} c={item.color} />)}
                   </div>
                   <div>
                     <div style={{color:C.text, fontSize:15, fontWeight:800}}>{isCat ? item.name : `#${item.name}`}</div>

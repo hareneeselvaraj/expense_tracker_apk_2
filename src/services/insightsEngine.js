@@ -5,7 +5,7 @@
 
 /**
  * Generate a list of insights based on transaction history.
- * @returns {Array} insights - [{id, type, emoji, title, body, color}]
+ * @returns {Array} insights - [{id, type, icon, title, body, color}]
  */
 export function generateInsights(transactions = [], categories = []) {
   const insights = [];
@@ -28,7 +28,7 @@ export function generateInsights(transactions = [], categories = []) {
     insights.push({
       id: "savings_rate",
       type: "metric",
-      emoji: rate >= 30 ? "🏆" : rate >= 10 ? "💪" : "⚠️",
+      icon: rate >= 30 ? "Trophy" : rate >= 10 ? "Zap" : "AlertTriangle",
       title: `${rate}% Savings Rate`,
       body: rate >= 30
         ? "Excellent! You're saving more than 30% of your income."
@@ -62,7 +62,7 @@ export function generateInsights(transactions = [], categories = []) {
         insights.push({
           id: `trend_${cat}`,
           type: "trend",
-          emoji: change > 0 ? "📈" : "📉",
+          icon: change > 0 ? "TrendingUp" : "TrendingDown",
           title: `${cat}: ${change > 0 ? "+" : ""}${change}% vs last month`,
           body: change > 0
             ? `You spent ${Math.abs(change)}% more on ${cat} compared to last month.`
@@ -90,7 +90,7 @@ export function generateInsights(transactions = [], categories = []) {
       insights.push({
         id: `anomaly_${t.id}`,
         type: "anomaly",
-        emoji: "🚨",
+        icon: "AlertTriangle",
         title: `Unusual ${cat} expense`,
         body: `"${t.description}" (₹${t.amount.toLocaleString()}) is ${Math.round(t.amount / avg)}× your average ${cat} spend.`,
         color: "#ff5252"
@@ -105,7 +105,7 @@ export function generateInsights(transactions = [], categories = []) {
     insights.push({
       id: "top_category",
       type: "info",
-      emoji: "🎯",
+      icon: "Target",
       title: `${topCat[0]} is your top expense`,
       body: `${pct}% of your total spending this month goes to ${topCat[0]}.`,
       color: "#00b0ff"

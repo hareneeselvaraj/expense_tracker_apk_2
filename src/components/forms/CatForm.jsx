@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Ico } from "../ui/Ico.jsx";
+import Icon from "../ui/Icon.jsx";
 import { Btn } from "../ui/Btn.jsx";
 import { uid } from "../../utils/id.js";
 
@@ -8,17 +9,38 @@ export function CatForm({ editCat, onSave, onCancel, theme }) {
   const [name, setName] = useState(editCat?.name || "");
   const [type, setType] = useState(editCat?.type || "Expense");
   const [color, setColor] = useState(editCat?.color || "#3b82f6");
-  const [emoji, setEmoji] = useState(editCat?.emoji || "📦");
+  const [icon, setIcon] = useState(editCat?.icon || editCat?.emoji || "Package");
 
   const colors = ["#ef4444", "#f97316", "#f59e0b", "#eab308", "#10b981", "#06b6d4", "#3b82f6", "#6366f1", "#a855f7", "#ec4899", "#64748b"];
   
-  const emojiSets = {
-    Expense: ["🍔", "🛒", "🛍️", "🚗", "🎬", "🏥", "⚡", "🎓", "💵", "📦", "🍕", "🍹", "✈️", "🏠", "🎁", "📱", "💻", "🎨", "🎮", "👕", "🚕", "🚲", "☕", "🍿", "🏀"],
-    Income: ["💰", "📈", "🏦", "💳", "🧧", "💸", "💹", "🏢", "🤝", "🎉", "🔥"],
-    Investment: ["💎", "🧱", "🏠", "🪙", "📊", "🚀", "🏦", "📉", "🛡️", "🧬"]
+  const iconSets = {
+    Expense: [
+      "Utensils", "Coffee", "Pizza", "Cake", "Beer", "Wine", "Martini",
+      "ShoppingCart", "ShoppingBag", "Store", "Gift", "Smartphone", "Laptop", "Tv",
+      "Car", "Bus", "Train", "Plane", "Bike", "Fuel",
+      "Home", "Droplets", "Zap", "Wifi", "Sofa",
+      "Film", "Ticket", "Music", "Gamepad2", "Headphones",
+      "Stethoscope", "HeartPulse", "Pill", "Dumbbell", "Activity",
+      "GraduationCap", "BookOpen", "PenTool",
+      "Baby", "Cat", "Dog",
+      "Shirt", "Scissors", "Brush", "Briefcase",
+      "Wrench", "Hammer", "ShieldAlert", "Package", "Archive"
+    ],
+    Income: [
+      "Banknote", "Coins", "DollarSign", "PiggyBank", "Wallet",
+      "TrendingUp", "ArrowUpRight", "ArrowUpCircle",
+      "Briefcase", "Handshake", "Award", "Trophy", "Crown",
+      "Gift", "PartyPopper", "Sparkles", "Undo2"
+    ],
+    Investment: [
+      "TrendingUp", "BarChart3", "PieChart", "LineChart", 
+      "Gem", "Coins", "Safe", "Building", "Landmark",
+      "Rocket", "Briefcase", "Globe", "Key", "ShieldCheck",
+      "Target", "Anchor", "Compass", "Map"
+    ]
   };
   
-  const emojis = emojiSets[type] || emojiSets.Expense;
+  const icons = iconSets[type] || iconSets.Expense;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -28,7 +50,7 @@ export function CatForm({ editCat, onSave, onCancel, theme }) {
       name: name.trim(),
       type,
       color,
-      emoji
+      icon
     });
   };
 
@@ -38,9 +60,10 @@ export function CatForm({ editCat, onSave, onCancel, theme }) {
         <div style={{
           width:56, height:56, borderRadius:18, background:`linear-gradient(135deg, ${color}33, ${color}11)`,
           display:"flex", alignItems:"center", justifyContent:"center", border:`1px solid ${color}66`,
-          fontSize:28, boxShadow:`0 10px 20px ${color}22`, backdropFilter:"blur(10px)"
+          fontSize:28, boxShadow:`0 10px 20px ${color}22`, backdropFilter:"blur(10px)",
+          color
         }}>
-          {emoji}
+          <Icon name={icon} size={28} />
         </div>
         <div style={{flex:1}}>
           <label style={{color:C.sub, fontSize:10, fontWeight:900, textTransform:"uppercase", letterSpacing:".1em"}}>Category Name</label>
@@ -87,12 +110,15 @@ export function CatForm({ editCat, onSave, onCancel, theme }) {
       <div>
         <label style={{color:C.sub, fontSize:10, fontWeight:900, textTransform:"uppercase", letterSpacing:".1em", display:"block", marginBottom:12}}>Visual Icon</label>
         <div style={{display:"flex", flexWrap:"wrap", gap:6, maxHeight:120, overflowY:"auto", paddingRight:4}} className="premium-scroll">
-          {emojis.map(e => (
-            <button key={e} type="button" onClick={()=>setEmoji(e)} style={{
-              width:36, height:36, borderRadius:10, background:emoji===e?C.primaryDim:"transparent",
-              border:emoji===e?`1px solid ${C.primary}`:`1px solid ${C.border}`,
+          {icons.map(e => (
+            <button key={e} type="button" onClick={()=>setIcon(e)} style={{
+              width:36, height:36, borderRadius:10, background:icon===e?C.primaryDim:"transparent",
+              border:icon===e?`1px solid ${C.primary}`:`1px solid ${C.border}`,
+              display:"flex", alignItems:"center", justifyContent:"center", color:C.text,
               fontSize:18, cursor:"pointer", transition:"all .2s"
-            }}>{e}</button>
+            }}>
+              <Icon name={e} size={18} />
+            </button>
           ))}
         </div>
       </div>

@@ -17,26 +17,26 @@ export const RULES = {
 };
 
 export const DEF_CATS = [
-  {id:"c1",name:"Food & Dining",type:"Expense",color:"#ef4444",emoji:"🍔"},
-  {id:"c2",name:"Groceries",type:"Expense",color:"#f97316",emoji:"🛒"},
-  {id:"c3",name:"Shopping",type:"Expense",color:"#f59e0b",emoji:"🛍️"},
-  {id:"c4",name:"Transport",type:"Expense",color:"#eab308",emoji:"🚗"},
-  {id:"c5",name:"Entertainment",type:"Expense",color:"#a855f7",emoji:"🎬"},
-  {id:"c6",name:"Healthcare",type:"Expense",color:"#ec4899",emoji:"🏥"},
-  {id:"c7",name:"Utilities",type:"Expense",color:"#06b6d4",emoji:"⚡"},
-  {id:"c8",name:"Education",type:"Expense",color:"#3b82f6",emoji:"🎓"},
-  {id:"c9",name:"Salary",type:"Income",color:"#10b981",emoji:"💰"},
-  {id:"c10",name:"Interest",type:"Income",color:"#34d399",emoji:"📈"},
-  {id:"c14",name:"Refund",type:"Income",color:"#06b6d4",emoji:"💸"},
-  {id:"c11",name:"Investment",type:"Investment",color:"#6366f1",emoji:"💎"},
-  {id:"c12",name:"Cash",type:"Expense",color:"#64748b",emoji:"💵"},
-  {id:"c13",name:"Others",type:"Expense",color:"#94a3b8",emoji:"📦"},
+  {id:"c1",name:"Food & Dining",type:"Expense",color:"#ef4444",icon:"Utensils"},
+  {id:"c2",name:"Groceries",type:"Expense",color:"#f97316",icon:"ShoppingCart"},
+  {id:"c3",name:"Shopping",type:"Expense",color:"#f59e0b",icon:"ShoppingBag"},
+  {id:"c4",name:"Transport",type:"Expense",color:"#eab308",icon:"Car"},
+  {id:"c5",name:"Entertainment",type:"Expense",color:"#a855f7",icon:"Film"},
+  {id:"c6",name:"Healthcare",type:"Expense",color:"#ec4899",icon:"Stethoscope"},
+  {id:"c7",name:"Utilities",type:"Expense",color:"#06b6d4",icon:"Zap"},
+  {id:"c8",name:"Education",type:"Expense",color:"#3b82f6",icon:"GraduationCap"},
+  {id:"c9",name:"Salary",type:"Income",color:"#10b981",icon:"Banknote"},
+  {id:"c10",name:"Interest",type:"Income",color:"#34d399",icon:"TrendingUp"},
+  {id:"c14",name:"Refund",type:"Income",color:"#06b6d4",icon:"Undo2"},
+  {id:"c11",name:"Investment",type:"Investment",color:"#6366f1",icon:"Gem"},
+  {id:"c12",name:"Cash",type:"Expense",color:"#64748b",icon:"Wallet"},
+  {id:"c13",name:"Others",type:"Expense",color:"#94a3b8",icon:"Package"},
 ];
 
 export const DEF_TAGS = [
-  {id:"t1",name:"Vacation",color:"#f97316"},
-  {id:"t2",name:"Birthday",color:"#ec4899"},
-  {id:"t3",name:"Work",color:"#3b82f6"},
+  {id:"t1",name:"Vacation",color:"#f97316",icon:"Plane"},
+  {id:"t2",name:"Birthday",color:"#ec4899",icon:"Gift"},
+  {id:"t3",name:"Work",color:"#3b82f6",icon:"Briefcase"},
 ];
 
 export const BLANK_TX = { description:"", amount:"", date:todayISO(), creditDebit:"Debit", txType:"Expense", category:"c13", tags:[], accountId:"", notes:"" };

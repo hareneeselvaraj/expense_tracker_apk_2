@@ -1,5 +1,6 @@
 import React from "react";
 import { Ico } from "../ui/Ico.jsx";
+import Icon from "../ui/Icon.jsx";
 import { fmtAmt, fmtDate } from "../../utils/format.js";
 
 export const TxRow = ({t, categories, tags, accounts, onClick, selected, onSelect, theme}) => {
@@ -27,7 +28,7 @@ export const TxRow = ({t, categories, tags, accounts, onClick, selected, onSelec
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{width:44,height:44,borderRadius:16,background:C.input,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>
-             {cat?.emoji || "💳"}
+             {cat?.icon ? <Icon name={cat.icon} size={24} color={cat.color || C.text} /> : "💳"}
           </div>
           <div style={{display:"flex",flexDirection:"column"}}>
             <span style={{color:C.text,fontSize:15,fontWeight:700,letterSpacing:"-.01em"}}>{t.description}</span>
@@ -45,7 +46,9 @@ export const TxRow = ({t, categories, tags, accounts, onClick, selected, onSelec
       {(txTags.length>0 || t.accountId) && (
         <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap", paddingTop:8, borderTop:`1px dashed ${C.borderLight}`}}>
           {txTags.map(tg=>(
-            <span key={tg.id} style={{background:C.input,borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,color:tg.deleted?C.border:C.sub,opacity:tg.deleted?0.5:1,textDecoration:tg.deleted?"line-through":"none"}}>#{tg.name}</span>
+            <span key={tg.id} style={{background:C.input,borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700,color:tg.deleted?C.border:C.sub,opacity:tg.deleted?0.5:1,textDecoration:tg.deleted?"line-through":"none", display:"flex", alignItems:"center", gap:4}}>
+              {tg.icon ? <Icon name={tg.icon} size={11} /> : "#"} {tg.name}
+            </span>
           ))}
           {t.accountId && accounts.find(a=>a.id===t.accountId) && (
             <span style={{color:C.sub,fontSize:11,fontWeight:600,marginLeft:"auto",display:"flex",alignItems:"center",gap:4}}>
