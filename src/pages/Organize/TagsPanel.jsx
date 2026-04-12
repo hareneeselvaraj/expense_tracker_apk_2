@@ -24,64 +24,69 @@ export default function TagsPanel({ tags, transactions, onAddTag, onEditTag, onD
           <div style={{color:C.sub,fontSize:14,maxWidth:260}}>No tags yet. Add tags to organize transactions.</div>
         </div>
       ) : (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))",gap:16}}>
-          {tags.map(tg => {
+        <div style={{background:C.surface, borderRadius:20, border:`1px solid ${C.borderLight}`, overflow:"hidden", boxShadow:C.shadow}}>
+          {tags.map((tg, idx) => {
             const txns = transactions.filter(t => !t.deleted && (t.tags || []).includes(tg.id));
             const income = txns.filter(t => t.creditDebit === "Credit").reduce((s, t) => s + t.amount, 0);
             const expense = txns.filter(t => t.creditDebit === "Debit").reduce((s, t) => s + t.amount, 0);
             const net = income - expense;
+            const isLast = idx === tags.length - 1;
+
             return (
-              <div key={tg.id} style={{
-                background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: 16,
-                display: "flex", flexDirection:"column", gap: 12, transition: "all .2s ease",
-                position:"relative", overflow: "hidden", minHeight: 140, boxShadow: C.shadow
-              }} onMouseEnter={e => { e.currentTarget.style.borderColor = tg.color; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = C.borderLight; e.currentTarget.style.transform = "translateY(0)"; }}>
-                
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 14, background: `${tg.color}1a`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div key={tg.id} 
+                onClick={() => onEditTag(tg)}
+                style={{
+                display: "flex", flexDirection: "column", padding: "12px 16px",
+                borderBottom: isLast ? "none" : `1px solid ${C.borderLight}`,
+                background: confirmId === tg.id ? C.expense + "11" : "transparent",
+                transition: "background .2s", cursor: "pointer", position: "relative"
+              }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  {/* Left: Icon */}
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                    background: `${tg.color}1a`, display: "flex", alignItems: "center", justifyContent: "center"
+                  }}>
                     {tg.icon ? <Icon name={tg.icon} size={20} color={tg.color} /> : <Ico n="tag" sz={20} c={tg.color} />}
                   </div>
-                  <div style={{ display: "flex", gap: 6, background:C.input, borderRadius:12, padding:2 }}>
-                    {confirmId === tg.id ? (
-                      <div style={{display:"flex", alignItems:"center", gap:4, padding:"0 4px"}}>
-                        <span style={{color:C.expense, fontSize:9, fontWeight:900, marginRight:2}}>DELETE?</span>
-                        <button onClick={()=>onDeleteTag(tg.id)} style={{background:C.expense, border:"none", color:"#fff", cursor:"pointer", borderRadius:8, padding:"4px 8px", fontSize:10, fontWeight:800}}>YES</button>
-                        <button onClick={()=>setConfirmId(null)} style={{background:"none", border:`1px solid ${C.border}`, color:C.sub, cursor:"pointer", borderRadius:8, padding:"4px 8px", fontSize:10, fontWeight:800}}>NO</button>
-                      </div>
-                    ) : (
-                      <>
-                        <button onClick={() => onEditTag(tg)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", transition: "color .2s", padding:6 }} onMouseEnter={e => e.currentTarget.style.color = C.primary} onMouseLeave={e => e.currentTarget.style.color = C.sub}><Ico n="pen" sz={15} /></button>
-                        <button onClick={() => setConfirmId(tg.id)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", transition: "color .2s", padding:6 }} onMouseEnter={e => e.currentTarget.style.color = C.expense} onMouseLeave={e => e.currentTarget.style.color = C.sub}><Ico n="trash" sz={15} /></button>
-                      </>
-                    )}
+
+                  {/* Middle: Info */}
+                  <div style={{ flex: 1, minWidth: 0, marginLeft: 12 }}>
+                    <div style={{ color: C.text, fontSize: 15, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>#{tg.name}</div>
+                    <div style={{ color: C.sub, fontSize: 12, fontWeight: 600, marginTop: 2 }}>{txns.length} transaction{txns.length !== 1 ? "s" : ""}</div>
+                  </div>
+
+                  {/* Right: Actions */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 8 }}>
+                    <button onClick={(e)=>{e.stopPropagation(); setConfirmId(tg.id);}} style={{ background: "transparent", border: "none", color: C.sub, cursor: "pointer", padding: 8, borderRadius: 10 }}>
+                      <Ico n="trash" sz={16} />
+                    </button>
+                    <Ico n="chevronRight" sz={14} c={C.sub} opacity={0.5} />
                   </div>
                 </div>
 
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <div style={{ color: C.text, fontSize: 16, fontWeight: 800, letterSpacing:"-.01em" }}>#{tg.name}</div>
-                  <div style={{ color: C.sub, fontSize: 12, marginTop: 4, fontWeight: 600 }}>{txns.length} transaction{txns.length !== 1 ? "s" : ""}</div>
-                </div>
-
-                <div style={{ borderTop: `1px solid ${C.borderLight}`, paddingTop: 12, marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-                  {income > 0 && (
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: C.sub, fontSize: 10, fontWeight: 700 }}>IN</span>
-                      <span style={{ color: C.income, fontSize: 13, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace" }}>+{fmtAmt(income)}</span>
-                    </div>
-                  )}
-                  {expense > 0 && (
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: C.sub, fontSize: 10, fontWeight: 700 }}>OUT</span>
-                      <span style={{ color: C.expense, fontSize: 13, fontWeight: 800, fontFamily: "'JetBrains Mono', monospace" }}>−{fmtAmt(expense)}</span>
-                    </div>
-                  )}
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-                    <span style={{ color: C.sub, fontSize: 10, fontWeight: 800 }}>NET</span>
-                    <span style={{ color: net >= 0 ? C.income : C.expense, fontSize: 15, fontWeight: 900, fontFamily: "'JetBrains Mono', monospace" }}>
-                      {net >= 0 ? "+" : "−"}{fmtAmt(Math.abs(net))}
-                    </span>
+                {/* Net amount detail for Tags (only if there are transactions) */}
+                {txns.length > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8, marginLeft: 52 }}>
+                    {income > 0 && <div style={{ fontSize: 12, color: C.income, fontWeight: 700 }}>+{fmtAmt(income)}</div>}
+                    {expense > 0 && <div style={{ fontSize: 12, color: C.expense, fontWeight: 700 }}>−{fmtAmt(expense)}</div>}
                   </div>
-                </div>
+                )}
+
+                {/* Delete Confirmation Overlay */}
+                {confirmId === tg.id && (
+                  <div onClick={(e) => e.stopPropagation()} style={{
+                    position: "absolute", inset: 0, background: C.surface, 
+                    display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px",
+                    borderBottom: isLast ? "none" : `1px solid ${C.borderLight}`
+                  }}>
+                    <div style={{ color: C.expense, fontSize: 13, fontWeight: 800 }}>Delete #{tg.name}?</div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={()=>setConfirmId(null)} style={{background:C.input, border:"none", color:C.text, cursor:"pointer", borderRadius:12, padding:"8px 16px", fontSize:12, fontWeight:800}}>Cancel</button>
+                      <button onClick={()=>onDeleteTag(tg.id)} style={{background:C.expense, border:"none", color:"#fff", cursor:"pointer", borderRadius:12, padding:"8px 16px", fontSize:12, fontWeight:800}}>Delete</button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

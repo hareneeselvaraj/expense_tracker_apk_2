@@ -289,47 +289,42 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
           </div>
 
           {Object.keys(activeTab.map).length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
               {Object.entries(activeTab.map).sort((a, b) => b[1] - a[1]).map(([name, amt]) => {
                 const cat = categories.find(c => c.name === name);
                 const pct = activeTab.total > 0 ? Math.round((amt / activeTab.total) * 100) : 0;
 
                 return (
-                  <div key={name} style={{ borderRadius: 14, overflow: "hidden", border: `1px solid ${C.borderLight}`, transition: "all .2s" }}>
-                    {/* Category Row — clickable */}
+                  <div key={name} style={{ borderRadius: 20, overflow: "hidden", border: `2px solid ${cat?.color || C.primary}00`, background: `${cat?.color || C.primary}24`, transition: "transform .2s" }}>
                     <button
                       onClick={() => setExpandedCat(name)}
                       style={{
                         width: "100%", background: "transparent",
-                        border: "none", padding: "10px 12px", cursor: "pointer",
-                        display: "flex", alignItems: "center", gap: 10, fontFamily: "inherit"
+                        border: "none", padding: "16px 12px 14px", cursor: "pointer",
+                        display: "flex", flexDirection: "column", gap: 10, fontFamily: "inherit", alignItems: "center"
                       }}
                     >
-                      {/* Icon */}
                       <div style={{
-                        width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-                        background: `${cat?.color || C.primary}15`,
-                        display: "flex", alignItems: "center", justifyContent: "center"
+                        width: 40, height: 40, borderRadius: "50%",
+                        background: C.surface,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        boxShadow: `0 4px 12px ${cat?.color || C.primary}22`
                       }}>
-                        <Icon name={cat?.icon || "Package"} size={16} color={cat?.color || C.text} />
+                        <Icon name={cat?.icon || "Package"} size={20} color={cat?.color || C.primary} />
                       </div>
 
-                      {/* Name + Percentage bar */}
-                      <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ color: C.text, fontSize: 12, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
-                          <span style={{ color: C.text, fontSize: 12, fontWeight: 800, flexShrink: 0, marginLeft: 8 }}>{fmtAmt(amt)}</span>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-                          <div style={{ flex: 1, height: 4, borderRadius: 2, background: C.input, overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: `${pct}%`, borderRadius: 2, background: cat?.color || C.primary, transition: "width .4s ease" }} />
-                          </div>
-                          <span style={{ fontSize: 9, fontWeight: 700, color: C.sub, flexShrink: 0, width: 28, textAlign: "right" }}>{pct}%</span>
-                        </div>
+                      <div style={{ color: C.text, fontSize: 13, fontWeight: 800, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", width: "100%", padding: "0 4px" }}>
+                        {name}
                       </div>
 
-                      {/* Expand chevron */}
-                      <Ico n="chevronRight" sz={14} c={C.sub} />
+                      <div style={{
+                        display: "flex", alignItems: "baseline", justifyContent: "center", gap: 6,
+                        background: C.surface, padding: "5px 12px", borderRadius: 20, marginTop: 2, width: "100%",
+                        boxShadow: `0 2px 8px ${cat?.color || C.primary}11`
+                      }}>
+                        <span style={{ color: C.text, fontSize: 13, fontWeight: 900 }}>{fmtAmt(amt)}</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: C.sub, opacity: 0.8 }}>{pct}%</span>
+                      </div>
                     </button>
                   </div>
                 );

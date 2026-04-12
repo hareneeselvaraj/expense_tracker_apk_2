@@ -20,9 +20,9 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
 
   const fabActions = [
     { label: "Transaction", icon: "Banknote", action: onAddTx },
-    { label: "Account", icon: "Landmark", action: onAddAcc },
     { label: "Category", icon: "FolderOpen", action: onAddCat },
-    { label: "Tag", icon: "Tag", action: onAddTag }
+    { label: "Tag", icon: "Tag", action: onAddTag },
+    { label: "Account", icon: "Landmark", action: onAddAcc }
   ];
 
   const handleFabAction = (action) => {
@@ -38,10 +38,10 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
           onClick={() => setFabOpen(false)}
           style={{
             position: "fixed", inset: 0, zIndex: 999,
-            background: "rgba(0,0,0,0.5)",
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
-            animation: "fabFadeIn 0.2s ease"
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            animation: "fabFadeIn 0.3s cubic-bezier(0.2, 0, 0, 1)"
           }}
         />
       )}
@@ -68,7 +68,7 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
             const angleStep = spreadAngle / (totalItems - 1);
             const angleDeg = startAngle + (i * angleStep);
             const angleRad = (angleDeg * Math.PI) / 180;
-            const radius = 90;
+            const radius = 95; // increased radius slightly for cinematic feel
             const x = Math.cos(angleRad) * radius;
             const y = Math.sin(angleRad) * radius;
 
@@ -84,30 +84,32 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: 4,
+                  gap: 8,
                   pointerEvents: "auto",
                   cursor: "pointer",
-                  animation: `fabBubbleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards`,
-                  animationDelay: `${i * 0.05}s`,
+                  animation: `fabBubbleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`,
+                  animationDelay: `${i * 0.06}s`,
                   opacity: 0,
                 }}
               >
                 <div style={{
-                  width: 48, height: 48, borderRadius: "50%",
+                  width: 52, height: 52, borderRadius: "50%",
                   background: `linear-gradient(135deg, ${C.primary}, ${C.primary}dd)`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 20,
-                  boxShadow: `0 6px 20px ${C.primary}55`,
-                  transition: "transform 0.15s",
+                  fontSize: 22,
+                  boxShadow: `0 8px 24px ${C.primary}77`,
+                  transition: "transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
                 }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
                   onMouseDown={e => e.currentTarget.style.transform = "scale(0.9)"}
                   onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
                 >
-                  {item.icon ? <Icon name={item.icon} size={20} color="#fff" /> : item.emoji}
+                  {item.icon ? <Icon name={item.icon} size={22} color="#fff" /> : item.emoji}
                 </div>
                 <span style={{
-                  fontSize: 9, fontWeight: 700, color: "#fff",
-                  textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+                  fontSize: 11, fontWeight: 800, color: "#fff",
+                  textShadow: "0 2px 6px rgba(0,0,0,0.8)",
                   letterSpacing: ".02em", whiteSpace: "nowrap"
                 }}>
                   {item.label}
@@ -162,11 +164,11 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
             alignItems: "center",
             justifyContent: "center",
             boxShadow: fabOpen
-              ? `0 10px 20px ${C.expense}55`
-              : `0 10px 20px ${C.primary}55`,
+              ? `0 10px 24px ${C.expense}66`
+              : `0 10px 24px ${C.primary}66`,
             cursor: "pointer",
-            transform: fabOpen ? "rotate(45deg)" : "rotate(0deg)",
-            transition: "transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.3s ease, box-shadow 0.3s ease"
+            transform: fabOpen ? "rotate(135deg) scale(0.95)" : "rotate(0deg) scale(1)",
+            transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, box-shadow 0.3s ease"
           }}
         >
           <Ico n="plus" sz={28} c="#fff" />
@@ -188,8 +190,10 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
           to { opacity: 1; }
         }
         @keyframes fabBubbleIn {
-          from { opacity: 0; transform: translate(-50%, 20px) scale(0.3); }
-          to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+          0% { opacity: 0; transform: translate(-50%, 30px) scale(0); }
+          50% { opacity: 1; transform: translate(-50%, -15px) scale(1.15); }
+          75% { transform: translate(-50%, 5px) scale(0.95); }
+          100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
         }
       `}</style>
     </>
