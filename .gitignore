@@ -36,6 +36,5 @@ android/local.properties
 *.keystore
 *.jks
 
-# Capacitor generated web assets (rebuilt on sync)
-android/app/src/main/assets/public/
-android/app/src/main/assets/capacitor.config.json
+# Capacitor generated web assets (rebuilt by cap copy/sync)
+# Keep the assets directory in git so CI can write to it
