@@ -5,6 +5,9 @@ on:
     branches: [read-from-messages]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Setup Java (JDK 17)
@@ -27,6 +30,12 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 13114758
+
+      - name: Install Android SDK platforms
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: Install dependencies
         run: npm ci
@@ -34,8 +43,11 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Sync Capacitor
-        run: npx cap sync android
+      - name: Copy web assets to Android
+        run: npx cap copy android
+
+      - name: Update Capacitor plugins
+        run: npx cap update android
 
       - name: Make Gradle executable
         run: chmod +x android/gradlew
