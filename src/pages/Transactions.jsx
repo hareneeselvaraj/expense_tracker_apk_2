@@ -607,6 +607,24 @@ export default function TransactionsPage({
           <span style={{ color: C.sub, fontSize: 12, fontWeight: 700 }}>{timeTx.length} items</span>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          {(() => {
+            const unreviewedCount = timeTx.filter(t => t.source === "sms" && t.status === "unreviewed").length;
+            return unreviewedCount > 0 ? (
+              <button onClick={() => {
+                // Mark all SMS transactions in current view as reviewed
+                const smsIds = timeTx.filter(t => t.source === "sms" && t.status === "unreviewed").map(t => t.id);
+                smsIds.forEach(id => onEditTx?.({ id, status: "reviewed" }));
+              }} style={{
+                background: C.primary + "22",
+                border: `1px solid ${C.primary}`,
+                borderRadius: 99, padding: "4px 10px", color: C.primary,
+                fontSize: 11, fontWeight: 800, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 6
+              }}>
+                📱 {unreviewedCount} SMS
+              </button>
+            ) : null;
+          })()}
           {dupeCount > 0 && (
             <button onClick={() => setShowDuplicates(true)} style={{
               background: C.warning + "22" || C.expense + "22",

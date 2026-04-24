@@ -20,6 +20,7 @@ import { checkAndSendYearEndEmail, sendYearEndEmailManual } from "./services/yea
 import { processBudgetAlerts } from "./services/budgetEmailSender.js";
 import { createNotification, shouldAdd, pruneNotifications } from "./services/notificationService.js";
 import { purgeOldDeleted } from "./services/purgeEngine.js";
+import { initSmsService, updateSmsServiceData } from "./services/smsService.js";
 
 import { useOffline } from "./hooks/useOffline.js";
 import { useInstallPrompt } from "./hooks/useInstallPrompt.js";
@@ -336,6 +337,30 @@ export default function App() {
     setTags(prev => prev.map(t => t.updatedAt ? t : { ...t, updatedAt: now }));
     setAccounts(prev => prev.map(a => a.updatedAt ? a : { ...a, updatedAt: now }));
   }, [ready]);
+
+  // ── SMS Service: auto-read bank SMS and create transactions ─────────
+  useEffect(() => {
+    if (!ready) return;
+    const handleSmsTransaction = (tx) => {
+      // Check for duplicate SMS ref
+      setTransactions(prev => {
+        if (tx.smsRef && prev.some(t => t.smsRef === tx.smsRef)) return prev;
+        addNotification({
+          type: "sms",
+          title: `${tx.txType}: ${tx.description}`,
+          message: `₹${tx.amount.toLocaleString("en-IN")} ${tx.creditDebit === "Credit" ? "received" : "sent"} — tap to review`,
+          severity: "info",
+        });
+        return [tx, ...prev];
+      });
+    };
+    initSmsService(handleSmsTransaction, categories, accounts);
+  }, [ready]);
+
+  // Keep SMS service updated with latest categories/accounts
+  useEffect(() => {
+    if (ready) updateSmsServiceData(categories, accounts);
+  }, [categories, accounts, ready]);
 
   useEffect(() => {
     if (!ready) return;
