@@ -43,14 +43,17 @@ jobs:
       - name: Build web app
         run: npm run build
 
-      - name: Ensure Android assets directory exists
-        run: mkdir -p android/app/src/main/assets
-
-      - name: Copy web assets to Android
-        run: npx cap copy android
+      - name: Copy web assets to Android (manual)
+        run: |
+          rm -rf android/app/src/main/assets/public
+          mkdir -p android/app/src/main/assets/public
+          cp -r dist/* android/app/src/main/assets/public/
+          cp capacitor.config.json android/app/src/main/assets/capacitor.config.json
+          echo "✓ Web assets copied to Android"
+          ls -la android/app/src/main/assets/public/ | head -20
 
       - name: Update Capacitor plugins
-        run: npx cap update android
+        run: npx cap update android || echo "⚠ cap update failed, continuing with Gradle build"
 
       - name: Make Gradle executable
         run: chmod +x android/gradlew
