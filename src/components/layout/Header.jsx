@@ -71,6 +71,13 @@ export const Header = ({
   const C = theme;
   const [showNotifs, setShowNotifs] = useState(false);
   const [activeTab, setActiveTab] = useState("All");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const requestNotifPermission = () => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -112,8 +119,14 @@ export const Header = ({
           {/* Notification Dropdown */}
           {showNotifs && (
             <div style={{
-              position: "absolute", right: 0, top: "100%", marginTop: 8,
-              width: 320, maxHeight: 440, overflowY: "auto",
+              position: isMobile ? "fixed" : "absolute", 
+              right: isMobile ? 12 : 0, 
+              left: isMobile ? 12 : "auto",
+              top: isMobile ? 70 : "100%", 
+              marginTop: isMobile ? 0 : 8,
+              width: isMobile ? "auto" : 320, 
+              maxHeight: isMobile ? "calc(100vh - 140px)" : 440, 
+              overflowY: "auto",
               background: C.surface, border: `1px solid ${C.borderLight}`,
               borderRadius: 20, boxShadow: `0 20px 60px rgba(0,0,0,0.3)`, zIndex: 999,
               padding: 16, display: "flex", flexDirection: "column", gap: 10
