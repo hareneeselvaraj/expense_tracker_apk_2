@@ -48,7 +48,7 @@ const QuickAdd = ({ categories, onSave, theme }) => {
   );
 };
 
-export default function Dashboard({ user, transactions, categories, tags, accounts, budgets, stats, netWorth, getDayFlow, viewDate, setViewDate, onEditTx, onAddTx, onSave, onSmartSync, isSyncing, isOffline, theme, goToTransactions }) {
+export default function Dashboard({ user, transactions, categories, tags, accounts, budgets, stats, netWorth, getDayFlow, viewDate, setViewDate, onEditTx, onAddTx, onSave, onSmartSync, isSyncing, isOffline, theme, goToTransactions, onSetBudget }) {
   const C = theme;
   const dateRef = React.useRef(null);
   const s = stats || { income: 0, expense: 0, invest: 0, expCatMap: {}, incCatMap: {}, invCatMap: {} };
@@ -343,20 +343,17 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
               <div style={{ width: 1, height: 24, background: C.borderLight }} />
               <div style={{ textAlign: "right" }}>
                 <div style={{ color: C.sub, fontSize: 9, fontWeight: 600 }}>Remaining Budget</div>
-                <div style={{ color: totalBudget === 0 ? C.sub : (remainingBudget >= 0 ? C.income : C.expense), fontSize: 15, fontWeight: 800 }}>
-                  {totalBudget === 0 
-                    ? "Not Set" 
-                    : (remainingBudget >= 0 
-                        ? fmtAmt(remainingBudget) 
-                        : "Over Budget")}
-                </div>
+                {totalBudget === 0 
+                  ? <span onClick={onSetBudget} style={{ color: C.primary, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>Set Budget →</span>
+                  : <span style={{ color: remainingBudget >= 0 ? C.income : C.expense, fontSize: 15, fontWeight: 800 }}>
+                      {remainingBudget >= 0 ? fmtAmt(remainingBudget) : "Over Budget"}
+                    </span>
+                }
               </div>
             </div>
           )}
 
-          <button onClick={goToTransactions} style={{ width: "100%", background: `linear-gradient(135deg, ${C.primary}, ${C.secondary})`, color: "#fff", border: "none", borderRadius: 16, padding: 12, fontSize: 13, fontWeight: 800, letterSpacing: ".05em", cursor: "pointer", transition: "transform .2s" }} onMouseDown={e => e.currentTarget.style.transform = "scale(0.98)"} onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}>
-            VIEW ALL
-          </button>
+
         </div>
       )}
 

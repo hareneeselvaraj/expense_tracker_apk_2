@@ -1177,7 +1177,7 @@ export default function App() {
 
 
       <main>
-        {page === "dashboard" && <Dashboard {...{ user, transactions: activeTransactions, categories, tags, accounts: activeAccounts, budgets, stats, netWorth: getNetWorth(activeAccounts, activeTransactions), getDayFlow: (d) => getDayFlow(activeTransactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions") }} />}
+        {page === "dashboard" && <Dashboard {...{ user, transactions: activeTransactions, categories, tags, accounts: activeAccounts, budgets, stats, netWorth: getNetWorth(activeAccounts, activeTransactions), getDayFlow: (d) => getDayFlow(activeTransactions, d), viewDate: viewDate, setViewDate: setViewDate, onEditTx: setEditTx, onAddTx: () => setAddTx(true), onSave: handleSaveTx, onSmartSync: handleSmartSync, isSyncing: syncStatus === "pending", isOffline: isOffline, theme: C, goToTransactions: () => setPage("transactions"), onSetBudget: () => { setPage("organize"); setOrganizeTab("budgets"); } }} />}
         {page === "transactions" && <TransactionsPage {...{
           transactions, filteredTx, categories, tags, accounts: activeAccounts, searchQ, setSearchQ, filters, setFilters,
           hasFilter: !!(filters.from || filters.to || filters.cats.length || filters.acc || filters.type || filters.cd || filters.tags.length),
