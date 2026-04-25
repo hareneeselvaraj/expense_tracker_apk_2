@@ -44,6 +44,7 @@ export default function TransactionsPage({
   onDeleteBulk,
   onSoftDeleteBulk,
   onAdd,
+  onContextDateChange,
   theme
 }) {
   const C = theme;
@@ -58,6 +59,42 @@ export default function TransactionsPage({
   /* ── tab state ───────────────────────────────────────── */
   const [activeTab, setActiveTab] = React.useState("daily"); // daily | weekly | monthly | yearly
   const [currentDate, setCurrentDate] = React.useState(new Date());
+
+  /* ── Swipe navigation ─────────────────────────────── */
+  const [touchStart, setTouchStart] = React.useState(null);
+  const [touchEnd, setTouchEnd] = React.useState(null);
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+  };
+  const onTouchMove = (e) => setTouchEnd({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+  const onTouchEndHandler = () => {
+    if (!touchStart || !touchEnd) return;
+    const distanceX = touchStart.x - touchEnd.x;
+    const distanceY = touchStart.y - touchEnd.y;
+    
+    // Ignore vertical scrolling priority
+    if (Math.abs(distanceY) > Math.abs(distanceX)) return;
+
+    const isLeftSwipe = distanceX > minSwipeDistance;
+    const isRightSwipe = distanceX < -minSwipeDistance;
+
+    const tabs = ["daily", "weekly", "monthly", "yearly"];
+    const currIdx = tabs.indexOf(activeTab);
+
+    if (isLeftSwipe && currIdx < tabs.length - 1) setActiveTab(tabs[currIdx + 1]);
+    else if (isRightSwipe && currIdx > 0) setActiveTab(tabs[currIdx - 1]);
+  };
+
+  React.useEffect(() => {
+    if (activeTab === "daily" && onContextDateChange) {
+      onContextDateChange(isoDate(currentDate));
+    } else if (onContextDateChange) {
+      onContextDateChange(null);
+    }
+  }, [activeTab, currentDate, onContextDateChange]);
 
   // Only detect exact duplicates
   const dupeCount = React.useMemo(() => {
@@ -356,23 +393,23 @@ export default function TransactionsPage({
               padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6,
             }}>
               {/* Date header */}
-              <div style={{ textAlign: "center", fontSize: 14, fontWeight: 800, color: C.text, paddingBottom: 6, borderBottom: `1px solid ${C.borderLight}` }}>
+              <div style={{ textAlign: "center", fontSize: 13, fontWeight: 800, color: C.text, paddingBottom: 6, borderBottom: `1px solid ${C.borderLight}` }}>
                 {fmtDayHeader(date)}
               </div>
 
               {/* Two columns: Income | Expense */}
               <div style={{ display: "flex", gap: 8 }}>
                 {/* Left — Income */}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.sub, marginBottom: 4 }}>Income (Credit)</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.sub, marginBottom: 4 }}>Income (Credit)</div>
                   {dayCr.length > 0 ? dayCr.map(t => (
-                    <div key={t.id} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", cursor: "pointer", fontSize: 12 }} onClick={() => onEditTx(t)}>
+                    <div key={t.id} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", cursor: "pointer", fontSize: 11 }} onClick={() => onEditTx(t)}>
                       <span style={{ color: C.text, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 4, flex: 1 }}>{t.description}</span>
                       <span style={{ fontWeight: 700, color: C.text, flexShrink: 0 }}>{t.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                     </div>
-                  )) : <div style={{ fontSize: 11, color: C.sub, fontStyle: "italic" }}>—</div>}
+                  )) : <div style={{ fontSize: 10, color: C.sub, fontStyle: "italic" }}>—</div>}
                   {dayCr.length > 0 && (
-                    <div style={{ fontSize: 12, fontWeight: 800, color: C.income, paddingTop: 2 }}>{fmtAmt(dayTotalCr)}</div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: C.income, paddingTop: 2 }}>{fmtAmt(dayTotalCr)}</div>
                   )}
                 </div>
 
@@ -380,24 +417,24 @@ export default function TransactionsPage({
                 <div style={{ width: 1, background: C.borderLight }} />
 
                 {/* Right — Expense */}
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: C.sub, marginBottom: 4 }}>Expense (Debit)</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: C.sub, marginBottom: 4 }}>Expense (Debit)</div>
                   {dayDb.length > 0 ? dayDb.map(t => (
-                    <div key={t.id} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", cursor: "pointer", fontSize: 12 }} onClick={() => onEditTx(t)}>
+                    <div key={t.id} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", cursor: "pointer", fontSize: 11 }} onClick={() => onEditTx(t)}>
                       <span style={{ color: C.text, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 4, flex: 1 }}>{t.description}</span>
                       <span style={{ fontWeight: 700, color: C.text, flexShrink: 0 }}>{t.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                     </div>
-                  )) : <div style={{ fontSize: 11, color: C.sub, fontStyle: "italic" }}>—</div>}
+                  )) : <div style={{ fontSize: 10, color: C.sub, fontStyle: "italic" }}>—</div>}
                   {dayDb.length > 0 && (
-                    <div style={{ fontSize: 12, fontWeight: 800, color: C.expense, paddingTop: 2, textAlign: "right" }}>{fmtAmt(dayTotalDb)}</div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: C.expense, paddingTop: 2, textAlign: "right" }}>{fmtAmt(dayTotalDb)}</div>
                   )}
                 </div>
               </div>
 
               {/* Day balance */}
               <div style={{ textAlign: "right", borderTop: `1px solid ${C.borderLight}`, paddingTop: 6 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: C.sub }}>Balance</span>
-                <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{fmtAmt(dayBalance)}</div>
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.sub }}>Balance</span>
+                <div style={{ fontSize: 12, fontWeight: 800, color: C.text }}>{fmtAmt(dayBalance)}</div>
               </div>
             </div>
           );
@@ -475,7 +512,7 @@ export default function TransactionsPage({
     <div className="page-enter" style={{ padding: "0 0 100px 0", display: "flex", flexDirection: "column", gap: 0 }}>
 
       {/* ── Existing Search & Actions bar ─────────────── */}
-      <div style={{ display: "flex", gap: 6, alignItems: "center", padding: "12px 16px 8px" }}>
+      <div style={{ display: "flex", gap: 6, alignItems: "center", padding: "12px 10px 8px" }}>
         <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search…" style={{ flex: 1, minWidth: 0, background: C.surface, borderWidth: 1, borderStyle: "solid", borderColor: C.borderLight, borderRadius: 12, padding: "8px 12px", color: C.text, fontSize: 13, outline: "none", fontFamily: "inherit", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }} />
 
         <button onClick={onShowFilters} style={{ width: 36, height: 36, flexShrink: 0, background: hasFilter ? C.primary : C.surface, border: `1px solid ${hasFilter ? C.primary : C.borderLight}`, borderRadius: 12, padding: 0, color: hasFilter ? "#fff" : C.sub, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", transition: "all .2s" }}>
@@ -529,7 +566,7 @@ export default function TransactionsPage({
 
       {/* ── DAILY / MONTHLY / YEARLY Tabs ────────────── */}
       <div style={{
-        display: "flex", borderBottom: `2px solid ${C.borderLight}`, margin: "0 16px",
+        display: "flex", borderBottom: `2px solid ${C.borderLight}`, margin: "0 10px",
       }}>
         {["daily", "weekly", "monthly", "yearly"].map(tab => (
           <button
@@ -552,7 +589,7 @@ export default function TransactionsPage({
 
       {/* ── Period navigator ─────────────────────────── */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 8, padding: "10px 16px",
+        display: "flex", alignItems: "center", gap: 8, padding: "10px 10px",
         borderBottom: `1px solid ${C.borderLight}`,
       }}>
         <button onClick={() => stepScope(-1)} style={{
@@ -582,7 +619,7 @@ export default function TransactionsPage({
       </div>
 
       {/* ── Items count & duplicates ─────────────────── */}
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", padding: "6px 16px" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", padding: "6px 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {timeTx.length > 0 && (
             <div onClick={() => {
@@ -619,7 +656,12 @@ export default function TransactionsPage({
       </div>
 
       {/* ── View content ─────────────────────────────── */}
-      <div style={{ padding: "0 16px" }}>
+      <div 
+        style={{ padding: "0 10px", flex: 1 }}
+        onTouchStart={onTouchStart} 
+        onTouchMove={onTouchMove} 
+        onTouchEnd={onTouchEndHandler}
+      >
         {activeTab === "daily" && renderDailyView()}
         {activeTab === "weekly" && renderMonthlyView()}
         {activeTab === "monthly" && renderMonthlyView()}

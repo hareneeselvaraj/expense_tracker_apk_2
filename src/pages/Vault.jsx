@@ -33,7 +33,7 @@ export default function VaultPage({
   const overallNetWorth = netWorth + investedValue;
 
   return (
-    <div className="page-enter" style={{padding:"16px 16px 100px 16px",display:"flex",flexDirection:"column",gap:20}}>
+    <div className="page-enter" style={{padding:"16px 10px 100px",display:"flex",flexDirection:"column",gap:20}}>
       
       {/* Sub-tab switcher */}
       <div style={{display:"flex", background:C.input, borderRadius:24, padding:4, marginBottom: 8}}>

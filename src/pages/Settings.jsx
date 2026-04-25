@@ -49,7 +49,7 @@ export default function SettingsPage({
   };
 
   return (
-    <div className="page-enter" style={{padding:"20px 20px 100px 20px",display:"flex",flexDirection:"column",gap:24}}>
+    <div className="page-enter" style={{padding:"20px 10px 100px",display:"flex",flexDirection:"column",gap:24}}>
 
       <div style={{display:"flex", flexDirection:"column", gap:16}}>
 

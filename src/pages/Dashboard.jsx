@@ -178,7 +178,7 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
               </div>
               <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, opacity: 0.6 }}>TAP TO FLIP ↻</div>
             </div>
-            <div className="net-amount" style={{ color: C.text, fontSize: 26, fontWeight: 800, margin: "2px 0", letterSpacing: "-0.03em" }}>
+            <div className="net-amount" style={{ color: netWorth < 0 ? C.expense : (netWorth > 0 ? C.income : C.text), fontSize: 26, fontWeight: 800, margin: "2px 0", letterSpacing: "-0.03em" }}>
               {fmtAmt(netWorth)}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 12, borderTop: `1px dashed ${C.border}`, paddingTop: 12 }}>
@@ -214,13 +214,13 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
               </div>
               <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, opacity: 0.6 }}>TAP TO FLIP ↻</div>
             </div>
-            <div style={{ color: C.text, fontSize: 26, fontWeight: 800, margin: "2px 0", letterSpacing: "-0.03em" }}>
+            <div style={{ color: overallNetWorth < 0 ? C.expense : (overallNetWorth > 0 ? C.income : C.text), fontSize: 26, fontWeight: 800, margin: "2px 0", letterSpacing: "-0.03em" }}>
               {fmtAmt(overallNetWorth)}
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 12, borderTop: `1px dashed ${C.border}`, paddingTop: 12 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Liquid</div>
-                <div style={{ color: C.text, fontSize: 15, fontWeight: 800, marginTop: 2 }}>{fmtAmt(netWorth)}</div>
+                <div style={{ color: netWorth < 0 ? C.expense : (netWorth > 0 ? C.income : C.text), fontSize: 15, fontWeight: 800, marginTop: 2 }}>{fmtAmt(netWorth)}</div>
               </div>
               <div style={{ width: 1, background: C.borderLight }} />
               <div style={{ flex: 1 }}>

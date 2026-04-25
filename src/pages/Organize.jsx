@@ -31,7 +31,7 @@ export default function OrganizePage({
   }, [transactions, orgPeriodTab, orgDate]);
 
   return (
-    <div className="page-enter" style={{padding:"16px 16px 100px 16px",display:"flex",flexDirection:"column",gap:20}}>
+    <div className="page-enter" style={{padding:"16px 10px 100px",display:"flex",flexDirection:"column",gap:20}}>
       
       {/* Period Navigator */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:20, marginTop:10}}>

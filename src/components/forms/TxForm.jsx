@@ -10,8 +10,8 @@ import { fmtAmt } from "../../utils/format.js";
 import { BLANK_TX } from "../../constants/defaults.js";
 import { checkImportBatch } from "../../services/duplicateEngine.js";
 
-export const TxForm = ({init, categories, tags, accounts, existingTransactions, onSave, onDelete, onClose, theme}) => {
-  const [tx, setTx] = useState({...BLANK_TX, ...init});
+export const TxForm = ({init, initialDate, categories, tags, accounts, existingTransactions, onSave, onDelete, onClose, theme}) => {
+  const [tx, setTx] = useState({...BLANK_TX, ...(initialDate ? {date: initialDate} : {}), ...init});
   const [isSplitting, setIsSplitting] = useState(false);
   const [splits, setSplits] = useState([{id:uid(), amount:"", category:init?.category||"c13"}]);
   const [confirmDelete, setConfirmDelete] = useState(false);

@@ -229,6 +229,7 @@ export default function App() {
 
   // UI State
   const [viewDate, setViewDate] = useState(new Date());
+  const [contextDate, setContextDate] = useState(null);
   const [addTx, setAddTx] = useState(false);
   const [editTx, setEditTx] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -1184,6 +1185,7 @@ export default function App() {
           onShowFilters: () => setShowFilters(true), onShowUpload: () => setShowUpload(true),
           onExportCSV: () => exportCSV(filteredTx, categories, tags, activeAccounts), onExportPDF: () => exportTransactionsPDF(filteredTx, categories, activeAccounts, (m) => notify(m)),
           onEditTx: setEditTx, selectedTxIds, setSelectedTxIds,
+          onContextDateChange: setContextDate,
           onDeleteBulk: () => {
             const now = new Date().toISOString();
             setTransactions(p => p.map(t => selectedTxIds.includes(t.id) ? { ...t, deleted: true, updatedAt: now } : t));
@@ -1344,6 +1346,7 @@ export default function App() {
 
       <Modal open={addTx} onClose={() => setAddTx(false)} title="Add Transaction" theme={C}>
         <TxForm
+          initialDate={page === "transactions" ? contextDate : null}
           categories={categories} tags={activeTags} accounts={activeAccounts}
           existingTransactions={transactions}
           onSave={tx => {
