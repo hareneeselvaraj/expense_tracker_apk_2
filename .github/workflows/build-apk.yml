@@ -58,9 +58,9 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 
-      - name: Build Debug APK
+      - name: Build Release APK
         working-directory: android
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleRelease --stacktrace
 
       - name: List generated APKs
         run: find android/app/build/outputs -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
