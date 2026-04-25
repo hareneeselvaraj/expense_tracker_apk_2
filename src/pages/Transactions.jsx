@@ -170,10 +170,7 @@ export default function TransactionsPage({
   }, [timeTx, currentDate]);
 
   /* ── styles ────────────────────────────────────────── */
-  const teal = "#5bb5a2";
-  const tealLight = "#e8f5f1";
   const sectionHeaderStyle = {
-    background: tealLight,
     padding: "8px 12px",
     fontSize: 14,
     fontWeight: 700,
@@ -249,10 +246,10 @@ export default function TransactionsPage({
           {showIcon && (
             <div style={{
               width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-              background: cat?.color ? cat.color + "18" : tealLight,
+              background: cat?.color ? cat.color + "18" : C.income + "18",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              {cat?.icon ? <Icon name={cat.icon} size={16} color={cat?.color || teal} /> : <span style={{ fontSize: 14 }}>💳</span>}
+              {cat?.icon ? <Icon name={cat.icon} size={16} color={cat?.color || C.income} /> : <span style={{ fontSize: 14 }}>💳</span>}
             </div>
           )}
           <span style={{ fontSize: 14, color: C.text, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -284,7 +281,7 @@ export default function TransactionsPage({
           {/* Income (Credit) Section */}
           {credits.length > 0 && (
             <>
-              <div style={{ ...sectionHeaderStyle, background: C.income + "15" }}>
+              <div style={{ ...sectionHeaderStyle, background: C.income + "20" }}>
                 <span style={{ color: C.income }}>Income (Credit)</span>
                 <span style={{ color: C.income }}>{fmtAmt(totalCredit)}</span>
               </div>
@@ -375,7 +372,7 @@ export default function TransactionsPage({
                     </div>
                   )) : <div style={{ fontSize: 11, color: C.sub, fontStyle: "italic" }}>—</div>}
                   {dayCr.length > 0 && (
-                    <div style={{ fontSize: 12, fontWeight: 800, color: teal, paddingTop: 2 }}>{fmtAmt(dayTotalCr)}</div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: C.income, paddingTop: 2 }}>{fmtAmt(dayTotalCr)}</div>
                   )}
                 </div>
 
@@ -392,7 +389,7 @@ export default function TransactionsPage({
                     </div>
                   )) : <div style={{ fontSize: 11, color: C.sub, fontStyle: "italic" }}>—</div>}
                   {dayDb.length > 0 && (
-                    <div style={{ fontSize: 12, fontWeight: 800, color: teal, paddingTop: 2, textAlign: "right" }}>{fmtAmt(dayTotalDb)}</div>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: C.expense, paddingTop: 2, textAlign: "right" }}>{fmtAmt(dayTotalDb)}</div>
                   )}
                 </div>
               </div>
@@ -425,7 +422,7 @@ export default function TransactionsPage({
         </div>
 
         {/* C/F row */}
-        <div style={{ display: "flex", padding: "6px 10px", borderBottom: `1px solid ${C.borderLight}`, background: tealLight }}>
+        <div style={{ display: "flex", padding: "6px 10px", borderBottom: `1px solid ${C.borderLight}`, background: C.muted }}>
           <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: C.sub }}>C/F</span>
           <span style={{ width: 90, fontSize: 12, fontWeight: 700, color: C.text, textAlign: "right" }}></span>
           <span style={{ width: 90, fontSize: 12, fontWeight: 700, color: C.text, textAlign: "right" }}></span>
@@ -451,7 +448,7 @@ export default function TransactionsPage({
                   setCurrentDate(new Date(currentDate.getFullYear(), mg.monthIndex, 1));
                 }
               }}
-              onMouseEnter={e => { if (hasData) e.currentTarget.style.background = C.muted || tealLight; }}
+              onMouseEnter={e => { if (hasData) e.currentTarget.style.background = C.muted; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
             >
               <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: C.text }}>{mg.month}</span>
@@ -543,8 +540,8 @@ export default function TransactionsPage({
               padding: "10px 0 8px", cursor: "pointer",
               fontSize: 13, fontWeight: 800, fontFamily: "inherit",
               textTransform: "uppercase", letterSpacing: "0.04em",
-              color: activeTab === tab ? teal : C.sub,
-              borderBottom: activeTab === tab ? `3px solid ${teal}` : "3px solid transparent",
+              color: activeTab === tab ? C.primary : C.sub,
+              borderBottom: activeTab === tab ? `3px solid ${C.primary}` : "3px solid transparent",
               transition: "all .2s",
             }}
           >
