@@ -19,8 +19,7 @@ import com.getcapacitor.annotation.PermissionCallback;
         @Permission(
             alias = "sms",
             strings = {
-                Manifest.permission.READ_SMS,
-                Manifest.permission.RECEIVE_SMS
+                Manifest.permission.READ_SMS
             }
         )
     }
