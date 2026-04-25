@@ -611,8 +611,23 @@ export default function App() {
   // Poll for Google Sign-In SDK to load (async defer script)
   const [gsiError, setGsiError] = useState(false);
 
+  // Auto-login on native (Capacitor) — Google Sign-In SDK can't load in WebView
   useEffect(() => {
-    if (gsiReady) return;
+    if (!ready || user) return;
+    if (isNativePlatform()) {
+      const saved = localStorage.getItem("user");
+      if (saved) {
+        setUser(JSON.parse(saved));
+      } else {
+        const localUser = { name: "Device User", email: "local@device", picture: "" };
+        setUser(localUser);
+        localStorage.setItem("user", JSON.stringify(localUser));
+      }
+    }
+  }, [ready, user]);
+
+  useEffect(() => {
+    if (gsiReady || isNativePlatform()) return;
     const startTime = Date.now();
     const interval = setInterval(() => {
       if (window.google) {
