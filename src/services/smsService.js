@@ -105,6 +105,23 @@ export function parseManualSmsInput(text) {
 }
 
 /**
+ * Standalone permission request — triggers the native Android SMS permission dialog.
+ * Returns true if granted, false otherwise.
+ */
+export async function requestSmsPermission() {
+  if (!Capacitor.isNativePlatform()) return false;
+  try {
+    const { registerPlugin } = await import("@capacitor/core");
+    const SmsReader = registerPlugin("SmsReader");
+    const result = await SmsReader.requestPermission();
+    return !!result.granted;
+  } catch (err) {
+    console.warn("[SmsService] Permission request failed:", err);
+    return false;
+  }
+}
+
+/**
  * Check if the app is running on a native platform
  */
 export function isNativePlatform() {

@@ -20,7 +20,7 @@ import { checkAndSendYearEndEmail, sendYearEndEmailManual } from "./services/yea
 import { processBudgetAlerts } from "./services/budgetEmailSender.js";
 import { createNotification, shouldAdd, pruneNotifications } from "./services/notificationService.js";
 import { purgeOldDeleted } from "./services/purgeEngine.js";
-import { initSmsService, updateSmsServiceData } from "./services/smsService.js";
+import { initSmsService, updateSmsServiceData, isNativePlatform, requestSmsPermission } from "./services/smsService.js";
 
 import { useOffline } from "./hooks/useOffline.js";
 import { useInstallPrompt } from "./hooks/useInstallPrompt.js";
@@ -265,6 +265,7 @@ export default function App() {
   const [driveFiles, setDriveFiles] = useState([]);
   const [driveStep, setDriveStep] = useState(null);
   const gInitRef = useRef(false);
+  const [showSmsPermPopup, setShowSmsPermPopup] = useState(false);
 
   const C = useMemo(() => ({ ...THEMES[themeMode], ...BASE_C }), [themeMode]);
 
@@ -338,22 +339,43 @@ export default function App() {
     setAccounts(prev => prev.map(a => a.updatedAt ? a : { ...a, updatedAt: now }));
   }, [ready]);
 
-  // ── SMS Service: auto-read bank SMS and create transactions ─────────
+  // ── SMS Permission Popup: show on first native launch ───────────────
   useEffect(() => {
     if (!ready) return;
-    const handleSmsTransaction = (tx) => {
-      // Check for duplicate SMS ref
-      setTransactions(prev => {
-        if (tx.smsRef && prev.some(t => t.smsRef === tx.smsRef)) return prev;
-        addNotification({
-          type: "sms",
-          title: `${tx.txType}: ${tx.description}`,
-          message: `₹${tx.amount.toLocaleString("en-IN")} ${tx.creditDebit === "Credit" ? "received" : "sent"} — tap to review`,
-          severity: "info",
-        });
-        return [tx, ...prev];
+    if (isNativePlatform() && !localStorage.getItem("sms_perm_asked")) {
+      setShowSmsPermPopup(true);
+    }
+  }, [ready]);
+
+  const handleSmsPermAllow = async () => {
+    localStorage.setItem("sms_perm_asked", "1");
+    setShowSmsPermPopup(false);
+    await requestSmsPermission();
+    // Re-init SMS service after permission granted
+    initSmsService(handleSmsTransaction, categories, accounts);
+  };
+
+  const handleSmsPermDeny = () => {
+    localStorage.setItem("sms_perm_asked", "1");
+    setShowSmsPermPopup(false);
+  };
+
+  // ── SMS Service: auto-read bank SMS and create transactions ─────────
+  const handleSmsTransaction = useCallback((tx) => {
+    setTransactions(prev => {
+      if (tx.smsRef && prev.some(t => t.smsRef === tx.smsRef)) return prev;
+      addNotification({
+        type: "sms",
+        title: `${tx.txType}: ${tx.description}`,
+        message: `₹${tx.amount.toLocaleString("en-IN")} ${tx.creditDebit === "Credit" ? "received" : "sent"} — tap to review`,
+        severity: "info",
       });
-    };
+      return [tx, ...prev];
+    });
+  }, [addNotification]);
+
+  useEffect(() => {
+    if (!ready) return;
     initSmsService(handleSmsTransaction, categories, accounts);
   }, [ready]);
 
@@ -1571,6 +1593,56 @@ export default function App() {
           theme={C}
         />
       </Modal>
+
+      {/* SMS Permission Popup */}
+      {showSmsPermPopup && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 99999,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24, animation: 'fadeIn 0.3s ease'
+        }}>
+          <div style={{
+            background: C.card, borderRadius: 20, padding: '32px 24px',
+            maxWidth: 380, width: '100%', textAlign: 'center',
+            border: `1px solid ${C.border}`,
+            boxShadow: `0 20px 60px rgba(0,0,0,0.4)`,
+            animation: 'scaleIn 0.3s ease'
+          }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 16, margin: '0 auto 20px',
+              background: `linear-gradient(135deg, ${C.primary}22, ${C.primary}44)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 32
+            }}>💬</div>
+            <h3 style={{ color: C.text, margin: '0 0 12px', fontSize: 20, fontWeight: 700 }}>
+              Allow SMS Access
+            </h3>
+            <p style={{ color: C.subtext, margin: '0 0 24px', fontSize: 14, lineHeight: 1.6 }}>
+              Allow this app to read your messages to automatically detect bank transactions and add them to your expense tracker.
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={handleSmsPermDeny}
+                style={{
+                  flex: 1, padding: '14px 0', borderRadius: 12,
+                  border: `1px solid ${C.border}`, background: 'transparent',
+                  color: C.subtext, fontSize: 15, fontWeight: 600, cursor: 'pointer'
+                }}
+              >Deny</button>
+              <button
+                onClick={handleSmsPermAllow}
+                style={{
+                  flex: 1, padding: '14px 0', borderRadius: 12,
+                  border: 'none', background: `linear-gradient(135deg, ${C.primary}, ${C.primaryDim || C.primary}dd)`,
+                  color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer',
+                  boxShadow: `0 4px 15px ${C.primary}44`
+                }}
+              >Allow</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Toast toast={toast} theme={C} />
 
