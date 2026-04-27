@@ -11,6 +11,8 @@ export default function VaultPage({
   vaultTab, setVaultTab,
   // Recurring Props
   recurring, onAddRecurring, onEditRecurring, onDeleteRecurring, onTogglePauseRecurring,
+  // Notes Props
+  vaultNotes, onAddNote, onEditNote, onDeleteNote,
   // Reports Props
   reportTab, setReportTab,
   reportsMode, setReportsMode,
@@ -39,6 +41,7 @@ export default function VaultPage({
       <div style={{display:"flex", background:C.input, borderRadius:24, padding:4, marginBottom: 8}}>
         {[
           { id: "accounts", label: "Accounts", icon: "bank" },
+          { id: "notes", label: "Notes", icon: "edit" },
           { id: "recurring", label: "Recurring", icon: "repeat" },
           { id: "reports", label: "Analytics", icon: "chart" }
         ].map(t => (
@@ -74,6 +77,47 @@ export default function VaultPage({
           onDelete={onDeleteRecurring}
           theme={theme}
         />
+      ) : vaultTab === "notes" ? (
+        <div style={{display:"flex", flexDirection:"column", gap:14}}>
+          {/* Header */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center", marginBottom: 4}}>
+            <p style={{margin:0,color:C.sub,fontSize:13,fontWeight:600}}>{(vaultNotes||[]).length} notes</p>
+            <Btn theme={C} icon="plus" sm onClick={onAddNote}>Add Note</Btn>
+          </div>
+
+          {(!vaultNotes || vaultNotes.length === 0) ? (
+            <div style={{
+              background:C.surface, border:`1px solid ${C.borderLight}`,
+              borderRadius:24,padding:"50px 24px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:16,
+              boxShadow:C.shadow
+            }}>
+              <div style={{width:64,height:64,borderRadius:20,background:C.input,display:"flex",alignItems:"center",justifyContent:"center",fontSize:32, border:`1px solid ${C.borderLight}`}}>📝</div>
+              <div>
+                <div style={{color:C.text,fontSize:18,fontWeight:800,marginBottom:6, letterSpacing:"-0.02em"}}>No Notes Yet</div>
+                <div style={{color:C.sub,fontSize:13,lineHeight:1.5,maxWidth:260, margin:"0 auto"}}>Keep track of lended amounts, sweep-in FDs, and other financial notes.</div>
+              </div>
+              <Btn theme={C} icon="plus" onClick={onAddNote}>Add First Note</Btn>
+            </div>
+          ) : (
+            vaultNotes.map((n, i) => (
+              <div key={n.id} onClick={() => onEditNote(n)} style={{
+                background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:20, padding:16,
+                cursor:"pointer", transition:"all .2s ease", position:"relative", overflow:"hidden",
+                boxShadow: C.shadow, borderLeft: `4px solid ${n.color || C.primary}`,
+                animation: `fadeInUp 0.4s ease forwards`, animationDelay: `${i * 0.05}s`, opacity:0, transform:"translateY(10px)"
+              }}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.transform="translateY(-2px)";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor=C.borderLight;e.currentTarget.style.transform="translateY(0)";}}
+              >
+                <div style={{fontSize:15, fontWeight:800, color:C.text, marginBottom:6, letterSpacing:"-0.01em"}}>{n.title}</div>
+                {n.body && <div style={{fontSize:13, color:C.sub, lineHeight:1.5, whiteSpace:"pre-wrap", maxHeight:80, overflow:"hidden"}}>{n.body}</div>}
+                <div style={{fontSize:10, color:C.sub, marginTop:8, fontWeight:600, opacity:0.7}}>
+                  {new Date(n.updatedAt || n.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       ) : (
         <>
           {/* Header */}

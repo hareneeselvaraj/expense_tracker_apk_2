@@ -61,32 +61,64 @@ export default function TransactionsPage({
   const [currentDate, setCurrentDate] = React.useState(new Date());
 
   /* ── Swipe navigation ─────────────────────────────── */
-  const [touchStart, setTouchStart] = React.useState(null);
-  const [touchEnd, setTouchEnd] = React.useState(null);
+  const swipeRef = React.useRef(null);
+  const touchDataRef = React.useRef({ startX: 0, startY: 0, endX: 0, endY: 0 });
   const minSwipeDistance = 50;
+  const activeTabRef = React.useRef(activeTab);
+  React.useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
 
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-  };
-  const onTouchMove = (e) => setTouchEnd({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-  const onTouchEndHandler = () => {
-    if (!touchStart || !touchEnd) return;
-    const distanceX = touchStart.x - touchEnd.x;
-    const distanceY = touchStart.y - touchEnd.y;
-    
-    // Ignore vertical scrolling priority
-    if (Math.abs(distanceY) > Math.abs(distanceX)) return;
+  React.useEffect(() => {
+    const el = swipeRef.current;
+    if (!el) return;
 
-    const isLeftSwipe = distanceX > minSwipeDistance;
-    const isRightSwipe = distanceX < -minSwipeDistance;
+    const handleStart = (e) => {
+      touchDataRef.current = {
+        startX: e.touches[0].clientX,
+        startY: e.touches[0].clientY,
+        endX: e.touches[0].clientX,
+        endY: e.touches[0].clientY,
+      };
+    };
 
-    const tabs = ["daily", "weekly", "monthly", "yearly"];
-    const currIdx = tabs.indexOf(activeTab);
+    const handleMove = (e) => {
+      touchDataRef.current.endX = e.touches[0].clientX;
+      touchDataRef.current.endY = e.touches[0].clientY;
 
-    if (isLeftSwipe && currIdx < tabs.length - 1) setActiveTab(tabs[currIdx + 1]);
-    else if (isRightSwipe && currIdx > 0) setActiveTab(tabs[currIdx - 1]);
-  };
+      const dx = Math.abs(touchDataRef.current.startX - touchDataRef.current.endX);
+      const dy = Math.abs(touchDataRef.current.startY - touchDataRef.current.endY);
+      // If horizontal motion dominates, prevent default scroll
+      if (dx > dy && dx > 10) {
+        e.preventDefault();
+      }
+    };
+
+    const handleEnd = () => {
+      const { startX, startY, endX, endY } = touchDataRef.current;
+      const distanceX = startX - endX;
+      const distanceY = startY - endY;
+
+      if (Math.abs(distanceY) > Math.abs(distanceX)) return;
+
+      const tabs = ["daily", "weekly", "monthly", "yearly"];
+      const currIdx = tabs.indexOf(activeTabRef.current);
+
+      if (distanceX > minSwipeDistance && currIdx < tabs.length - 1) {
+        setActiveTab(tabs[currIdx + 1]);
+      } else if (distanceX < -minSwipeDistance && currIdx > 0) {
+        setActiveTab(tabs[currIdx - 1]);
+      }
+    };
+
+    el.addEventListener("touchstart", handleStart, { passive: true });
+    el.addEventListener("touchmove", handleMove, { passive: false });
+    el.addEventListener("touchend", handleEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener("touchstart", handleStart);
+      el.removeEventListener("touchmove", handleMove);
+      el.removeEventListener("touchend", handleEnd);
+    };
+  }, []);
 
   React.useEffect(() => {
     if (activeTab === "daily" && onContextDateChange) {
@@ -509,7 +541,7 @@ export default function TransactionsPage({
   /* ── MAIN RENDER ────────────────────────────────── */
   /* ═══════════════════════════════════════════════════ */
   return (
-    <div className="page-enter" style={{ padding: "0 0 100px 0", display: "flex", flexDirection: "column", gap: 0 }}>
+    <div ref={swipeRef} className="page-enter" style={{ padding: "0 0 100px 0", display: "flex", flexDirection: "column", gap: 0 }}>
 
       {/* ── Existing Search & Actions bar ─────────────── */}
       <div style={{ display: "flex", gap: 6, alignItems: "center", padding: "12px 10px 8px" }}>
@@ -658,9 +690,6 @@ export default function TransactionsPage({
       {/* ── View content ─────────────────────────────── */}
       <div 
         style={{ padding: "0 10px", flex: 1 }}
-        onTouchStart={onTouchStart} 
-        onTouchMove={onTouchMove} 
-        onTouchEnd={onTouchEndHandler}
       >
         {activeTab === "daily" && renderDailyView()}
         {activeTab === "weekly" && renderMonthlyView()}

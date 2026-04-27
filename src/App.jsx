@@ -58,6 +58,7 @@ import { TagForm } from "./components/forms/TagForm.jsx";
 import { BudgetForm } from "./components/forms/BudgetForm.jsx";
 import { AccForm } from "./components/forms/AccForm.jsx";
 import { RecurringForm } from "./components/forms/RecurringForm.jsx";
+import { NoteForm } from "./components/forms/NoteForm.jsx";
 import { UploadModal } from "./components/forms/UploadModal.jsx";
 import { FilterModal } from "./components/forms/FilterModal.jsx";
 
@@ -163,6 +164,7 @@ export default function App() {
   const [budgets, setBudgets] = useState([]);
   const [rules, setRules] = useState([]);
   const [recurring, setRecurring] = useState([]);
+  const [vaultNotes, setVaultNotes] = useState([]);
   const [emailPrefs, setEmailPrefs] = useState({ budgetAlerts: true, yearEndSummary: true });
 
   // Phase 1C: Offline detection
@@ -258,8 +260,10 @@ export default function App() {
   const [showUpload, setShowUpload] = useState(false);
   const [addRecurring, setAddRecurring] = useState(false);
   const [editRecurring, setEditRecurring] = useState(null);
+  const [addNote, setAddNote] = useState(false);
+  const [editNote, setEditNote] = useState(null);
 
-  const isModalOpen = !!(addTx || editTx || showBackup || showFilters || addCat || editCat || addTag || editTag || editBudget || addAcc || editAcc || showUpload || addRecurring || editRecurring);
+  const isModalOpen = !!(addTx || editTx || showBackup || showFilters || addCat || editCat || addTag || editTag || editBudget || addAcc || editAcc || showUpload || addRecurring || editRecurring || addNote || editNote);
   const driveTokenRef = useRef(null);
   const budgetCheckPending = useRef(false);
   const [driveFiles, setDriveFiles] = useState([]);
@@ -300,6 +304,7 @@ export default function App() {
           setRules(migrated);
         }
         if (d.recurring) setRecurring(purgeOldDeleted(ensureTimestamps(d.recurring)));
+        if (d.vaultNotes) setVaultNotes(d.vaultNotes);
         if (d.emailPrefs) setEmailPrefs(d.emailPrefs);
       }
 
@@ -355,7 +360,7 @@ export default function App() {
 
   useEffect(() => {
     if (!ready) return;
-    dbSet("data", { transactions, categories, tags, accounts, budgets, rules, recurring, emailPrefs })
+    dbSet("data", { transactions, categories, tags, accounts, budgets, rules, recurring, vaultNotes, emailPrefs })
       .catch(err => {
         console.error("Failed to save data to IndexedDB:", err);
         notify("Failed to save data locally", "error");
@@ -1282,6 +1287,14 @@ export default function App() {
             const tmpl = recurring.find(r => r.id === id);
             notify(tmpl?.paused ? "Recurring payment resumed" : "Recurring payment paused");
           },
+          // Notes
+          vaultNotes,
+          onAddNote: () => setAddNote(true),
+          onEditNote: (n) => setEditNote(n),
+          onDeleteNote: (id) => {
+            setVaultNotes(p => p.filter(n => n.id !== id));
+            notify("Note deleted", "error");
+          },
           reportTab, setReportTab, reportsMode, setReportsMode, reportsSubTab, setReportsSubTab, reportDate, setReportDate,
           filtered: filteredTx,
           categories, tags,
@@ -1539,6 +1552,29 @@ export default function App() {
             setAddRecurring(false);
             setEditRecurring(null);
             notify(editRecurring ? "✓ Recurring Updated" : "✓ Recurring Created");
+          }}
+        />
+      </Modal>
+
+      <Modal open={!!(addNote || editNote)} title={editNote ? "Edit Note" : "New Note"} onClose={() => { setAddNote(false); setEditNote(null); }} theme={C}>
+        <NoteForm
+          init={editNote}
+          theme={C}
+          onClose={() => { setAddNote(false); setEditNote(null); }}
+          onDelete={(id) => {
+            setVaultNotes(p => p.filter(n => n.id !== id));
+            setEditNote(null);
+            notify("Note deleted", "error");
+          }}
+          onSave={(n) => {
+            setVaultNotes(p => {
+              const idx = p.findIndex(x => x.id === n.id);
+              if (idx > -1) return p.map(x => x.id === n.id ? n : x);
+              return [n, ...p];
+            });
+            setAddNote(false);
+            setEditNote(null);
+            notify(editNote ? "Note updated" : "Note added");
           }}
         />
       </Modal>
