@@ -338,6 +338,21 @@ export default function App() {
     setAccounts(prev => prev.map(a => a.updatedAt ? a : { ...a, updatedAt: now }));
   }, [ready]);
 
+  // One-time fix: correct transactions where txType is Income but creditDebit was saved as Debit
+  useEffect(() => {
+    if (!ready) return;
+    setTransactions(prev => {
+      const hasBroken = prev.some(t => !t.deleted && t.txType === "Income" && t.creditDebit === "Debit");
+      if (!hasBroken) return prev;
+      console.log("[Migration] Fixing Income transactions with incorrect creditDebit=Debit");
+      return prev.map(t =>
+        !t.deleted && t.txType === "Income" && t.creditDebit === "Debit"
+          ? { ...t, creditDebit: "Credit", updatedAt: new Date().toISOString() }
+          : t
+      );
+    });
+  }, [ready]);
+
   useEffect(() => {
     if (!ready) return;
     dbSet("data", { transactions, categories, tags, accounts, budgets, rules, recurring, emailPrefs })

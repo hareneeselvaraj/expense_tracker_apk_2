@@ -44,7 +44,9 @@ export const TxForm = ({init, initialDate, categories, tags, accounts, existingT
       {/* Row 2: Transaction Type */}
       <div>
         <FLabel theme={C}>Type</FLabel>
-        <TypeToggle theme={C} value={tx.txType} onChange={f("txType")}/>
+        <TypeToggle theme={C} value={tx.txType} onChange={v=>{
+          setTx(p=>({...p, txType:v, creditDebit:v==="Income"?"Credit":"Debit"}));
+        }}/>
       </div>
 
       {/* Row 3: Category + Description side by side */}
