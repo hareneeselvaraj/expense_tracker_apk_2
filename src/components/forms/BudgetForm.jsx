@@ -40,27 +40,27 @@ export function BudgetForm({ item: initialItem, type, currentBudget, onSave, onC
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{padding:24, display:"flex", flexDirection:"column", gap:24}}>
-      <div style={{display:"flex", gap:20, alignItems:"center", padding:16, background:C.input, borderRadius:20, border:`1px solid ${C.border}`, position:"relative"}}>
-        <button type="button" onClick={() => setSelectedItem(null)} style={{position:"absolute", top:10, right:10, background:"none", border:"none", color:C.sub, cursor:"pointer"}}><Ico n="pen" sz={12} /></button>
+    <form onSubmit={handleSubmit} style={{padding:16, display:"flex", flexDirection:"column", gap:20}}>
+      <div style={{display:"flex", gap:14, alignItems:"center", padding:12, background:C.input, borderRadius:16, border:`1px solid ${C.border}`, position:"relative"}}>
+        <button type="button" onClick={() => setSelectedItem(null)} style={{position:"absolute", top:8, right:8, background:"none", border:"none", color:C.sub, cursor:"pointer"}}><Ico n="pen" sz={11} /></button>
         <div style={{
-          width:56, height:56, borderRadius:16, background:`linear-gradient(135deg, ${selectedItem.color}33, ${selectedItem.color}11)`,
+          width:44, height:44, borderRadius:12, background:`linear-gradient(135deg, ${selectedItem.color}33, ${selectedItem.color}11)`,
           display:"flex", alignItems:"center", justifyContent:"center", border:`1px solid ${selectedItem.color}66`,
-          fontSize:28, boxShadow:`0 10px 20px ${selectedItem.color}22`, backdropFilter:"blur(10px)",
+          boxShadow:`0 8px 16px ${selectedItem.color}18`, backdropFilter:"blur(8px)",
           color: isCat ? "inherit" : selectedItem.color
         }}>
-          {isCat ? (selectedItem.icon ? <Icon name={selectedItem.icon} size={28} color={selectedItem.color} /> : "📦") : "#"}
+          {isCat ? (selectedItem.icon ? <Icon name={selectedItem.icon} size={22} color={selectedItem.color} /> : "📦") : "#"}
         </div>
         <div>
-          <div style={{color:C.text, fontSize:18, fontWeight:900}}>{isCat ? selectedItem.name : `#${selectedItem.name}`}</div>
-          <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Setting Monthly Limit</div>
+          <div style={{color:C.text, fontSize:15, fontWeight:900}}>{isCat ? selectedItem.name : `#${selectedItem.name}`}</div>
+          <div style={{color:C.sub, fontSize:10, fontWeight:700, textTransform:"uppercase"}}>Setting Monthly Limit</div>
         </div>
       </div>
 
       <div>
         <label style={{color:C.sub, fontSize:10, fontWeight:900, textTransform:"uppercase", letterSpacing:".1em"}}>Monthly Budget Amount</label>
-        <div style={{display:"flex", alignItems:"center", gap:12, borderBottom:`2px solid ${C.border}`, transition:"all .3s"}} onFocusCapture={e=>e.currentTarget.style.borderColor=C.primary} onBlurCapture={e=>e.currentTarget.style.borderColor=C.border}>
-          <span style={{fontSize:24, fontWeight:900, color:C.primary}}>₹</span>
+        <div style={{display:"flex", alignItems:"center", gap:10, borderBottom:`2px solid ${C.border}`, transition:"all .3s"}} onFocusCapture={e=>e.currentTarget.style.borderColor=C.primary} onBlurCapture={e=>e.currentTarget.style.borderColor=C.border}>
+          <span style={{fontSize:20, fontWeight:900, color:C.primary}}>₹</span>
           <input 
             autoFocus
             type="number"
@@ -69,20 +69,20 @@ export function BudgetForm({ item: initialItem, type, currentBudget, onSave, onC
             placeholder="0.00"
             style={{
               width:"100%", background:"none", border:"none",
-              color:C.text, fontSize:32, fontWeight:900, padding:"12px 0", outline:"none",
+              color:C.text, fontSize:24, fontWeight:900, padding:"8px 0", outline:"none",
               fontFamily:"'JetBrains Mono',monospace"
             }}
           />
         </div>
       </div>
 
-      <p style={{margin:0, color:C.sub, fontSize:11, lineHeight:1.5, fontStyle:"italic"}}>
-        Setting a budget helps you track your spending velocity. You'll see a progress bar for this category in the Organize hub.
+      <p style={{margin:0, color:C.sub, fontSize:10.5, lineHeight:1.45, fontStyle:"italic"}}>
+        Setting a budget helps you track your spending velocity. You'll see a progress bar for this item in the Organize hub.
       </p>
 
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginTop:8}}>
-        <Btn theme={C} v="ghost" full onClick={onCancel}>Cancel</Btn>
-        <Btn theme={C} v="primary" full type="submit">Save Budget</Btn>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:4}}>
+        <Btn theme={C} v="ghost" full sm onClick={onCancel}>Cancel</Btn>
+        <Btn theme={C} v="primary" full sm type="submit">Save Budget</Btn>
       </div>
     </form>
   );

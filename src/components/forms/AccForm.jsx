@@ -27,7 +27,7 @@ export function AccForm({ editAcc, onSave, onCancel, theme }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ padding: 24, display: "flex", flexDirection: "column", gap: 24 }}>
+    <form onSubmit={handleSubmit} style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16 }}>
       <div>
         <label style={{ color: C.sub, fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: ".1em" }}>Account Name</label>
         <input
@@ -37,7 +37,7 @@ export function AccForm({ editAcc, onSave, onCancel, theme }) {
           placeholder="e.g. HDFC Bank, Amazon Pay..."
           style={{
             width: "100%", background: "none", border: "none", borderBottom: `2px solid ${C.border}`,
-            color: C.text, fontSize: 22, fontWeight: 800, padding: "8px 0", outline: "none",
+            color: C.text, fontSize: 16, fontWeight: 800, padding: "6px 0", outline: "none",
             transition: "border-color .3s"
           }}
           onFocus={e => e.target.style.borderColor = C.primary}
@@ -46,20 +46,20 @@ export function AccForm({ editAcc, onSave, onCancel, theme }) {
       </div>
 
       <div>
-        <label style={{ color: C.sub, fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 12, display: "block" }}>Account Type</label>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+        <label style={{ color: C.sub, fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 10, display: "block" }}>Account Type</label>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
           {types.map(t => (
             <button key={t.id} type="button" onClick={() => setType(t.id)} style={{
               background: type === t.id ? C.primaryDim : C.input,
               border: `1px solid ${type === t.id ? C.primary : C.border}`,
-              borderRadius: 16, padding: "16px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-              transition: "all .2s ease", transform: type === t.id ? "translateY(-4px)" : "none",
-              boxShadow: type === t.id ? `0 10px 20px ${C.primaryDim}` : "none"
+              borderRadius: 12, padding: "10px 4px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+              transition: "all .2s ease", transform: type === t.id ? "translateY(-2px)" : "none",
+              boxShadow: type === t.id ? `0 6px 12px ${C.primaryDim}` : "none"
             }}>
-              <div style={{ width: 40, height: 40, borderRadius: 12, background: type === t.id ? C.primary : C.surface, color: type === t.id ? "#000" : C.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Ico n={t.icon} sz={20} />
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: type === t.id ? C.primary : C.surface, color: type === t.id ? "#000" : C.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Ico n={t.icon} sz={16} />
               </div>
-              <span style={{ color: type === t.id ? C.primary : C.sub, fontSize: 11, fontWeight: 800 }}>{t.id}</span>
+              <span style={{ color: type === t.id ? C.primary : C.sub, fontSize: 10, fontWeight: 800 }}>{t.id}</span>
             </button>
           ))}
         </div>
@@ -73,8 +73,8 @@ export function AccForm({ editAcc, onSave, onCancel, theme }) {
           onChange={e => setBalance(e.target.value)}
           placeholder="0.00"
           style={{
-            width: "100%", background: C.input, border: `1px solid ${C.border}`, borderRadius: 12,
-            color: C.text, fontSize: 18, fontWeight: 700, padding: "12px 16px", outline: "none",
+            width: "100%", background: C.input, border: `1px solid ${C.border}`, borderRadius: 10,
+            color: C.text, fontSize: 14, fontWeight: 700, padding: "10px 12px", outline: "none",
             fontFamily: "'JetBrains Mono',monospace", transition: "border-color .3s"
           }}
           onFocus={e => e.target.style.borderColor = C.primary}
@@ -82,9 +82,9 @@ export function AccForm({ editAcc, onSave, onCancel, theme }) {
         />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
-        <Btn theme={C} v="ghost" full onClick={onCancel}>Cancel</Btn>
-        <Btn theme={C} v="primary" full type="submit">{editAcc ? "Save Changes" : "Create Account"}</Btn>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 4 }}>
+        <Btn theme={C} v="ghost" full sm onClick={onCancel}>Cancel</Btn>
+        <Btn theme={C} v="primary" full sm type="submit">{editAcc ? "Save Changes" : "Create Account"}</Btn>
       </div>
     </form>
   );
