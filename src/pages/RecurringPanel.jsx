@@ -34,19 +34,19 @@ export default function RecurringPanel({ recurring, categories, accounts, onAdd,
     return (
       <div style={{
         background: C.surface, border: `1px solid ${C.borderLight}`,
-        borderRadius: 32, padding: "60px 24px", textAlign: "center",
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 20,
+        borderRadius: 12, padding: "32px 16px", textAlign: "center",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
         boxShadow: C.shadow, position: "relative", overflow: "hidden"
       }}>
-        <div style={{ width: 80, height: 80, borderRadius: 24, background: C.input, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40, border: `1px solid ${C.borderLight}`, zIndex: 1 }}>🔄</div>
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: C.input, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, border: `1px solid ${C.borderLight}`, zIndex: 1 }}>🔄</div>
         <div style={{ zIndex: 1 }}>
-          <div style={{ color: C.text, fontSize: 20, fontWeight: 800, marginBottom: 8, letterSpacing: "-0.02em" }}>No Recurring Payments</div>
-          <div style={{ color: C.sub, fontSize: 14, lineHeight: 1.6, maxWidth: 280, margin: "0 auto" }}>
+          <div style={{ color: C.text, fontSize: 16, fontWeight: 800, marginBottom: 4, letterSpacing: "-0.02em" }}>No Recurring Payments</div>
+          <div style={{ color: C.sub, fontSize: 12, lineHeight: 1.5, maxWidth: 240, margin: "0 auto" }}>
             Set up auto-recurring payments like subscriptions, rent, or SIPs that are posted automatically.
           </div>
         </div>
-        <div style={{ zIndex: 1, marginTop: 8 }}>
-          <Btn theme={C} icon="plus" onClick={onAdd}>Add First Recurring</Btn>
+        <div style={{ zIndex: 1 }}>
+          <Btn theme={C} icon="plus" sm onClick={onAdd}>Add First Recurring</Btn>
         </div>
       </div>
     );
@@ -65,13 +65,13 @@ export default function RecurringPanel({ recurring, categories, accounts, onAdd,
       {/* Summary Card */}
       <div className="hero-card" style={{
         background: C.surface,
-        border: `1px solid ${C.borderLight}`, borderRadius: 32, padding: 24,
+        border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: 16,
         boxShadow: C.shadow, position: "relative", overflow: "hidden"
       }}>
-        <div className="hero-label" style={{ color: C.sub, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em", marginBottom: 8 }}>
+        <div className="hero-label" style={{ color: C.sub, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 4 }}>
           Monthly Auto-Debits
         </div>
-        <div className="hero-amount" style={{ color: C.text, fontSize: 32, fontWeight: 800, letterSpacing: "-.02em" }}>
+        <div className="hero-amount" style={{ color: C.text, fontSize: 24, fontWeight: 800, letterSpacing: "-.02em" }}>
           {fmtAmt(
             recurring
               .filter(r => !r.paused && getStatus(r) === "active")
@@ -100,8 +100,8 @@ export default function RecurringPanel({ recurring, categories, accounts, onAdd,
 
         return (
           <div key={tmpl.id} style={{
-            background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 24, padding: 20,
-            display: "flex", flexDirection: "column", gap: 14, transition: "all .2s ease",
+            background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: 12,
+            display: "flex", flexDirection: "column", gap: 12, transition: "all .2s ease",
             position: "relative", overflow: "hidden", boxShadow: C.shadow,
             opacity: status === "paused" ? 0.65 : 1,
             animation: `fadeInUp 0.4s ease forwards`, animationDelay: `${i * 0.05}s`,
@@ -110,15 +110,15 @@ export default function RecurringPanel({ recurring, categories, accounts, onAdd,
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{
-                  width: 44, height: 44, borderRadius: 14, background: C.input,
+                  width: 36, height: 36, borderRadius: 8, background: C.input,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   border: `1px solid ${C.borderLight}`,
                 }}>
-                  {cat?.icon ? <Icon name={cat.icon} size={20} color={C.text} /> : <Ico n="repeat" sz={20} c={C.primary} />}
+                   {cat?.icon ? <Icon name={cat.icon} size={16} color={C.text} /> : <Ico n="repeat" sz={16} c={C.primary} />}
                 </div>
                 <div>
-                  <div style={{ color: C.text, fontSize: 15, fontWeight: 800, letterSpacing: "-0.01em" }}>{tmpl.templateTx?.description || "Untitled"}</div>
-                  <div style={{ color: C.sub, fontSize: 12, fontWeight: 600, marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ color: C.text, fontSize: 13, fontWeight: 700, letterSpacing: "-0.01em" }}>{tmpl.templateTx?.description || "Untitled"}</div>
+                  <div style={{ color: C.sub, fontSize: 10, fontWeight: 600, marginTop: 1, display: "flex", alignItems: "center", gap: 5 }}>
                     {FREQ_LABELS[tmpl.frequency] || tmpl.frequency}
                     <span style={{ color: C.border }}>·</span>
                     {STATUS_BADGE(C, status)}
@@ -132,32 +132,32 @@ export default function RecurringPanel({ recurring, categories, accounts, onAdd,
                   <div
                     onClick={() => onTogglePause(tmpl.id)}
                     style={{
-                      background: C.input, cursor: "pointer", width: 36, height: 36, borderRadius: 12,
+                      background: C.input, cursor: "pointer", width: 28, height: 28, borderRadius: 8,
                       display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s"
                     }}
                   >
-                    <Ico n={tmpl.paused ? "play" : "pause"} sz={16} c={tmpl.paused ? C.income : C.sub} />
+                    <Ico n={tmpl.paused ? "play" : "pause"} sz={14} c={tmpl.paused ? C.income : C.sub} />
                   </div>
                 )}
                 {/* Edit */}
                 <div
                   onClick={() => onEdit(tmpl)}
                   style={{
-                    background: C.input, cursor: "pointer", width: 36, height: 36, borderRadius: 12,
+                    background: C.input, cursor: "pointer", width: 28, height: 28, borderRadius: 8,
                     display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s"
                   }}
                 >
-                  <Ico n="edit" sz={16} c={C.sub} />
+                  <Ico n="edit" sz={14} c={C.sub} />
                 </div>
                 {/* Delete */}
                 <div
                   onClick={() => setConfirmDeleteId(tmpl.id)}
                   style={{
-                    background: C.input, color: C.expense, cursor: "pointer", width: 36, height: 36, borderRadius: 12,
+                    background: C.input, color: C.expense, cursor: "pointer", width: 28, height: 28, borderRadius: 8,
                     display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s"
                   }}
                 >
-                  <Ico n="trash" sz={16} c={C.expense} />
+                  <Ico n="trash" sz={14} c={C.expense} />
                 </div>
               </div>
             </div>
@@ -200,10 +200,10 @@ export default function RecurringPanel({ recurring, categories, accounts, onAdd,
                 )}
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 4 }}>Amount</div>
+                <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 2 }}>Amount</div>
                 <div style={{
                   color: tmpl.templateTx?.creditDebit === "Credit" ? C.income : C.expense,
-                  fontSize: 22, fontWeight: 800, letterSpacing: "-.02em"
+                  fontSize: 18, fontWeight: 800, letterSpacing: "-.02em"
                 }}>
                   {tmpl.templateTx?.creditDebit === "Credit" ? "+" : "-"}{fmtAmt(tmpl.templateTx?.amount || 0)}
                 </div>

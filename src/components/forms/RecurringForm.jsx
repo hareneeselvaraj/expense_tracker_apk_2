@@ -55,57 +55,87 @@ export const RecurringForm = ({ init, categories, accounts, onSave, onDelete, on
     form.frequency;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Description */}
-      <div>
-        <FLabel theme={C}>Description</FLabel>
-        <FInput
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* Row 1: Description & Category side by side */}
+      <div style={{display:"grid", gridTemplateColumns:"1.2fr 1fr", gap:10}}>
+        <div>
+          <FLabel theme={C}>Description</FLabel>
+          <FInput
+            theme={C}
+            value={form.templateTx.description}
+            onChange={updateTxEv("description")}
+            placeholder="e.g. Netflix, Rent…"
+          />
+        </div>
+        <CustomSelect
           theme={C}
-          value={form.templateTx.description}
-          onChange={updateTxEv("description")}
-          placeholder="e.g. Netflix, Rent, SIP…"
+          label="Category"
+          value={form.templateTx.category}
+          options={categories.filter((c) => c.type === form.templateTx.txType)}
+          onChange={updateTx("category")}
         />
       </div>
 
-      {/* Amount */}
-      <div>
-        <FLabel theme={C}>Amount (₹)</FLabel>
-        <FInput
+      {/* Row 2: Amount & Account side by side */}
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1.2fr", gap:10}}>
+        <div>
+          <FLabel theme={C}>Amount (₹)</FLabel>
+          <FInput
+            theme={C}
+            value={form.templateTx.amount}
+            onChange={updateTxEv("amount")}
+            type="number"
+            placeholder="0"
+            style={{
+              fontFamily: "'JetBrains Mono',monospace",
+              fontSize: 16,
+              fontWeight: 700,
+              color: form.templateTx.creditDebit === "Credit" ? C.income : C.expense,
+            }}
+          />
+        </div>
+        <CustomSelect
           theme={C}
-          value={form.templateTx.amount}
-          onChange={updateTxEv("amount")}
-          type="number"
-          placeholder="0"
-          style={{
-            fontFamily: "'JetBrains Mono',monospace",
-            fontSize: 18,
-            fontWeight: 700,
-            color:
-              form.templateTx.creditDebit === "Credit" ? C.income : C.expense,
-          }}
+          label="Account"
+          value={form.templateTx.accountId || ""}
+          options={[
+            { id: "", name: "Default (None)", color: C.sub },
+            ...accounts.map((a) => ({ ...a })),
+          ]}
+          onChange={updateTx("accountId")}
         />
       </div>
 
-      {/* Credit / Debit */}
-      <div>
-        <FLabel theme={C}>Credit / Debit</FLabel>
-        <CdToggle
+      {/* Row 3: Credit/Debit & Frequency side by side */}
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10}}>
+        <div>
+          <FLabel theme={C}>Credit / Debit</FLabel>
+          <CdToggle
+            theme={C}
+            value={form.templateTx.creditDebit}
+            onChange={(v) => {
+              setForm((p) => ({
+                ...p,
+                templateTx: {
+                  ...p.templateTx,
+                  creditDebit: v,
+                  txType: v === "Credit" ? "Income" : "Expense",
+                },
+              }));
+            }}
+          />
+        </div>
+        <CustomSelect
           theme={C}
-          value={form.templateTx.creditDebit}
-          onChange={(v) => {
-            setForm((p) => ({
-              ...p,
-              templateTx: {
-                ...p.templateTx,
-                creditDebit: v,
-                txType: v === "Credit" ? "Income" : "Expense",
-              },
-            }));
-          }}
+          label="Frequency"
+          value={form.frequency}
+          options={FREQ_OPTIONS}
+          onChange={updateField("frequency")}
+          searchable={false}
         />
       </div>
 
-      {/* Transaction Type */}
+      {/* Row 4: Transaction Type */}
       <div>
         <FLabel theme={C}>Transaction Type</FLabel>
         <TypeToggle
@@ -115,39 +145,8 @@ export const RecurringForm = ({ init, categories, accounts, onSave, onDelete, on
         />
       </div>
 
-      {/* Category */}
-      <CustomSelect
-        theme={C}
-        label="Category"
-        value={form.templateTx.category}
-        options={categories.filter((c) => c.type === form.templateTx.txType)}
-        onChange={updateTx("category")}
-      />
-
-      {/* Account */}
-      <CustomSelect
-        theme={C}
-        label="Account"
-        value={form.templateTx.accountId || ""}
-        options={[
-          { id: "", name: "Default (None)", color: C.sub },
-          ...accounts.map((a) => ({ ...a })),
-        ]}
-        onChange={updateTx("accountId")}
-      />
-
-      {/* Frequency */}
-      <CustomSelect
-        theme={C}
-        label="Frequency"
-        value={form.frequency}
-        options={FREQ_OPTIONS}
-        onChange={updateField("frequency")}
-        searchable={false}
-      />
-
-      {/* Start Date & End Date */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      {/* Row 5: Start Date & End Date */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <div>
           <FLabel theme={C}>Start Date</FLabel>
           <FInput
@@ -161,7 +160,7 @@ export const RecurringForm = ({ init, categories, accounts, onSave, onDelete, on
           />
         </div>
         <div>
-          <FLabel theme={C}>End Date (optional)</FLabel>
+          <FLabel theme={C}>End Date (Optional)</FLabel>
           <FInput
             theme={C}
             value={form.endDate}
@@ -178,9 +177,9 @@ export const RecurringForm = ({ init, categories, accounts, onSave, onDelete, on
           alignItems: "center",
           justifyContent: "space-between",
           background: C.input,
-          borderRadius: 14,
-          padding: "12px 16px",
-          border: `1px solid ${C.border}`,
+          borderRadius: 12,
+          padding: "10px 14px",
+          border: `1px solid ${C.borderLight}`,
         }}
       >
         <div>
@@ -225,17 +224,17 @@ export const RecurringForm = ({ init, categories, accounts, onSave, onDelete, on
       <div
         style={{
           display: "flex",
-          gap: 10,
-          paddingTop: 12,
-          borderTop: `1px solid ${C.border}`,
+          gap: 8,
+          paddingTop: 8,
+          borderTop: `1px solid ${C.borderLight}`,
         }}
       >
         {onDelete && isEdit && (
           confirmDelete ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, background: C.expense + "11", padding: "4px 12px", borderRadius: 12, border: `1px solid ${C.expense}40` }}>
-              <span style={{ color: C.expense, fontSize: 10, fontWeight: 900, textTransform: "uppercase" }}>Confirm?</span>
-              <button type="button" onClick={() => onDelete(form.id)} style={{ background: C.expense, border: "none", color: "#fff", cursor: "pointer", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 800 }}>YES</button>
-              <button type="button" onClick={() => setConfirmDelete(false)} style={{ background: "none", border: `1px solid ${C.border}`, color: C.sub, cursor: "pointer", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 800 }}>NO</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: C.expense + "11", padding: "3px 10px", borderRadius: 10, border: `1px solid ${C.expense}40` }}>
+              <span style={{ color: C.expense, fontSize: 9, fontWeight: 900, textTransform: "uppercase" }}>Confirm?</span>
+              <button type="button" onClick={() => onDelete(form.id)} style={{ background: C.expense, border: "none", color: "#fff", cursor: "pointer", borderRadius: 6, padding: "4px 10px", fontSize: 10, fontWeight: 800 }}>YES</button>
+              <button type="button" onClick={() => setConfirmDelete(false)} style={{ background: "none", border: `1px solid ${C.borderLight}`, color: C.sub, cursor: "pointer", borderRadius: 6, padding: "4px 10px", fontSize: 10, fontWeight: 800 }}>NO</button>
             </div>
           ) : (
             <Btn theme={C} v="ghost" sm icon="trash" onClick={() => setConfirmDelete(true)} style={{ color: C.expense }}>Delete</Btn>
@@ -262,7 +261,7 @@ export const RecurringForm = ({ init, categories, accounts, onSave, onDelete, on
             });
           }}
         >
-          {isEdit ? "Save Changes" : "Add Recurring"}
+          {isEdit ? "Save" : "Add"}
         </Btn>
       </div>
     </div>

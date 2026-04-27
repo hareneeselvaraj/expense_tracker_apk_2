@@ -263,7 +263,16 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
             <div style={{ color: C.sub, fontSize: 11, fontWeight: 600, marginTop: 2 }}>{viewDate.toLocaleString("en", { month: "long", year: "numeric" })}</div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 14 }}>
+          <div style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            gap: 2, 
+            marginBottom: 14, 
+            background: C.input, 
+            borderRadius: 30, 
+            padding: 4 
+          }}>
             {tabConfig.map(t => {
               if (Object.keys(t.map).length === 0) return null;
               const active = topTab === t.key;
@@ -273,16 +282,18 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
                   key={t.key}
                   onClick={() => { setTopTab(t.key); setExpandedCat(null); }}
                   style={{
-                    background: active ? t.color + "22" : "transparent",
-                    color: active ? t.color : C.sub,
-                    border: `1px solid ${active ? t.color : C.borderLight}`,
-                    borderRadius: 20, padding: "5px 10px", fontSize: 11, fontWeight: 800,
-                    cursor: "pointer", transition: "all .2s", display: "flex", alignItems: "center", gap: 5
+                    flex: 1,
+                    background: active ? t.color : "transparent",
+                    color: active ? "#fff" : C.sub,
+                    border: "none",
+                    borderRadius: 25, padding: "8px 0", fontSize: 10, fontWeight: 800,
+                    cursor: "pointer", transition: "all .2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+                    fontFamily: "inherit"
                   }}
                 >
-                  <Icon name={t.icon} size={12} color={active ? t.color : C.sub} />
+                  <Icon name={t.icon} size={11} color={active ? "#fff" : C.sub} />
                   {t.label}
-                  <span style={{ fontSize: 9, opacity: 0.7 }}>({count})</span>
+                  <span style={{ fontSize: 9, opacity: 0.8 }}>({count})</span>
                 </button>
               );
             })}

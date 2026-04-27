@@ -13,14 +13,14 @@ export const Btn = ({children,onClick,v="primary",icon,disabled,full,sm,theme,st
   return (
     <button onClick={onClick} disabled={disabled} style={{
       backgroundColor: s.bg,
-      color:s.co,borderWidth:s.bo==="none"?0:1,borderStyle:"solid",borderColor:s.bo==="none"?"transparent":C.border,borderRadius:14,padding:sm?"8px 14px":"12px 18px",
-      fontSize:sm?12:14,fontWeight:600,cursor:disabled?"not-allowed":"pointer",opacity:disabled?0.5:1,
-      display:"flex",alignItems:"center",gap:8,justifyContent:"center",
+      color:s.co,borderWidth:s.bo==="none"?0:1,borderStyle:"solid",borderColor:s.bo==="none"?"transparent":C.border,borderRadius:sm?8:14,padding:sm?"5px 10px":"12px 18px",
+      fontSize:sm?11:14,fontWeight:sm?700:600,cursor:disabled?"not-allowed":"pointer",opacity:disabled?0.5:1,
+      display:"flex",alignItems:"center",gap:sm?5:8,justifyContent:"center",
       width:full?"100%":"auto",fontFamily:"inherit",transition:"transform .15s ease",
-      minHeight:sm?36:44, touchAction:"manipulation", WebkitTapHighlightColor:"transparent",
+      minHeight:sm?28:44, touchAction:"manipulation", WebkitTapHighlightColor:"transparent",
       ...xStyle,
     }} onMouseDown={e=>{if(!disabled)e.currentTarget.style.transform="scale(0.98)";}} onMouseUp={e=>{if(!disabled)e.currentTarget.style.transform="scale(1)";}} onMouseLeave={e=>{if(!disabled)e.currentTarget.style.transform="scale(1)";}}>
-      {icon&&<Ico n={icon} sz={sm?14:16} c={s.co}/>}{children}
+      {icon&&<Ico n={icon} sz={sm?12:16} c={s.co}/>}{children}
     </button>
   );
 };

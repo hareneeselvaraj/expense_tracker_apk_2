@@ -9,11 +9,11 @@ export default function CategoriesPanel({ categories, transactions, DEF_CATS, on
   const [confirmId, setConfirmId] = useState(null);
 
   return (
-    <div className="page-enter" style={{display:"flex",flexDirection:"column",gap:24}}>
+    <div className="page-enter" style={{display:"flex",flexDirection:"column",gap:12}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div>
-          <h2 style={{margin:0,fontSize:22,fontWeight:800,color:C.text,letterSpacing:"-.02em"}}>Categories</h2>
-          <p style={{margin:0,color:C.sub,fontSize:12}}>{categories.length} categories active</p>
+          <h2 style={{margin:0,fontSize:16,fontWeight:800,color:C.text,letterSpacing:"-.02em"}}>Categories</h2>
+          <p style={{margin:0,color:C.sub,fontSize:11}}>{categories.length} active</p>
         </div>
         <Btn theme={C} icon="plus" sm onClick={onAddCat}>Add</Btn>
       </div>
@@ -22,11 +22,11 @@ export default function CategoriesPanel({ categories, transactions, DEF_CATS, on
         const cats=categories.filter(c=>c.type===type); if(!cats.length) return null;
         return (
           <div key={type}>
-            <div style={{color:C.sub,fontSize:12,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase",marginBottom:12,paddingLeft:4,display:"flex",alignItems:"center",gap:10}}>
+            <div style={{color:C.sub,fontSize:10,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase",marginBottom:6,paddingLeft:4,display:"flex",alignItems:"center",gap:8}}>
               {type} <div style={{flex:1,height:1,background:C.borderLight}}/>
             </div>
             
-            <div style={{background:C.surface, borderRadius:20, border:`1px solid ${C.borderLight}`, overflow:"hidden", boxShadow:C.shadow}}>
+            <div style={{background:C.surface, borderRadius:12, border:`1px solid ${C.borderLight}`, overflow:"hidden"}}>
               {cats.map((cat, idx)=>{
                 const txns=transactions.filter(t=>!t.deleted && t.category===cat.id);
                 const count=txns.length;
@@ -37,23 +37,23 @@ export default function CategoriesPanel({ categories, transactions, DEF_CATS, on
                   <div key={cat.id} 
                     onClick={() => onEditCat(cat)}
                     style={{
-                    display:"flex", alignItems:"center", padding:"12px 16px",
+                    display:"flex", alignItems:"center", padding:"8px 12px",
                     borderBottom: isLast ? "none" : `1px solid ${C.borderLight}`,
                     background: confirmId === cat.id ? C.expense + "11" : "transparent",
                     transition: "background .2s", cursor: "pointer", position: "relative"
                   }}>
                     {/* Left: Icon */}
                     <div style={{
-                      width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                      width: 32, height: 32, borderRadius: 8, flexShrink: 0,
                       background: `${cat.color}1a`, display: "flex", alignItems: "center", justifyContent: "center"
                     }}>
-                      {cat.icon ? <Icon name={cat.icon} size={20} color={cat.color} /> : "📦"}
+                      {cat.icon ? <Icon name={cat.icon} size={16} color={cat.color} /> : "📦"}
                     </div>
 
                     {/* Middle: Info */}
-                    <div style={{flex:1, minWidth:0, marginLeft:12}}>
-                      <div style={{color:C.text, fontSize:15, fontWeight:800, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{cat.name}</div>
-                      <div style={{color:C.sub, fontSize:12, fontWeight:600, marginTop:2}}>{count} entries {count > 0 && `· ${fmtAmt(total)}`}</div>
+                    <div style={{flex:1, minWidth:0, marginLeft:10}}>
+                      <div style={{color:C.text, fontSize:13, fontWeight:700, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{cat.name}</div>
+                      <div style={{color:C.sub, fontSize:10, fontWeight:600, marginTop:1}}>{count} entries {count > 0 && `· ${fmtAmt(total)}`}</div>
                     </div>
 
                     {/* Right: Actions */}

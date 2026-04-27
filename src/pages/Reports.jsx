@@ -85,13 +85,13 @@ export default function ReportsPage({
   return (
     <div className="page-enter" style={{padding:"0 0 80px 0",display:"flex",flexDirection:"column",gap:16}}>
       {/* Tab Selector (Week/Month/Year) */}
-      <div style={{display:"flex",background:C.input,borderRadius:20,padding:3}}>
+      {/* Tab Selector (Pill style) */}
+      <div style={{display:"flex",background:C.input,borderRadius:30,padding:4,gap:2}}>
         {["week","month","year"].map(t=>(
           <button key={t} onClick={()=>setReportTab(t)} style={{
-            flex:1,padding:"8px",borderRadius:16,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,textTransform:"capitalize",
+            flex:1,padding:"8px 0",borderRadius:25,border:"none",cursor:"pointer",fontSize:11,fontWeight:800,textTransform:"capitalize",fontFamily:"inherit",
             background:reportTab===t?C.primary:"transparent", 
             color:reportTab===t? "#fff" : C.sub,
-            boxShadow:reportTab===t?`0 2px 8px ${C.primary}40`:"none",
             transition:"all .2s ease"
           }}>{t}</button>
         ))}
@@ -99,20 +99,21 @@ export default function ReportsPage({
 
       {/* Mode & Sub-Tab Switchers */}
       <div style={{display:"flex", flexDirection:"column", gap:8}}>
-        <div style={{display:"flex", background:C.input, borderRadius:20, padding:4}}>
+        <div style={{display:"flex", background:C.input, borderRadius:30, padding:4, gap:2}}>
           {[{id:"category",icon:"grid",label:"Category"},{id:"tag",icon:"tag",label:"Tag"},{id:"breakdown",icon:"analyze",label:"Breakdown"},{id:"trend",icon:"trendUp",label:"Trend"}].map(m => {
             const isMode = m.id === "category" || m.id === "tag";
             const isActive = isMode ? reportsMode === m.id : reportsSubTab === m.id;
             const onClick = isMode ? () => setReportsMode(m.id) : () => setReportsSubTab(m.id);
             return (
               <button key={m.id} onClick={onClick} style={{
-                flex:1, padding:"8px 6px", borderRadius:16, border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:5,
-                background:isActive?C.surface:"transparent",
-                color:isActive?C.primary:C.sub, transition:"all .2s",
-                boxShadow:isActive?"0 2px 8px rgba(0,0,0,0.02)":"none"
+                flex:1, padding:"8px 0", borderRadius:25, border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:4,
+                background:isActive?C.primary:"transparent",
+                color:isActive?"#fff":C.sub,
+                transition:"all .2s",
+                fontFamily:"inherit"
               }}>
-                <Ico n={m.icon} sz={14} c={isActive?C.primary:C.sub}/>
-                <span style={{fontSize:11, fontWeight:700}}>{m.label}</span>
+                <Ico n={m.icon} sz={12} c={isActive?"#fff":C.sub}/>
+                <span style={{fontSize:10, fontWeight:800}}>{m.label}</span>
               </button>
             );
           })}

@@ -37,17 +37,16 @@ export default function VaultPage({
   return (
     <div className="page-enter" style={{padding:"16px 10px 100px",display:"flex",flexDirection:"column",gap:20}}>
       
-      {/* Sub-tab switcher (Scrollable horizontally on mobile) */}
+      {/* Sub-tab switcher (Pill style) */}
       <div 
-        className="premium-scroll"
         style={{
           display: "flex", 
-          overflowX: "auto", 
           background: C.input, 
-          borderRadius: 24, 
+          borderRadius: 30, 
           padding: 4, 
-          marginBottom: 8,
-          gap: 4
+          marginBottom: 10,
+          gap: 2,
+          alignItems: "center"
         }}
       >
         {[
@@ -57,15 +56,14 @@ export default function VaultPage({
           { id: "reports", label: "Analytics", icon: "chart" }
         ].map(t => (
           <button key={t.id} onClick={() => setVaultTab(t.id)} style={{
-            flex: "1 0 auto", padding: "10px 16px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            whiteSpace: "nowrap",
+            flex: 1, padding: "8px 4px", borderRadius: 25, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 800,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+            whiteSpace: "nowrap", fontFamily: "inherit",
             background: vaultTab === t.id ? C.primary : "transparent",
             color: vaultTab === t.id ? "#fff" : C.sub,
-            boxShadow: vaultTab === t.id ? `0 4px 12px ${C.primary}40` : "none",
             transition: "all .2s ease"
           }}>
-            <Ico n={t.icon} sz={16} c={vaultTab === t.id ? "#fff" : C.sub} />
+            <Ico n={t.icon} sz={14} c={vaultTab === t.id ? "#fff" : C.sub} />
             {t.label}
           </button>
         ))}
@@ -100,20 +98,20 @@ export default function VaultPage({
           {(!vaultNotes || vaultNotes.length === 0) ? (
             <div style={{
               background:C.surface, border:`1px solid ${C.borderLight}`,
-              borderRadius:24,padding:"50px 24px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:16,
+              borderRadius:12,padding:"32px 24px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:12,
               boxShadow:C.shadow
             }}>
-              <div style={{width:64,height:64,borderRadius:20,background:C.input,display:"flex",alignItems:"center",justifyContent:"center",fontSize:32, border:`1px solid ${C.borderLight}`}}>📝</div>
+              <div style={{width:48,height:48,borderRadius:12,background:C.input,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24, border:`1px solid ${C.borderLight}`}}>📝</div>
               <div>
-                <div style={{color:C.text,fontSize:18,fontWeight:800,marginBottom:6, letterSpacing:"-0.02em"}}>No Notes Yet</div>
-                <div style={{color:C.sub,fontSize:13,lineHeight:1.5,maxWidth:260, margin:"0 auto"}}>Keep track of lended amounts, sweep-in FDs, and other financial notes.</div>
+                <div style={{color:C.text,fontSize:16,fontWeight:800,marginBottom:4, letterSpacing:"-0.02em"}}>No Notes Yet</div>
+                <div style={{color:C.sub,fontSize:12,lineHeight:1.5,maxWidth:240, margin:"0 auto"}}>Keep track of lended amounts, sweep-in FDs, and other financial notes.</div>
               </div>
-              <Btn theme={C} icon="plus" onClick={onAddNote}>Add First Note</Btn>
+              <Btn theme={C} icon="plus" sm onClick={onAddNote}>Add First Note</Btn>
             </div>
           ) : (
             vaultNotes.map((n, i) => (
               <div key={n.id} onClick={() => onEditNote(n)} style={{
-                background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:20, padding:16,
+                background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:12, padding:12,
                 cursor:"pointer", transition:"all .2s ease", position:"relative", overflow:"hidden",
                 boxShadow: C.shadow, borderLeft: `4px solid ${n.color || C.primary}`,
                 animation: `fadeInUp 0.4s ease forwards`, animationDelay: `${i * 0.05}s`, opacity:0, transform:"translateY(10px)"
@@ -166,16 +164,16 @@ export default function VaultPage({
                     backfaceVisibility: "hidden",
                     WebkitBackfaceVisibility: "hidden",
                     background: C.surface, border: `1px solid ${C.borderLight}`,
-                    borderRadius: 32, padding: 24, boxShadow: C.shadow, overflow: "hidden",
+                    borderRadius: 12, padding: 16, boxShadow: C.shadow, overflow: "hidden",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div style={{ color: C.sub, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <div style={{ color: C.sub, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>
                       Total Net Worth
                     </div>
-                    <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, opacity: 0.6 }}>TAP TO FLIP ↻</div>
+                    <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, opacity: 0.6 }}>FLIP ↺</div>
                   </div>
-                  <div className="hero-amount" style={{ color: C.text, fontSize: 32, fontWeight: 800, letterSpacing: "-.02em" }}>
+                  <div className="hero-amount" style={{ color: C.text, fontSize: 24, fontWeight: 800, letterSpacing: "-.02em" }}>
                     {fmtAmt(netWorth)}
                   </div>
                 </div>
@@ -189,27 +187,27 @@ export default function VaultPage({
                     transform: "rotateY(180deg)",
                     background: `linear-gradient(135deg, ${C.surface}, ${C.primaryDim || C.surface})`,
                     border: `1px solid ${C.primary}33`,
-                    borderRadius: 32, padding: 24, boxShadow: C.shadow, overflow: "hidden",
+                    borderRadius: 12, padding: 16, boxShadow: C.shadow, overflow: "hidden",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div style={{ color: C.primary, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".1em" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <div style={{ color: C.primary, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>
                       Total Wealth
                     </div>
-                    <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, opacity: 0.6 }}>TAP TO FLIP ↻</div>
+                    <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, opacity: 0.6 }}>FLIP ↺</div>
                   </div>
-                  <div style={{ color: C.text, fontSize: 32, fontWeight: 800, letterSpacing: "-.02em" }}>
+                  <div style={{ color: C.text, fontSize: 24, fontWeight: 800, letterSpacing: "-.02em" }}>
                     {fmtAmt(overallNetWorth)}
                   </div>
-                  <div style={{ display: "flex", gap: 10, marginTop: 12, borderTop: `1px dashed ${C.border}`, paddingTop: 12 }}>
+                  <div style={{ display: "flex", gap: 10, marginTop: 8, borderTop: `1px dashed ${C.border}`, paddingTop: 8 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Liquid</div>
-                      <div style={{ color: C.text, fontSize: 18, fontWeight: 800, marginTop: 2 }}>{fmtAmt(netWorth)}</div>
+                      <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Liquid</div>
+                      <div style={{ color: C.text, fontSize: 16, fontWeight: 800, marginTop: 2 }}>{fmtAmt(netWorth)}</div>
                     </div>
                     <div style={{ width: 1, background: C.borderLight }} />
                     <div style={{ flex: 1 }}>
-                      <div style={{ color: C.sub, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Invested</div>
-                      <div style={{ color: C.invest || C.primary, fontSize: 18, fontWeight: 800, marginTop: 2 }}>{fmtAmt(investedValue)}</div>
+                      <div style={{ color: C.sub, fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Invested</div>
+                      <div style={{ color: C.invest || C.primary, fontSize: 16, fontWeight: 800, marginTop: 2 }}>{fmtAmt(investedValue)}</div>
                     </div>
                   </div>
                 </div>
@@ -220,16 +218,16 @@ export default function VaultPage({
           {accounts.length===0 ? (
             <div style={{
               background:C.surface, border:`1px solid ${C.borderLight}`,
-              borderRadius:32,padding:"60px 24px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:20,
+              borderRadius:12,padding:"32px 24px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:12,
               boxShadow:C.shadow, position:"relative", overflow:"hidden"
             }}>
-              <div style={{width:80,height:80,borderRadius:24,background:C.input,display:"flex",alignItems:"center",justifyContent:"center",fontSize:40, border:`1px solid ${C.borderLight}`, zIndex:1}}>🏦</div>
+              <div style={{width:48,height:48,borderRadius:12,background:C.input,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24, border:`1px solid ${C.borderLight}`, zIndex:1}}>🏦</div>
               <div style={{zIndex:1}}>
-                <div style={{color:C.text,fontSize:20,fontWeight:800,marginBottom:8, letterSpacing:"-0.02em"}}>No Accounts Yet</div>
-                <div style={{color:C.sub,fontSize:14,lineHeight:1.6,maxWidth:280, margin:"0 auto"}}>Add your bank accounts, wallets, and cards to track balances.</div>
+                <div style={{color:C.text,fontSize:16,fontWeight:800,marginBottom:4, letterSpacing:"-0.02em"}}>No Accounts Yet</div>
+                <div style={{color:C.sub,fontSize:12,lineHeight:1.5,maxWidth:240, margin:"0 auto"}}>Add your bank accounts, wallets, and cards to track balances.</div>
               </div>
-              <div style={{zIndex:1, marginTop:8}}>
-                 <Btn theme={C} icon="plus" onClick={onAddAcc}>Add First Account</Btn>
+              <div style={{zIndex:1, marginTop:4}}>
+                 <Btn theme={C} icon="plus" sm onClick={onAddAcc}>Add First Account</Btn>
               </div>
             </div>
           ) : (
@@ -240,26 +238,26 @@ export default function VaultPage({
                 const isConfirming = confirmDeleteId === acc.id;
                 return (
                   <div key={acc.id} className="acc-card" style={{
-                    background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:24, padding:20,
-                    display:"flex", flexDirection:"column", gap:14, transition:"all .2s ease",
+                    background:C.surface, border:`1px solid ${C.borderLight}`, borderRadius:12, padding:12,
+                    display:"flex", flexDirection:"column", gap:12, transition:"all .2s ease",
                     position:"relative", overflow:"hidden", boxShadow: C.shadow,
                     animation: `fadeInUp 0.4s ease forwards`, animationDelay: `${i * 0.05}s`, opacity:0, transform:"translateY(10px)"
                   }} onMouseEnter={e=>{e.currentTarget.style.borderColor=C.border;e.currentTarget.style.transform="translateY(-2px)";}} onMouseLeave={e=>{e.currentTarget.style.borderColor=C.borderLight;e.currentTarget.style.transform="translateY(0)";}}>
                     
                     <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start"}}>
-                       <div style={{display:"flex", alignItems:"center", gap:12}}>
-                         <div className="acc-icon" style={{width:44, height:44, borderRadius:14, background:C.input, display:"flex", alignItems:"center", justifyContent:"center"}}>
-                           <Ico n={acc.type==="Credit Card"?"list":acc.type==="Wallet"?"archive":"bank"} sz={20} c={C.primary}/>
+                       <div style={{display:"flex", alignItems:"center", gap:10}}>
+                         <div className="acc-icon" style={{width:32, height:32, borderRadius:8, background:C.input, display:"flex", alignItems:"center", justifyContent:"center"}}>
+                           <Ico n={acc.type==="Credit Card"?"list":acc.type==="Wallet"?"archive":"bank"} sz={16} c={C.primary}/>
                          </div>
                          <div>
-                           <div className="acc-name" style={{color:C.text, fontSize:15, fontWeight:800, letterSpacing:"-0.01em"}}>{acc.name}</div>
-                           <div className="acc-type" style={{color:C.sub, fontSize:12, fontWeight:600, marginTop:2}}>{acc.type}</div>
+                           <div className="acc-name" style={{color:C.text, fontSize:13, fontWeight:700, letterSpacing:"-0.01em"}}>{acc.name}</div>
+                           <div className="acc-type" style={{color:C.sub, fontSize:10, fontWeight:600, marginTop:1}}>{acc.type}</div>
                          </div>
                        </div>
-                       <div className="acc-actions" style={{display:"flex", gap:10, position:"relative", zIndex:9999}}>
+                       <div className="acc-actions" style={{display:"flex", gap:8, position:"relative", zIndex:9999}}>
                          {/* Edit button */}
-                         <div onClick={(e)=>{e.stopPropagation(); onEditAcc(acc);}} style={{background:C.input, color:C.sub, cursor:"pointer", width:36, height:36, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", transition:"all .2s", pointerEvents:"auto"}} onMouseEnter={e=>{e.currentTarget.style.background=C.primary; e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.background=C.input; e.currentTarget.style.color=C.sub;}}>
-                           <Ico n="edit" sz={16}/>
+                         <div onClick={(e)=>{e.stopPropagation(); onEditAcc(acc);}} style={{background:C.input, color:C.sub, cursor:"pointer", width:28, height:28, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", transition:"all .2s", pointerEvents:"auto"}} onMouseEnter={e=>{e.currentTarget.style.background=C.primary; e.currentTarget.style.color="#fff";}} onMouseLeave={e=>{e.currentTarget.style.background=C.input; e.currentTarget.style.color=C.sub;}}>
+                           <Ico n="edit" sz={14}/>
                          </div>
                          {/* Delete button */}
                          <div 
@@ -267,11 +265,11 @@ export default function VaultPage({
                              e.stopPropagation();
                              setConfirmDeleteId(acc.id);
                            }} 
-                           style={{background:C.input, color:C.expense, cursor:"pointer", width:36, height:36, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center", transition:"all .2s", pointerEvents:"auto"}} 
+                           style={{background:C.input, color:C.expense, cursor:"pointer", width:28, height:28, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", transition:"all .2s", pointerEvents:"auto"}} 
                            onMouseEnter={e=>{e.currentTarget.style.background=C.expense; e.currentTarget.style.color="#fff";}} 
                            onMouseLeave={e=>{e.currentTarget.style.background=C.input; e.currentTarget.style.color=C.expense;}}
                          >
-                           <Ico n="trash" sz={16}/>
+                           <Ico n="trash" sz={14}/>
                          </div>
                         </div>
                     </div>
@@ -307,11 +305,11 @@ export default function VaultPage({
                       </div>
                     )}
 
-                    <div className="acc-footer" style={{display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginTop:4, borderTop:`1px dashed ${C.borderLight}`, paddingTop:16}}>
-                       <div className="acc-entries" style={{color:C.sub, fontSize:12, fontWeight:600, display:"flex", alignItems:"center", gap:6}}><Ico n="swap" sz={14}/> {txnsCount} entries</div>
+                    <div className="acc-footer" style={{display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginTop:2, borderTop:`1px dashed ${C.borderLight}`, paddingTop:12}}>
+                       <div className="acc-entries" style={{color:C.sub, fontSize:10, fontWeight:600, display:"flex", alignItems:"center", gap:4}}><Ico n="swap" sz={12}/> {txnsCount} entries</div>
                        <div style={{textAlign:"right"}}>
-                         <div className="acc-bal-label" style={{color:C.sub, fontSize:11, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em", marginBottom:4}}>Balance</div>
-                         <div className="acc-bal" style={{color:bal>=0?C.text:C.expense, fontSize:22, fontWeight:800, letterSpacing:"-.02em"}}>{fmtAmt(bal)}</div>
+                         <div className="acc-bal-label" style={{color:C.sub, fontSize:9, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em", marginBottom:2}}>Balance</div>
+                         <div className="acc-bal" style={{color:bal>=0?C.text:C.expense, fontSize:18, fontWeight:800, letterSpacing:"-.02em"}}>{fmtAmt(bal)}</div>
                        </div>
                     </div>
                   </div>

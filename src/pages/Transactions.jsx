@@ -8,17 +8,17 @@ import { findExactDuplicates } from "../services/duplicateEngine.js";
 import { DuplicatesPanel } from "../components/duplicates/DuplicatesPanel.jsx";
 
 /* ── helpers ──────────────────────────────────────────────── */
-const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const MONTHS_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const pad2 = n => String(n).padStart(2, "0");
-const isoDate = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+const isoDate = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
 const fmtDayHeader = (iso) => {
   try {
     const d = new Date(iso + "T00:00:00");
-    return `${DAYS[d.getDay()].slice(0,3)}, ${pad2(d.getDate())} ${MONTHS_SHORT[d.getMonth()]}`;
+    return `${DAYS[d.getDay()].slice(0, 3)}, ${pad2(d.getDate())} ${MONTHS_SHORT[d.getMonth()]}`;
   } catch { return iso; }
 };
 
@@ -166,7 +166,7 @@ export default function TransactionsPage({
       return [isoDate(mon), isoDate(sun)];
     }
     if (scope === "month") {
-      return [`${y}-${pad2(m+1)}-01`, `${y}-${pad2(m+1)}-${pad2(new Date(y, m+1, 0).getDate())}`];
+      return [`${y}-${pad2(m + 1)}-01`, `${y}-${pad2(m + 1)}-${pad2(new Date(y, m + 1, 0).getDate())}`];
     }
     return [`${y}-01-01`, `${y}-12-31`];
   }, [scope, currentDate]);
@@ -229,7 +229,7 @@ export default function TransactionsPage({
     const y = currentDate.getFullYear();
     const result = [];
     for (let i = 0; i < 12; i++) {
-      const key = `${y}-${pad2(i+1)}`;
+      const key = `${y}-${pad2(i + 1)}`;
       const data = map[key];
       if (data) {
         result.push({ month: MONTHS_SHORT[i], monthIndex: i, key, ...data, balance: data.credit - data.debit });
@@ -267,12 +267,9 @@ export default function TransactionsPage({
     const y = currentDate.getFullYear(), m = currentDate.getMonth(), d = currentDate.getDate();
     if (scope === "day") {
       return (
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 22, fontWeight: 900, color: C.text }}>{pad2(d)}</span>
-          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: C.sub }}>{MONTHS_FULL[m]}, {y}</span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: C.sub }}>{DAYS[currentDate.getDay()]}</span>
-          </div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+          <span style={{ fontSize: 16, fontWeight: 900, color: C.text }}>{pad2(d)}</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: C.sub }}>{MONTHS_SHORT[m]} • {DAYS[currentDate.getDay()].slice(0, 3)}</span>
         </div>
       );
     }
@@ -281,12 +278,12 @@ export default function TransactionsPage({
         const dt = new Date(d + "T00:00:00");
         return `${pad2(dt.getDate())} ${MONTHS_SHORT[dt.getMonth()]}`;
       };
-      return <span style={{ fontSize: 14, fontWeight: 800, color: C.text, flex: 1, textAlign: "center" }}>{fmtShort(scopeRange[0])} — {fmtShort(scopeRange[1])}, {y}</span>;
+      return <span style={{ fontSize: 13, fontWeight: 800, color: C.text, flex: 1, textAlign: "center" }}>{fmtShort(scopeRange[0])} — {fmtShort(scopeRange[1])}</span>;
     }
     if (scope === "month") {
-      return <span style={{ fontSize: 16, fontWeight: 800, color: C.text, flex: 1, textAlign: "center" }}>{MONTHS_FULL[m]} {y}</span>;
+      return <span style={{ fontSize: 14, fontWeight: 800, color: C.text, flex: 1, textAlign: "center" }}>{MONTHS_FULL[m]} {y}</span>;
     }
-    return <span style={{ fontSize: 16, fontWeight: 800, color: C.text, flex: 1, textAlign: "center" }}>{y}</span>;
+    return <span style={{ fontSize: 14, fontWeight: 800, color: C.text, flex: 1, textAlign: "center" }}>{y}</span>;
   };
 
   /* ── render compact transaction row ────────────────── */
@@ -337,10 +334,16 @@ export default function TransactionsPage({
   /* ═══════════════════════════════════════════════════ */
   const renderDailyView = () => (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-      {/* C/F row */}
-      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px", borderBottom: `1px solid ${C.borderLight}` }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: C.sub }}>C/F</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{fmtAmt(cfBalance)}</span>
+      {/* C/F & Balance row */}
+      <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 10px", borderBottom: `1px solid ${C.borderLight}`, background: C.surface }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: C.sub }}>C/F:</span>
+          <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{fmtAmt(cfBalance)}</span>
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: C.sub }}>Bal:</span>
+          <span style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{fmtAmt(balance)}</span>
+        </div>
       </div>
 
       {timeTx.length === 0 ? (
@@ -543,154 +546,150 @@ export default function TransactionsPage({
   return (
     <div ref={swipeRef} className="page-enter" style={{ padding: "0 0 100px 0", display: "flex", flexDirection: "column", gap: 0 }}>
 
-      {/* ── Existing Search & Actions bar ─────────────── */}
-      <div style={{ display: "flex", gap: 6, alignItems: "center", padding: "12px 10px 8px" }}>
-        <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search…" style={{ flex: 1, minWidth: 0, background: C.surface, borderWidth: 1, borderStyle: "solid", borderColor: C.borderLight, borderRadius: 12, padding: "8px 12px", color: C.text, fontSize: 13, outline: "none", fontFamily: "inherit", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }} />
-
-        <button onClick={onShowFilters} style={{ width: 36, height: 36, flexShrink: 0, background: hasFilter ? C.primary : C.surface, border: `1px solid ${hasFilter ? C.primary : C.borderLight}`, borderRadius: 12, padding: 0, color: hasFilter ? "#fff" : C.sub, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", transition: "all .2s" }}>
-          <Ico n="filter" sz={18} />
-        </button>
-
-        <button onClick={onShowUpload} style={{ width: 36, height: 36, flexShrink: 0, background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: 0, color: C.sub, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", transition: "all .2s" }}>
-          <Ico n="upload" sz={18} />
-        </button>
-
+      {/* ── Search & Actions ─────────────────────────── */}
+      <div style={{ display: "flex", gap: 5, alignItems: "center", padding: "6px 12px 4px" }}>
+        <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search…"
+          style={{
+            flex: 1, minWidth: 0, height: 30, boxSizing: "border-box",
+            background: C.input, border: `1px solid ${C.borderLight}`, borderRadius: 8,
+            padding: "0 10px", color: C.text, fontSize: 12, fontWeight: 500,
+            outline: "none", fontFamily: "inherit",
+          }}
+        />
+        {[
+          { action: onShowFilters, icon: "filter", active: hasFilter },
+          { action: onShowUpload, icon: "upload" },
+        ].map(({ action, icon, active }, i) => (
+          <button key={i} onClick={action} style={{
+            width: 30, height: 30, flexShrink: 0, border: "none",
+            background: active ? C.primary : C.input, borderRadius: 8, padding: 0,
+            color: active ? "#fff" : C.sub, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Ico n={icon} sz={13} />
+          </button>
+        ))}
         <div ref={exportRef} style={{ position: "relative", flexShrink: 0 }}>
-          <button onClick={() => setShowExportMenu(p => !p)} style={{ width: 36, height: 36, background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12, padding: 0, color: C.sub, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.02)", transition: "all .2s" }}>
-            <Ico n="down" sz={18} />
+          <button onClick={() => setShowExportMenu(p => !p)} style={{
+            width: 30, height: 30, background: C.input, border: "none",
+            borderRadius: 8, padding: 0, color: C.sub, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Ico n="down" sz={13} />
           </button>
           {showExportMenu && (
             <div style={{
-              position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 500,
-              background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 14,
-              padding: 6, minWidth: 150, boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
-              display: "flex", flexDirection: "column", gap: 2,
-              animation: "fadeIn 0.15s ease"
+              position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 500,
+              background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12,
+              padding: 4, minWidth: 140, boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+              display: "flex", flexDirection: "column", gap: 2, animation: "fadeIn 0.15s ease",
             }}>
-              <button onClick={() => { onExportCSV(); setShowExportMenu(false); }} style={{
-                background: "transparent", border: "none", borderRadius: 10,
-                padding: "10px 14px", color: C.text, fontSize: 13, fontWeight: 700,
-                cursor: "pointer", textAlign: "left", fontFamily: "inherit",
-                display: "flex", alignItems: "center", gap: 8,
-                transition: "background .15s"
-              }}
-                onMouseEnter={e => e.currentTarget.style.background = C.input}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-              >
-                📊 CSV (Excel)
-              </button>
-              <button onClick={() => { onExportPDF(); setShowExportMenu(false); }} style={{
-                background: "transparent", border: "none", borderRadius: 10,
-                padding: "10px 14px", color: C.text, fontSize: 13, fontWeight: 700,
-                cursor: "pointer", textAlign: "left", fontFamily: "inherit",
-                display: "flex", alignItems: "center", gap: 8,
-                transition: "background .15s"
-              }}
-                onMouseEnter={e => e.currentTarget.style.background = C.input}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-              >
-                📄 PDF Report
-              </button>
+              {[
+                { label: "📊 CSV (Excel)", fn: onExportCSV },
+                { label: "📄 PDF Report", fn: onExportPDF },
+              ].map(({ label, fn }, i) => (
+                <button key={i} onClick={() => { fn(); setShowExportMenu(false); }} style={{
+                  background: "transparent", border: "none", borderRadius: 8,
+                  padding: "8px 12px", color: C.text, fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", textAlign: "left", fontFamily: "inherit",
+                }}>
+                  {label}
+                </button>
+              ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* ── DAILY / MONTHLY / YEARLY Tabs ────────────── */}
-      <div style={{
-        display: "flex", borderBottom: `2px solid ${C.borderLight}`, margin: "0 10px",
-      }}>
-        {["daily", "weekly", "monthly", "yearly"].map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              flex: 1, background: "transparent", border: "none",
-              padding: "10px 0 8px", cursor: "pointer",
-              fontSize: 13, fontWeight: 800, fontFamily: "inherit",
-              textTransform: "uppercase", letterSpacing: "0.04em",
-              color: activeTab === tab ? C.primary : C.sub,
-              borderBottom: activeTab === tab ? `3px solid ${C.primary}` : "3px solid transparent",
-              transition: "all .2s",
-            }}
-          >
-            {tab}
-          </button>
-        ))}
+      {/* ── Tabs (Pill style) ───────────────────────── */}
+      <div style={{ padding: "4px 12px 8px", background: C.bg }}>
+        <div style={{
+          display: "flex", 
+          background: C.input, 
+          borderRadius: 30, 
+          padding: 4, 
+          gap: 2,
+          alignItems: "center"
+        }}>
+          {["daily", "weekly", "monthly", "yearly"].map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{
+              flex: 1, border: "none", padding: "8px 0", cursor: "pointer",
+              fontSize: 10, fontWeight: 800, fontFamily: "inherit",
+              textTransform: "uppercase", letterSpacing: "0.05em",
+              color: activeTab === tab ? "#fff" : C.sub,
+              background: activeTab === tab ? C.primary : "transparent",
+              borderRadius: 25, transition: "all .2s",
+            }}>
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* ── Period navigator ─────────────────────────── */}
+      {/* ── Date nav + info row (85/15 split) ──────── */}
       <div style={{
-        display: "flex", alignItems: "center", gap: 8, padding: "10px 10px",
+        display: "flex", alignItems: "center", padding: "6px 12px",
         borderBottom: `1px solid ${C.borderLight}`,
       }}>
-        <button onClick={() => stepScope(-1)} style={{
-          background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 10,
-          width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
-          color: C.sub, cursor: "pointer", flexShrink: 0, transition: "transform .2s",
-        }}>
-          <Ico n="chevronLeft" sz={16} />
-        </button>
+        {/* 85% — date navigation + balance */}
+        <div style={{ width: "85%", display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+          <button onClick={() => stepScope(-1)} style={{
+            width: 26, height: 26, border: "none", background: C.input, borderRadius: 6,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: C.sub, cursor: "pointer", flexShrink: 0,
+          }}>
+            <Ico n="chevronLeft" sz={12} />
+          </button>
 
-        {getPeriodLabel()}
+          <div style={{ flex: 1, minWidth: 0 }}>{getPeriodLabel()}</div>
 
-        {scope === "day" && (
-          <div style={{ textAlign: "right", marginRight: 4 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.sub }}>Balance</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: C.text }}>{fmtAmt(balance)}</div>
-          </div>
-        )}
+          <button onClick={() => stepScope(1)} style={{
+            width: 26, height: 26, border: "none", background: C.input, borderRadius: 6,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: C.sub, cursor: "pointer", flexShrink: 0,
+          }}>
+            <Ico n="chevronRight" sz={12} />
+          </button>
 
-        <button onClick={() => stepScope(1)} style={{
-          background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 10,
-          width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
-          color: C.sub, cursor: "pointer", flexShrink: 0, transition: "transform .2s",
-        }}>
-          <Ico n="chevronRight" sz={16} />
-        </button>
-      </div>
-
-      {/* ── Items count & duplicates ─────────────────── */}
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", padding: "6px 10px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {timeTx.length > 0 && (
-            <div onClick={() => {
-              const allFilteredIds = timeTx.map(t => t.id);
-              const isAllSelected = allFilteredIds.every(id => selectedTxIds.includes(id));
-              if (isAllSelected) {
-                setSelectedTxIds(selectedTxIds.filter(id => !allFilteredIds.includes(id)));
-              } else {
-                setSelectedTxIds([...new Set([...selectedTxIds, ...allFilteredIds])]);
-              }
-            }} style={{
-              width: 20, height: 20, borderRadius: 6, border: `2px solid ${timeTx.every(t => selectedTxIds.includes(t.id)) ? C.primary : C.border}`,
-              background: timeTx.every(t => selectedTxIds.includes(t.id)) ? C.primary : "transparent",
-              display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all .2s"
-            }}>
-              {timeTx.every(t => selectedTxIds.includes(t.id)) && <Ico n="check" sz={12} c="#000" />}
-            </div>
+          {scope === "day" && (
+            <span style={{
+              fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 6,
+              color: balance >= 0 ? C.income : C.expense,
+              background: (balance >= 0 ? C.income : C.expense) + "12",
+              flexShrink: 0,
+            }}>{fmtAmt(balance)}</span>
           )}
-          <span style={{ color: C.sub, fontSize: 12, fontWeight: 700 }}>{timeTx.length} items</span>
         </div>
-        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+
+        {/* 15% — entries count + select */}
+        <div style={{ width: "15%", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4 }}>
+          {(() => {
+            const allSelected = timeTx.length > 0 && timeTx.every(t => selectedTxIds.includes(t.id));
+            return timeTx.length > 0 ? (
+              <div onClick={() => {
+                const ids = timeTx.map(t => t.id);
+                setSelectedTxIds(allSelected ? selectedTxIds.filter(id => !ids.includes(id)) : [...new Set([...selectedTxIds, ...ids])]);
+              }} style={{
+                width: 14, height: 14, borderRadius: 3, flexShrink: 0, cursor: "pointer",
+                border: `2px solid ${allSelected ? C.primary : C.border}`,
+                background: allSelected ? C.primary : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                {allSelected && <Ico n="check" sz={8} c="#000" />}
+              </div>
+            ) : null;
+          })()}
+          <span style={{ color: C.sub, fontSize: 10, fontWeight: 700 }}>{timeTx.length}</span>
           {dupeCount > 0 && (
-            <button onClick={() => setShowDuplicates(true)} style={{
-              background: C.warning + "22" || C.expense + "22",
-              border: `1px solid ${C.warning || C.expense}`,
-              borderRadius: 99, padding: "4px 10px", color: C.warning || C.expense,
-              fontSize: 11, fontWeight: 800, cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 6
-            }}>
-              ⚠️ {dupeCount} duplicates
-            </button>
+            <span onClick={() => setShowDuplicates(true)} style={{
+              color: C.warning, fontSize: 9, fontWeight: 800, cursor: "pointer",
+            }}>⚠</span>
           )}
         </div>
       </div>
 
       {/* ── View content ─────────────────────────────── */}
-      <div 
-        style={{ padding: "0 10px", flex: 1 }}
-      >
+      <div style={{ padding: "0 10px", flex: 1 }}>
         {activeTab === "daily" && renderDailyView()}
         {activeTab === "weekly" && renderMonthlyView()}
         {activeTab === "monthly" && renderMonthlyView()}
