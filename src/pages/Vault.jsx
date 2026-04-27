@@ -37,8 +37,19 @@ export default function VaultPage({
   return (
     <div className="page-enter" style={{padding:"16px 10px 100px",display:"flex",flexDirection:"column",gap:20}}>
       
-      {/* Sub-tab switcher */}
-      <div style={{display:"flex", background:C.input, borderRadius:24, padding:4, marginBottom: 8}}>
+      {/* Sub-tab switcher (Scrollable horizontally on mobile) */}
+      <div 
+        className="premium-scroll"
+        style={{
+          display: "flex", 
+          overflowX: "auto", 
+          background: C.input, 
+          borderRadius: 24, 
+          padding: 4, 
+          marginBottom: 8,
+          gap: 4
+        }}
+      >
         {[
           { id: "accounts", label: "Accounts", icon: "bank" },
           { id: "notes", label: "Notes", icon: "edit" },
@@ -46,8 +57,9 @@ export default function VaultPage({
           { id: "reports", label: "Analytics", icon: "chart" }
         ].map(t => (
           <button key={t.id} onClick={() => setVaultTab(t.id)} style={{
-            flex:1, padding:"10px", borderRadius:20, border:"none", cursor:"pointer", fontSize:13, fontWeight:700,
+            flex: "1 0 auto", padding: "10px 16px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700,
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            whiteSpace: "nowrap",
             background: vaultTab === t.id ? C.primary : "transparent",
             color: vaultTab === t.id ? "#fff" : C.sub,
             boxShadow: vaultTab === t.id ? `0 4px 12px ${C.primary}40` : "none",
