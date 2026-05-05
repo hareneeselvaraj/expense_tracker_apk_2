@@ -142,6 +142,7 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState(null);
   const [themeMode, setThemeMode] = useState(localStorage.getItem("theme") || "light");
+  const [glassMode, setGlassMode] = useState(localStorage.getItem("glassMode") === "true");
   const [page, setPage] = useState("dashboard");
   const [toast, setToast] = useState(null);
 
@@ -270,7 +271,8 @@ export default function App() {
   const [driveStep, setDriveStep] = useState(null);
   const gInitRef = useRef(false);
 
-  const C = useMemo(() => ({ ...THEMES[themeMode], ...BASE_C }), [themeMode]);
+  const effectiveTheme = glassMode ? "glass" : themeMode;
+  const C = useMemo(() => ({ ...THEMES[effectiveTheme], ...BASE_C }), [effectiveTheme]);
 
   // ── PERSISTENCE ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -395,9 +397,9 @@ export default function App() {
       const { newTransactions, updatedTemplates } = processRecurring(currentRec);
       if (newTransactions.length > 0) {
         setTransactions(prev => {
-          // Deduplicate: skip if a tx with same recurringId + date already exists
+          // Deduplicate: skip if a non-deleted tx with same recurringId + date already exists
           const toAdd = newTransactions.filter(nt =>
-            !prev.some(existing => existing.recurringId === nt.recurringId && existing.date === nt.date)
+            !prev.some(existing => !existing.deleted && existing.recurringId === nt.recurringId && existing.date === nt.date)
           );
           if (toAdd.length === 0) return prev;
 
@@ -959,9 +961,21 @@ export default function App() {
   };
 
   const toggleTheme = () => {
+    if (glassMode) return; // Glass mode forces dark, no toggling
     const next = themeMode === "dark" ? "light" : "dark";
     setThemeMode(next);
     localStorage.setItem("theme", next);
+  };
+
+  const toggleGlass = () => {
+    const next = !glassMode;
+    setGlassMode(next);
+    localStorage.setItem("glassMode", String(next));
+    if (next) {
+      // Force dark mode when glass is on
+      setThemeMode("dark");
+      localStorage.setItem("theme", "dark");
+    }
   };
 
   // ── SYNC ──────────────────────────────────────────────────────────────────
@@ -1176,13 +1190,23 @@ export default function App() {
   }[page];
 
   return (
-    <div style={{ background: C.bg, minHeight: "100vh", color: C.text, paddingBottom: 100, maxWidth: 600, margin: "0 auto", position: "relative" }}>
+    <div style={{ background: C.isGlass ? "#050818" : C.bg, minHeight: "100vh", color: C.text, paddingBottom: 100, maxWidth: 600, margin: "0 auto", position: "relative", overflow: "hidden" }}>
+      {/* Glass mode — AI-generated premium background image */}
+      {C.isGlass && (
+        <>
+          {/* Full-bleed background image */}
+          <div style={{ position: "fixed", inset: 0, backgroundImage: "url(/glass-bg.png)", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", pointerEvents: "none", zIndex: 0 }} />
+          {/* Subtle dark overlay for text readability */}
+          <div style={{ position: "fixed", inset: 0, background: "rgba(5, 8, 24, 0.35)", pointerEvents: "none", zIndex: 0 }} />
+        </>
+      )}
       <style>{globalStyles}</style>
       <Header
         title={activeTitle}
         theme={C}
-        themeMode={themeMode}
+        themeMode={effectiveTheme}
         toggleTheme={toggleTheme}
+        glassMode={glassMode}
         onOpenSettings={() => setPage("settings")}
         syncStatus={syncStatus}
         onOpenSync={() => setShowBackup(true)}
@@ -1310,7 +1334,7 @@ export default function App() {
             await sendYearEndEmailManual(transactions, categories, tags, accounts, user, getToken, year);
             notify(`📊 ${year} financial summary sent to ${user.email}`);
           },
-          themeMode, toggleTheme,
+          themeMode: effectiveTheme, toggleTheme, glassMode, toggleGlass,
           onLogout: logout,
           investData,
           onOpenInvestments: () => setAppMode("investment"),
@@ -1462,20 +1486,20 @@ export default function App() {
             currentBudget={editBudget.budget}
             theme={C}
             onCancel={() => setEditBudget(null)}
-            onSave={(targetId, amt) => {
+            onSave={(targetId, amt, period) => {
               setBudgets(p => {
                 const idKey = editBudget.type === "categories" ? "categoryId" : "tagId";
 
                 const idx = p.findIndex(b => b[idKey] === targetId);
                 if (idx > -1) {
                   if (amt === 0) return p.filter(b => b[idKey] !== targetId);
-                  const n = [...p]; n[idx].amount = amt; return n;
+                  const n = [...p]; n[idx] = { ...n[idx], amount: amt, period: period || "monthly" }; return n;
                 }
                 if (amt === 0) return p;
-                return [...p, { id: uid(), [idKey]: targetId, amount: amt }];
+                return [...p, { id: uid(), [idKey]: targetId, amount: amt, period: period || "monthly" }];
               });
               setEditBudget(null);
-              notify("Budget created successfully");
+              notify(`${period === "weekly" ? "Weekly" : "Monthly"} budget saved`);
             }}
           />
         )}
@@ -1528,7 +1552,7 @@ export default function App() {
             if (newTransactions.length > 0) {
               setTransactions(prev => {
                 const toAdd = newTransactions.filter(nt =>
-                  !prev.some(existing => existing.recurringId === nt.recurringId && existing.date === nt.date)
+                  !prev.some(existing => !existing.deleted && existing.recurringId === nt.recurringId && existing.date === nt.date)
                 );
                 if (toAdd.length === 0) return prev;
 
@@ -1652,6 +1676,52 @@ export default function App() {
         }
         .premium-scroll::-webkit-scrollbar { width: 5px; }
         .premium-scroll::-webkit-scrollbar-thumb { background: ${C.border}; border-radius: 10px; }
+
+        ${C.isGlass ? `
+        /* ═══ PREMIUM GLASSMORPHISM — ALL ELEMENTS ═══ */
+
+        /* Cards & Sections */
+        .section-card, .net-hero {
+          backdrop-filter: blur(30px) saturate(180%) !important;
+          -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+          background: rgba(12, 12, 35, 0.55) !important;
+          border: 1px solid rgba(140, 130, 255, 0.14) !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.30),
+                      inset 0 1px 0 rgba(200, 190, 255, 0.10),
+                      inset 0 0 20px rgba(100, 80, 200, 0.03) !important;
+        }
+        .vital-card {
+          backdrop-filter: blur(24px) saturate(170%) !important;
+          -webkit-backdrop-filter: blur(24px) saturate(170%) !important;
+          background: rgba(12, 12, 35, 0.45) !important;
+          border: 1px solid rgba(140, 130, 255, 0.12) !important;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22),
+                      inset 0 1px 0 rgba(200, 190, 255, 0.08) !important;
+        }
+        .budget-bar {
+          background: rgba(12, 12, 35, 0.40) !important;
+          backdrop-filter: blur(16px) !important;
+          border: 1px solid rgba(140, 130, 255, 0.10) !important;
+        }
+
+        /* Inputs & Select */
+        input, textarea, select {
+          backdrop-filter: blur(12px) !important;
+          -webkit-backdrop-filter: blur(12px) !important;
+        }
+
+        /* Pill tab switchers */
+        [style*="borderRadius: 30"], [style*="borderRadius:30"] {
+          backdrop-filter: blur(16px) saturate(160%) !important;
+          -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+        }
+
+        /* Make all content above the background */
+        .page-enter, .page-enter > * {
+          position: relative;
+          z-index: 1;
+        }
+        ` : ""}
       `}</style>
     </div>
   );

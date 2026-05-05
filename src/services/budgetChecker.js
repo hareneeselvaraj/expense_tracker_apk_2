@@ -2,22 +2,52 @@
  * Budget Checker Service
  * 
  * Called after every transaction save.
- * Compares month-to-date spend against budget limits.
+ * Compares period-to-date spend against budget limits.
+ * Supports both weekly and monthly budget periods.
  * Returns an array of alert objects.
  * 
  * IMPORTANT: This function is PURE — no side effects.
  * The caller (App.jsx) decides whether to show toasts, send emails, etc.
  */
 
-export function checkBudgets(transactions, budgets, categories, tags) {
+import { startOfWeek, toISO } from "../utils/format.js";
+
+/**
+ * Get the date range [from, to] for a budget period containing "now".
+ */
+function getPeriodRange(period) {
   const now = new Date();
-  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  if (period === "weekly") {
+    const mon = startOfWeek(now);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    return [toISO(mon), toISO(sun)];
+  }
+  // Default: monthly
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const pad = n => String(n).padStart(2, '0');
+  const from = `${y}-${pad(m + 1)}-01`;
+  const to = `${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`;
+  return [from, to];
+}
+
+export function checkBudgets(transactions, budgets, categories, tags) {
   const alerts = [];
 
-  // Get this month's transactions
-  const monthTx = transactions.filter(t => t.date?.startsWith(monthKey) && !t.deleted);
+  // Pre-compute period ranges to avoid recalculating for each budget
+  const monthRange = getPeriodRange("monthly");
+  const weekRange = getPeriodRange("weekly");
 
   for (const budget of budgets) {
+    const period = budget.period || "monthly";
+    const [from, to] = period === "weekly" ? weekRange : monthRange;
+
+    // Get transactions in this period
+    const periodTx = transactions.filter(t =>
+      t.date >= from && t.date <= to && !t.deleted
+    );
+
     let spent = 0;
     let budgetName = "";
     let budgetColor = "";
@@ -28,7 +58,7 @@ export function checkBudgets(transactions, budgets, categories, tags) {
       if (!cat) continue;
       budgetName = cat.name;
       budgetColor = cat.color;
-      spent = monthTx
+      spent = periodTx
         .filter(t => t.category === budget.categoryId && t.creditDebit === "Debit")
         .reduce((sum, t) => sum + (t.amount || 0), 0);
     } else if (budget.tagId) {
@@ -37,7 +67,7 @@ export function checkBudgets(transactions, budgets, categories, tags) {
       if (!tag) continue;
       budgetName = `#${tag.name}`;
       budgetColor = tag.color;
-      spent = monthTx
+      spent = periodTx
         .filter(t => (t.tags || []).includes(budget.tagId) && t.creditDebit === "Debit")
         .reduce((sum, t) => sum + (t.amount || 0), 0);
     }
@@ -55,6 +85,7 @@ export function checkBudgets(transactions, budgets, categories, tags) {
         spent,
         limit,
         percentage,
+        period,
         overshoot: spent - limit
       });
     } else if (percentage >= 100) {
@@ -65,6 +96,7 @@ export function checkBudgets(transactions, budgets, categories, tags) {
         spent,
         limit,
         percentage,
+        period,
         overshoot: spent - limit
       });
     } else if (percentage >= 80) {
@@ -75,6 +107,7 @@ export function checkBudgets(transactions, budgets, categories, tags) {
         spent,
         limit,
         percentage,
+        period,
         remaining: limit - spent
       });
     }

@@ -134,12 +134,14 @@ export const BottomNav = ({ page, setPage, onAddTx, onAddAcc, onAddCat, onAddTag
         justifyContent: "space-between",
         padding: "10px 12px",
         paddingBottom: "max(10px, env(safe-area-inset-bottom))",
-        background: C.navBg,
-        backdropFilter: "blur(24px) saturate(180%)",
-        WebkitBackdropFilter: "blur(24px) saturate(180%)",
+        background: C.isGlass ? "rgba(10, 10, 30, 0.65)" : C.navBg,
+        backdropFilter: C.isGlass ? "blur(30px) saturate(180%)" : "blur(24px) saturate(180%)",
+        WebkitBackdropFilter: C.isGlass ? "blur(30px) saturate(180%)" : "blur(24px) saturate(180%)",
         borderRadius: 32,
-        border: `1px solid ${C.borderLight}`,
-        boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
+        border: `1px solid ${C.isGlass ? "rgba(140,120,255,0.14)" : C.borderLight}`,
+        boxShadow: C.isGlass 
+          ? "0 16px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(160,140,255,0.08)" 
+          : "0 20px 40px rgba(0,0,0,0.25)",
       }}>
         {/* Left Items */}
         <div style={{ display: "flex", flex: 1, justifyContent: "space-around", gap: 4 }}>

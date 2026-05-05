@@ -49,6 +49,16 @@ export const RecurringForm = ({ init, categories, accounts, onSave, onDelete, on
   const updateField = (k) => (v) => setForm((p) => ({ ...p, [k]: v }));
   const updateFieldEv = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }));
 
+  // When frequency changes, reset nextDue to startDate so the engine can
+  // recompute all missed occurrences (dedup in App.jsx prevents duplicates)
+  const handleFrequencyChange = (newFreq) => {
+    setForm((p) => ({
+      ...p,
+      frequency: newFreq,
+      nextDue: p.startDate, // reset so processRecurring catches up
+    }));
+  };
+
   const valid =
     form.templateTx.description.trim() &&
     parseFloat(form.templateTx.amount) > 0 &&
@@ -130,7 +140,7 @@ export const RecurringForm = ({ init, categories, accounts, onSave, onDelete, on
           label="Frequency"
           value={form.frequency}
           options={FREQ_OPTIONS}
-          onChange={updateField("frequency")}
+          onChange={handleFrequencyChange}
           searchable={false}
         />
       </div>
@@ -256,7 +266,17 @@ export const RecurringForm = ({ init, categories, accounts, onSave, onDelete, on
                 ...form.templateTx,
                 amount: parseFloat(form.templateTx.amount) || 0,
               },
-              nextDue: (isEdit && form.startDate !== init.startDate) ? form.startDate : (isEdit ? form.nextDue : form.startDate),
+              nextDue: (() => {
+                // New recurring: start from startDate
+                if (!isEdit) return form.startDate;
+                // Edit: if startDate or frequency changed, reset nextDue to startDate
+                // so the engine can recompute from scratch (dedup prevents duplicates)
+                if (form.startDate !== init.startDate || form.frequency !== init.frequency) {
+                  return form.startDate;
+                }
+                // Otherwise keep existing nextDue
+                return form.nextDue;
+              })(),
               endDate: form.endDate || null,
             });
           }}

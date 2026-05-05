@@ -54,9 +54,9 @@ export const Modal = ({ open, onClose, title, children, theme, maxWidth = 400 })
     <div onClick={onClose} style={{
       position: "fixed",
       inset: 0,
-      background: "rgba(0,0,0,.5)",
-      backdropFilter: "blur(8px)",
-      WebkitBackdropFilter: "blur(8px)",
+      background: C.isGlass ? "rgba(5,5,20,.55)" : "rgba(0,0,0,.5)",
+      backdropFilter: C.isGlass ? "blur(24px) saturate(180%)" : "blur(8px)",
+      WebkitBackdropFilter: C.isGlass ? "blur(24px) saturate(180%)" : "blur(8px)",
       zIndex: 5000,
       display: "flex",
       alignItems: "center",
@@ -66,7 +66,7 @@ export const Modal = ({ open, onClose, title, children, theme, maxWidth = 400 })
       opacity: active ? 1 : 0,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background: C.surface,
+        background: C.isGlass ? "rgba(10, 10, 30, 0.88)" : C.surface,
         borderRadius: 20,
         width: "100%",
         maxWidth,
@@ -74,7 +74,11 @@ export const Modal = ({ open, onClose, title, children, theme, maxWidth = 400 })
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
-        boxShadow: `0 24px 80px rgba(0,0,0,.5), 0 0 0 1px ${C.border}33`,
+        backdropFilter: C.isGlass ? "blur(40px) saturate(200%)" : undefined,
+        WebkitBackdropFilter: C.isGlass ? "blur(40px) saturate(200%)" : undefined,
+        boxShadow: C.isGlass 
+          ? `0 24px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(140,120,255,0.10), inset 0 1px 0 rgba(160,140,255,0.06)`
+          : `0 24px 80px rgba(0,0,0,.5), 0 0 0 1px ${C.border}33`,
         transform: active ? "scale(1)" : "scale(0.92)",
         opacity: active ? 1 : 0,
         transition: "transform .25s cubic-bezier(0.32, 0.72, 0, 1), opacity .2s ease",

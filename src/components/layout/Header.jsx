@@ -63,7 +63,7 @@ const NotificationCard = ({ notification: n, theme: C, onRead, onAction, onDismi
 };
 
 export const Header = ({
-  title, theme, themeMode, toggleTheme, onOpenSettings,
+  title, theme, themeMode, toggleTheme, glassMode, onOpenSettings,
   syncStatus, onOpenSync, isOffline, budgetAlerts = [],
   notifications = [], unreadCount = 0,
   onMarkRead, onMarkAllRead, onClearNotification, onNavigate
@@ -92,7 +92,7 @@ export const Header = ({
   const close = () => setShowNotifs(false);
 
   return (
-    <div style={{position:"sticky",top:0,zIndex:300,background:C.headerBg,borderBottom:`1px solid ${C.borderLight}`,padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+    <div style={{position:"sticky",top:0,zIndex:300,background: C.isGlass ? "rgba(8, 8, 25, 0.60)" : C.headerBg,backdropFilter: C.isGlass ? "blur(30px) saturate(180%)" : undefined,WebkitBackdropFilter: C.isGlass ? "blur(30px) saturate(180%)" : undefined,borderBottom: C.isGlass ? "1px solid rgba(140,130,255,0.10)" : `1px solid ${C.borderLight}`,boxShadow: C.isGlass ? "inset 0 -1px 0 rgba(100,80,200,0.06)" : undefined,padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
       <div style={{display:"flex", alignItems:"center", gap:10}}>
         <div style={{width: 8, height: 8, borderRadius: "50%", background: C.primary}} />
         <span style={{fontSize:20,fontWeight:800,letterSpacing:"-.02em", color:C.text}}>{title}</span>
@@ -101,7 +101,7 @@ export const Header = ({
       <div style={{display:"flex",gap:8}}>
         {/* Bell / Notification Icon */}
         <div style={{ position: "relative" }}>
-          <button onClick={() => { setShowNotifs(!showNotifs); requestNotifPermission(); }} style={{background:C.input,border:"none",borderRadius:12,padding:"8px",color:C.text,cursor:"pointer",display:"flex",transition:"transform .2s", position: "relative"}} onMouseOver={e=>e.currentTarget.style.transform="scale(1.05)"} onMouseOut={e=>e.currentTarget.style.transform="scale(1)"}>
+          <button onClick={() => { setShowNotifs(!showNotifs); requestNotifPermission(); }} style={{background: C.isGlass ? "rgba(255,255,255,0.06)" : C.input, border: C.isGlass ? "1px solid rgba(140,130,255,0.14)" : "none", borderRadius:12, padding:"8px", color:C.text, cursor:"pointer", display:"flex", transition:"transform .2s", position: "relative", boxShadow: C.isGlass ? "inset 0 1px 0 rgba(255,255,255,0.10)" : "none", backdropFilter: C.isGlass ? "blur(12px)" : undefined}} onMouseOver={e=>e.currentTarget.style.transform="scale(1.05)"} onMouseOut={e=>e.currentTarget.style.transform="scale(1)"}>
             <Ico n="bell" sz={18}/>
             {unreadCount > 0 && (
               <div style={{
@@ -127,8 +127,10 @@ export const Header = ({
               width: isMobile ? "auto" : 320, 
               maxHeight: isMobile ? "calc(100vh - 140px)" : 440, 
               overflowY: "auto",
-              background: C.surface, border: `1px solid ${C.borderLight}`,
-              borderRadius: 20, boxShadow: `0 20px 60px rgba(0,0,0,0.3)`, zIndex: 999,
+              background: C.isGlass ? "rgba(10, 10, 30, 0.85)" : C.surface, border: C.isGlass ? "1px solid rgba(140,130,255,0.12)" : `1px solid ${C.borderLight}`,
+              borderRadius: 20, boxShadow: C.isGlass ? "0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(200,190,255,0.06)" : `0 20px 60px rgba(0,0,0,0.3)`, zIndex: 999,
+              backdropFilter: C.isGlass ? "blur(30px) saturate(180%)" : undefined,
+              WebkitBackdropFilter: C.isGlass ? "blur(30px) saturate(180%)" : undefined,
               padding: 16, display: "flex", flexDirection: "column", gap: 10
             }}>
               {/* Header row */}
@@ -217,10 +219,10 @@ export const Header = ({
           )}
         </div>
 
-        <button onClick={toggleTheme} style={{background:C.input,border:"none",borderRadius:12,padding:"8px",color:C.text,cursor:"pointer",display:"flex",transition:"transform .2s"}} onMouseOver={e=>e.currentTarget.style.transform="scale(1.05)"} onMouseOut={e=>e.currentTarget.style.transform="scale(1)"}>
-          <Ico n={themeMode==="dark"?"sun":"moon"} sz={18}/>
+        <button onClick={glassMode ? undefined : toggleTheme} style={{background: glassMode ? "rgba(255,255,255,0.06)" : C.input, border: glassMode ? "1px solid rgba(140,130,255,0.14)" : "none", borderRadius:12, padding:"8px", color: glassMode ? C.primary : C.text, cursor: glassMode ? "default" : "pointer", display:"flex", transition:"transform .2s", boxShadow: C.isGlass ? "inset 0 1px 0 rgba(255,255,255,0.10)" : "none", backdropFilter: C.isGlass ? "blur(12px)" : undefined}} onMouseOver={e=> !glassMode && (e.currentTarget.style.transform="scale(1.05)")} onMouseOut={e=>e.currentTarget.style.transform="scale(1)"}>
+          <Ico n={glassMode ? "diamond" : (themeMode==="dark"?"sun":"moon")} sz={18}/>
         </button>
-         <button onClick={onOpenSettings} style={{background:C.input,border:"none",borderRadius:12,padding:"8px",color:C.text,cursor:"pointer",display:"flex",transition:"transform .2s"}} onMouseOver={e=>e.currentTarget.style.transform="scale(1.05)"} onMouseOut={e=>e.currentTarget.style.transform="scale(1)"}>
+         <button onClick={onOpenSettings} style={{background: C.isGlass ? "rgba(255,255,255,0.06)" : C.input, border: C.isGlass ? "1px solid rgba(140,130,255,0.14)" : "none", borderRadius:12, padding:"8px", color:C.text, cursor:"pointer", display:"flex", transition:"transform .2s", boxShadow: C.isGlass ? "inset 0 1px 0 rgba(255,255,255,0.10)" : "none", backdropFilter: C.isGlass ? "blur(12px)" : undefined}} onMouseOver={e=>e.currentTarget.style.transform="scale(1.05)"} onMouseOut={e=>e.currentTarget.style.transform="scale(1)"}>
           <Ico n="settings" sz={18}/>
         </button>
       </div>

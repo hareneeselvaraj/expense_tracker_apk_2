@@ -1,14 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Ico } from "../../components/ui/Ico.jsx";
 import Icon from "../../components/ui/Icon.jsx";
 import { Btn } from "../../components/ui/Btn.jsx";
-import { fmtAmt } from "../../utils/format.js";
+import { fmtAmt, startOfWeek, toISO } from "../../utils/format.js";
 
 export default function BudgetsPanel({ categories, tags, budgets, transactions, onAddBudget, onEditBudget, onDeleteBudget, theme }) {
   const C = theme;
   const [subTab, setSubTab] = useState("categories");
   const [confirmId, setConfirmId] = useState(null);
   const isCat = subTab === "categories";
+
+  // Pre-compute period ranges
+  const { weekRange, monthRange } = useMemo(() => {
+    const now = new Date();
+    const mon = startOfWeek(now);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    const y = now.getFullYear(), m = now.getMonth();
+    const pad = n => String(n).padStart(2, '0');
+    return {
+      weekRange: [toISO(mon), toISO(sun)],
+      monthRange: [`${y}-${pad(m + 1)}-01`, `${y}-${pad(m + 1)}-${pad(new Date(y, m + 1, 0).getDate())}`],
+    };
+  }, []);
 
   // Only show items that HAVE a budget set
   const budgetedItems = budgets
@@ -27,12 +41,23 @@ export default function BudgetsPanel({ categories, tags, budgets, transactions, 
     setConfirmId(null);
   };
 
+  // Count weekly vs monthly budgets
+  const weeklyCount = budgets.filter(b => b.period === "weekly").length;
+  const monthlyCount = budgets.filter(b => !b.period || b.period === "monthly").length;
+
   return (
     <div className="page-enter" style={{display:"flex",flexDirection:"column",gap:14}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
         <div>
-          <h2 style={{margin:0,fontSize:18,fontWeight:800,color:C.text,letterSpacing:"-.01em"}}>Monthly Limits</h2>
-          <p style={{margin:0,color:C.sub,fontSize:11}}>Control your spending velocity.</p>
+          <h2 style={{margin:0,fontSize:18,fontWeight:800,color:C.text,letterSpacing:"-.01em"}}>Spending Limits</h2>
+          <p style={{margin:0,color:C.sub,fontSize:11}}>
+            {weeklyCount > 0 && monthlyCount > 0
+              ? `${weeklyCount} weekly · ${monthlyCount} monthly`
+              : weeklyCount > 0
+                ? "Weekly budget tracking"
+                : "Monthly budget tracking"
+            }
+          </p>
         </div>
         <Btn theme={C} icon="plus" sm onClick={() => onAddBudget(subTab)}>Add</Btn>
       </div>
@@ -67,10 +92,13 @@ export default function BudgetsPanel({ categories, tags, budgets, transactions, 
           </div>
         ) : budgetedItems.map(item => {
           const b = item.budget;
+          const period = b.period || "monthly";
+          const [from, to] = period === "weekly" ? weekRange : monthRange;
 
           const spent = transactions
             .filter(t => {
               if (t.deleted) return false;
+              if (t.date < from || t.date > to) return false;
               const matchesEntity = isCat
                 ? t.category === item.id
                 : (t.tags || []).includes(item.id);
@@ -99,7 +127,21 @@ export default function BudgetsPanel({ categories, tags, budgets, transactions, 
                       : (item.icon ? <Icon name={item.icon} size={18} color={item.color} /> : <Ico n="tag" sz={16} c={item.color} />)}
                   </div>
                   <div>
-                    <div style={{color:C.text, fontSize:13, fontWeight:800}}>{isCat ? item.name : `#${item.name}`}</div>
+                    <div style={{display:"flex", alignItems:"center", gap:6}}>
+                      <span style={{color:C.text, fontSize:13, fontWeight:800}}>{isCat ? item.name : `#${item.name}`}</span>
+                      <span style={{
+                        fontSize: 8,
+                        fontWeight: 900,
+                        textTransform: "uppercase",
+                        letterSpacing: ".06em",
+                        padding: "2px 6px",
+                        borderRadius: 6,
+                        background: period === "weekly" ? C.primary + "18" : C.secondary ? C.secondary + "18" : C.primary + "10",
+                        color: period === "weekly" ? C.primary : C.secondary || C.primary,
+                      }}>
+                        {period === "weekly" ? "Weekly" : "Monthly"}
+                      </span>
+                    </div>
                     <div style={{color:C.sub, fontSize:11, fontWeight:600}}>{fmtAmt(spent)} of {fmtAmt(b.amount)}</div>
                   </div>
                 </div>

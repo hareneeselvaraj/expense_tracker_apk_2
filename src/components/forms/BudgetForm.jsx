@@ -7,12 +7,13 @@ export function BudgetForm({ item: initialItem, type, currentBudget, onSave, onC
   const C = theme;
   const [selectedItem, setSelectedItem] = useState(initialItem);
   const [amount, setAmount] = useState(currentBudget?.amount || "");
+  const [period, setPeriod] = useState(currentBudget?.period || "monthly");
   const isCat = type === "categories";
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedItem) return;
-    onSave(selectedItem.id, Number(amount));
+    onSave(selectedItem.id, Number(amount), period);
   };
 
   if (!selectedItem) {
@@ -39,6 +40,8 @@ export function BudgetForm({ item: initialItem, type, currentBudget, onSave, onC
     );
   }
 
+  const periodLabel = period === "weekly" ? "Weekly" : "Monthly";
+
   return (
     <form onSubmit={handleSubmit} style={{padding:16, display:"flex", flexDirection:"column", gap:20}}>
       <div style={{display:"flex", gap:14, alignItems:"center", padding:12, background:C.input, borderRadius:16, border:`1px solid ${C.border}`, position:"relative"}}>
@@ -53,12 +56,58 @@ export function BudgetForm({ item: initialItem, type, currentBudget, onSave, onC
         </div>
         <div>
           <div style={{color:C.text, fontSize:15, fontWeight:900}}>{isCat ? selectedItem.name : `#${selectedItem.name}`}</div>
-          <div style={{color:C.sub, fontSize:10, fontWeight:700, textTransform:"uppercase"}}>Setting Monthly Limit</div>
+          <div style={{color:C.sub, fontSize:10, fontWeight:700, textTransform:"uppercase"}}>Setting {periodLabel} Limit</div>
+        </div>
+      </div>
+
+      {/* Period Toggle */}
+      <div>
+        <label style={{color:C.sub, fontSize:10, fontWeight:900, textTransform:"uppercase", letterSpacing:".1em", marginBottom:6, display:"block"}}>Budget Period</label>
+        <div style={{
+          display: "flex",
+          background: C.input,
+          borderRadius: 12,
+          padding: 3,
+          gap: 2,
+          border: `1px solid ${C.borderLight}`,
+        }}>
+          {[
+            { id: "weekly", label: "Weekly", icon: "📅" },
+            { id: "monthly", label: "Monthly", icon: "🗓️" },
+          ].map(p => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setPeriod(p.id)}
+              style={{
+                flex: 1,
+                padding: "9px 0",
+                borderRadius: 10,
+                border: "none",
+                cursor: "pointer",
+                fontSize: 11,
+                fontWeight: 800,
+                fontFamily: "inherit",
+                background: period === p.id
+                  ? `linear-gradient(135deg, ${C.primary}, ${C.secondary || C.primary})`
+                  : "transparent",
+                color: period === p.id ? "#fff" : C.sub,
+                transition: "all .25s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 5,
+              }}
+            >
+              <span style={{ fontSize: 13 }}>{p.icon}</span>
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
       <div>
-        <label style={{color:C.sub, fontSize:10, fontWeight:900, textTransform:"uppercase", letterSpacing:".1em"}}>Monthly Budget Amount</label>
+        <label style={{color:C.sub, fontSize:10, fontWeight:900, textTransform:"uppercase", letterSpacing:".1em"}}>{periodLabel} Budget Amount</label>
         <div style={{display:"flex", alignItems:"center", gap:10, borderBottom:`2px solid ${C.border}`, transition:"all .3s"}} onFocusCapture={e=>e.currentTarget.style.borderColor=C.primary} onBlurCapture={e=>e.currentTarget.style.borderColor=C.border}>
           <span style={{fontSize:20, fontWeight:900, color:C.primary}}>₹</span>
           <input 
@@ -77,7 +126,10 @@ export function BudgetForm({ item: initialItem, type, currentBudget, onSave, onC
       </div>
 
       <p style={{margin:0, color:C.sub, fontSize:10.5, lineHeight:1.45, fontStyle:"italic"}}>
-        Setting a budget helps you track your spending velocity. You'll see a progress bar for this item in the Organize hub.
+        {period === "weekly"
+          ? "Weekly budgets reset every Monday. You'll see a progress bar showing your current week's spending."
+          : "Monthly budgets reset on the 1st of each month. You'll see a progress bar for this item in the Organize hub."
+        }
       </p>
 
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginTop:4}}>

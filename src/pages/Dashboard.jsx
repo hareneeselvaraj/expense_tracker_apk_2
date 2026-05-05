@@ -168,8 +168,13 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
               position: "absolute", inset: 0,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
-              background: C.surface, border: `1px solid ${C.borderLight}`,
-              borderRadius: 18, padding: 12, boxShadow: C.shadow, overflow: "hidden",
+              background: C.isGlass ? "rgba(255,255,255,0.08)" : C.surface,
+              border: `1px solid ${C.isGlass ? "rgba(255,255,255,0.15)" : C.borderLight}`,
+              borderRadius: 18, padding: 12,
+              boxShadow: C.isGlass ? "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12)" : C.shadow,
+              overflow: "hidden",
+              backdropFilter: C.isGlass ? "blur(24px) saturate(160%)" : undefined,
+              WebkitBackdropFilter: C.isGlass ? "blur(24px) saturate(160%)" : undefined,
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -240,8 +245,13 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
           { l: "Growth", a: s.invest, co: C.invest, ic: "stars" }
         ].map((s, i) => (
           <div key={i} className="vital-card" style={{
-            background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 14, padding: 10,
-            display: "flex", flexDirection: "column", gap: 6, transition: "transform .2s", boxShadow: "0 4px 12px rgba(0,0,0,0.02)"
+            background: C.isGlass ? "rgba(255,255,255,0.08)" : C.surface,
+            border: `1px solid ${C.isGlass ? "rgba(255,255,255,0.14)" : C.borderLight}`,
+            borderRadius: 14, padding: 10,
+            display: "flex", flexDirection: "column", gap: 6, transition: "all .3s",
+            boxShadow: C.isGlass ? `0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.10)` : "0 4px 12px rgba(0,0,0,0.02)",
+            backdropFilter: C.isGlass ? "blur(20px) saturate(160%)" : undefined,
+            WebkitBackdropFilter: C.isGlass ? "blur(20px) saturate(160%)" : undefined,
           }}>
             <div className="vital-icon" style={{ width: 26, height: 26, borderRadius: 8, background: s.co + "15", display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${s.co}10` }}>
               <Ico n={s.ic} sz={14} c={s.co} />
@@ -256,7 +266,7 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
 
       {/* Categories Breakdown — Dynamic & Clickable */}
       {hasAnyData && (
-        <div className="section-card" style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 18, padding: 12, boxShadow: C.shadow }}>
+        <div className="section-card" style={{ background: C.isGlass ? "rgba(255,255,255,0.06)" : C.surface, border: `1px solid ${C.isGlass ? "rgba(255,255,255,0.14)" : C.borderLight}`, borderRadius: 18, padding: 12, boxShadow: C.isGlass ? "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10)" : C.shadow, backdropFilter: C.isGlass ? "blur(24px) saturate(160%)" : undefined, WebkitBackdropFilter: C.isGlass ? "blur(24px) saturate(160%)" : undefined }}>
           
           <div style={{ textAlign: "center", marginBottom: 12 }}>
             <h2 style={{ color: C.text, fontSize: 14, fontWeight: 800, margin: 0, letterSpacing: "-.02em" }}>Categories</h2>
@@ -306,7 +316,15 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
                 const pct = activeTab.total > 0 ? Math.round((amt / activeTab.total) * 100) : 0;
 
                 return (
-                  <div key={name} style={{ borderRadius: 20, overflow: "hidden", border: `2px solid ${cat?.color || C.primary}00`, background: `${cat?.color || C.primary}24`, transition: "transform .2s" }}>
+                  <div key={name} style={{
+                    borderRadius: 20, overflow: "hidden",
+                    border: C.isGlass ? `1px solid rgba(255,255,255,0.14)` : `2px solid ${cat?.color || C.primary}00`,
+                    background: C.isGlass ? `rgba(255,255,255,0.06)` : `${cat?.color || C.primary}24`,
+                    transition: "all .3s",
+                    backdropFilter: C.isGlass ? "blur(20px) saturate(160%)" : undefined,
+                    WebkitBackdropFilter: C.isGlass ? "blur(20px) saturate(160%)" : undefined,
+                    boxShadow: C.isGlass ? `0 4px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.10)` : undefined,
+                  }}>
                     <button
                       onClick={() => setExpandedCat(name)}
                       style={{
@@ -316,10 +334,11 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
                       }}
                     >
                       <div style={{
-                        width: 40, height: 40, borderRadius: "50%",
-                        background: C.surface,
+                        width: 44, height: 44, borderRadius: 14,
+                        background: C.isGlass ? `rgba(255,255,255,0.08)` : C.surface,
+                        border: C.isGlass ? `1px solid rgba(255,255,255,0.12)` : undefined,
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: `0 4px 12px ${cat?.color || C.primary}22`
+                        boxShadow: C.isGlass ? `inset 0 1px 0 rgba(255,255,255,0.08)` : `0 4px 12px ${cat?.color || C.primary}22`
                       }}>
                         <Icon name={cat?.icon || "Package"} size={20} color={cat?.color || C.primary} />
                       </div>
@@ -330,8 +349,10 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
 
                       <div style={{
                         display: "flex", alignItems: "baseline", justifyContent: "center", gap: 6,
-                        background: C.surface, padding: "5px 12px", borderRadius: 20, marginTop: 2, width: "100%",
-                        boxShadow: `0 2px 8px ${cat?.color || C.primary}11`
+                        background: C.isGlass ? "rgba(255,255,255,0.06)" : C.surface,
+                        padding: "5px 12px", borderRadius: 20, marginTop: 2, width: "100%",
+                        border: C.isGlass ? "1px solid rgba(255,255,255,0.08)" : undefined,
+                        boxShadow: C.isGlass ? "inset 0 1px 0 rgba(255,255,255,0.06)" : `0 2px 8px ${cat?.color || C.primary}11`
                       }}>
                         <span style={{ color: C.text, fontSize: 13, fontWeight: 900 }}>{fmtAmt(amt)}</span>
                         <span style={{ fontSize: 10, fontWeight: 700, color: C.sub, opacity: 0.8 }}>{pct}%</span>
@@ -369,7 +390,7 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
       )}
 
       {/* Recent Activity */}
-      <div className="section-card" style={{ background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 18, padding: 12, boxShadow: C.shadow }}>
+      <div className="section-card" style={{ background: C.isGlass ? "rgba(255,255,255,0.06)" : C.surface, border: `1px solid ${C.isGlass ? "rgba(255,255,255,0.14)" : C.borderLight}`, borderRadius: 18, padding: 12, boxShadow: C.isGlass ? "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.10)" : C.shadow, backdropFilter: C.isGlass ? "blur(24px) saturate(160%)" : undefined, WebkitBackdropFilter: C.isGlass ? "blur(24px) saturate(160%)" : undefined }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
           <div style={{ color: C.text, fontSize: 16, fontWeight: 800, letterSpacing: "-.02em" }}>Recent Activity</div>
         </div>

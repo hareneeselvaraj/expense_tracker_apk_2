@@ -5,6 +5,8 @@ import { Btn } from "../components/ui/Btn.jsx";
 export default function SettingsPage({ 
   themeMode, 
   toggleTheme, 
+  glassMode,
+  toggleGlass,
   onShowBackup, 
   onExportBackup, 
   onImportBackup, 
@@ -48,6 +50,20 @@ export default function SettingsPage({
     }
   };
 
+  // Glass-aware card style helper
+  const cardStyle = {
+    background: C.isGlass ? "rgba(255,255,255,0.03)" : C.surface, 
+    borderRadius: 32, 
+    padding: 24, 
+    display: "flex", 
+    flexDirection: "column", 
+    gap: 20, 
+    border: `1px solid ${C.isGlass ? "rgba(255,255,255,0.15)" : C.borderLight}`, 
+    boxShadow: C.isGlass ? "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12)" : C.shadow,
+    backdropFilter: C.isGlass ? "blur(24px) saturate(160%)" : undefined,
+    WebkitBackdropFilter: C.isGlass ? "blur(24px) saturate(160%)" : undefined,
+  };
+
   return (
     <div className="page-enter" style={{padding:"20px 10px 100px",display:"flex",flexDirection:"column",gap:24}}>
 
@@ -55,7 +71,7 @@ export default function SettingsPage({
 
         {/* Investment Tracker Card moved down */}
 
-        <div style={{background:C.surface, borderRadius:32, padding:24, display:"flex", flexDirection:"column", gap:20, border:`1px solid ${C.borderLight}`, boxShadow:C.shadow}}>
+        <div style={cardStyle}>
            <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em"}}>Data Management</div>
            <div style={{display:"flex", flexDirection:"column", gap:12}}>
               <Btn theme={C} v="soft" full icon="cloud" onClick={onShowBackup}>Cloud Sync & Backups</Btn>
@@ -67,36 +83,113 @@ export default function SettingsPage({
            </div>
         </div>
 
-         <div style={{background:C.surface, borderRadius:32, padding:24, display:"flex", flexDirection:"column", gap:20, border:`1px solid ${C.borderLight}`, boxShadow:C.shadow}}>
-           <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em"}}>Preferences</div>
-           <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0"}}>
+         <div style={cardStyle}>
+           <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em"}}>Appearance</div>
+           
+           {/* Dark Mode Toggle */}
+           <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0", opacity: glassMode ? 0.4 : 1, transition:"opacity .3s"}}>
               <div style={{display:"flex", alignItems:"center", gap:14}}>
                  <div style={{width:44, height:44, borderRadius:16, background:C.input, display:"flex", alignItems:"center", justifyContent:"center"}}>
-                   <Ico n={themeMode==="dark"?"moon":"sun"} sz={20} c={C.primary}/>
+                   <Ico n={themeMode==="dark" || themeMode==="glass"?"moon":"sun"} sz={20} c={C.primary}/>
                  </div>
                  <div>
                    <div style={{fontSize:15, fontWeight:700, color:C.text, letterSpacing:"-.01em"}}>Dark Mode</div>
-                   <div style={{fontSize:12, color:C.sub, fontWeight:600}}>System-wide theme</div>
+                   <div style={{fontSize:12, color:C.sub, fontWeight:600}}>{glassMode ? "Locked in glass mode" : "System-wide theme"}</div>
                  </div>
               </div>
               <button 
-                onClick={toggleTheme} 
+                onClick={glassMode ? undefined : toggleTheme}
+                disabled={glassMode}
                 style={{
-                  width:56, height:30, borderRadius:15, background:themeMode==="dark"?C.primary:C.muted, border:"none", 
-                  position:"relative", cursor:"pointer", transition:"all .3s"
+                  width:56, height:30, borderRadius:15, 
+                  background: (themeMode==="dark" || themeMode==="glass") ? C.primary : C.muted, 
+                  border:"none", 
+                  position:"relative", cursor: glassMode ? "not-allowed" : "pointer", transition:"all .3s"
                 }}
               >
                   <div style={{
-                    position:"absolute", left:themeMode==="dark"?"calc(100% - 26px)":"4px", top:4, width:22, height:22, borderRadius:"50%", 
-                    background:C.surface, transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
+                    position:"absolute", left: (themeMode==="dark" || themeMode==="glass") ?"calc(100% - 26px)":"4px", top:4, width:22, height:22, borderRadius:"50%", 
+                    background: C.isGlass ? "rgba(255,255,255,0.9)" : C.surface, transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
                   }}/>
               </button>
            </div>
+
+           {/* Divider */}
+           <div style={{height:1, background:C.borderLight, margin:"0 -24px", padding:0}}/>
+
+           {/* Glass Theme Toggle */}
+           <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"4px 0"}}>
+              <div style={{display:"flex", alignItems:"center", gap:14}}>
+                 <div style={{
+                   width:44, height:44, borderRadius:16, 
+                   background: glassMode 
+                     ? "linear-gradient(135deg, rgba(124,92,252,0.2), rgba(99,102,241,0.15))" 
+                     : C.input, 
+                   display:"flex", alignItems:"center", justifyContent:"center",
+                   border: glassMode ? `1px solid ${C.primary}30` : "1px solid transparent",
+                   transition:"all .4s ease",
+                   boxShadow: glassMode ? `0 0 20px ${C.primary}15` : "none"
+                 }}>
+                   <Ico n="diamond" sz={20} c={glassMode ? C.primary : C.sub}/>
+                 </div>
+                 <div>
+                   <div style={{fontSize:15, fontWeight:700, color:C.text, letterSpacing:"-.01em", display:"flex", alignItems:"center", gap:8}}>
+                     Glass Theme
+                     {glassMode && (
+                       <span style={{
+                         fontSize:9, fontWeight:800, color:C.primary, 
+                         background:`${C.primary}15`, padding:"2px 8px", borderRadius:99,
+                         border:`1px solid ${C.primary}25`, letterSpacing:".05em",
+                         textTransform:"uppercase"
+                       }}>Active</span>
+                     )}
+                   </div>
+                   <div style={{fontSize:12, color:C.sub, fontWeight:600, lineHeight:1.4, maxWidth:200}}>Premium frosted-glass fintech UI</div>
+                 </div>
+              </div>
+              <button 
+                onClick={toggleGlass} 
+                style={{
+                  width:56, height:30, borderRadius:15, 
+                  background: glassMode 
+                    ? "linear-gradient(135deg, #7C5CFC, #6366f1)" 
+                    : C.muted, 
+                  border:"none", 
+                  position:"relative", cursor:"pointer", transition:"all .4s cubic-bezier(0.16, 1, 0.3, 1)",
+                  boxShadow: glassMode ? "0 4px 16px rgba(124,92,252,0.35)" : "none"
+                }}
+              >
+                  <div style={{
+                    position:"absolute", left:glassMode?"calc(100% - 26px)":"4px", top:4, width:22, height:22, borderRadius:"50%", 
+                    background:"#fff", transition:"all .4s cubic-bezier(0.16, 1, 0.3, 1)",
+                    boxShadow: glassMode 
+                      ? "0 2px 8px rgba(124,92,252,0.4)" 
+                      : "0 2px 4px rgba(0,0,0,0.15)"
+                  }}/>
+              </button>
+           </div>
+
+           {/* Glass theme preview hint */}
+           {glassMode && (
+             <div style={{
+               background:"linear-gradient(135deg, rgba(124,92,252,0.08), rgba(99,102,241,0.05))",
+               border:`1px solid ${C.primary}15`,
+               borderRadius:16, padding:"12px 16px",
+               display:"flex", alignItems:"center", gap:12,
+               animation:"fadeIn 0.5s ease"
+             }}>
+               <div style={{fontSize:20}}>✨</div>
+               <div>
+                 <div style={{fontSize:12, fontWeight:700, color:C.text, lineHeight:1.3}}>Glass mode enabled</div>
+                 <div style={{fontSize:11, color:C.sub, fontWeight:600, marginTop:2}}>Frosted glass surfaces with ambient glow effects. Dark mode is forced on.</div>
+               </div>
+             </div>
+           )}
         </div>
 
-        <div style={{background:C.surface, borderRadius:32, border:`1px solid ${C.borderLight}`, padding:24, boxShadow:C.shadow}}>
-          <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em", marginBottom:20}}>
+        <div style={cardStyle}>
+          <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em", marginBottom:0}}>
             Email Reports
           </div>
           
@@ -115,7 +208,7 @@ export default function SettingsPage({
             >
               <div style={{
                 position:"absolute", left:emailPrefs?.budgetAlerts ? "calc(100% - 24px)" : "4px", top:4, width:20, height:20, borderRadius:"50%", 
-                background:C.surface, transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
+                background: C.isGlass ? "rgba(255,255,255,0.9)" : C.surface, transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
                 boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
               }}/>
             </button>
@@ -136,7 +229,7 @@ export default function SettingsPage({
             >
               <div style={{
                 position:"absolute", left:emailPrefs?.yearEndSummary ? "calc(100% - 24px)" : "4px", top:4, width:20, height:20, borderRadius:"50%", 
-                background:C.surface, transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
+                background: C.isGlass ? "rgba(255,255,255,0.9)" : C.surface, transition:"all .3s cubic-bezier(0.16, 1, 0.3, 1)",
                 boxShadow: "0 2px 4px rgba(0,0,0,0.15)"
               }}/>
             </button>
@@ -173,18 +266,22 @@ export default function SettingsPage({
           </div>
         </div>
 
-        <div style={{background:C.surface, borderRadius:32, padding:24, display:"flex", flexDirection:"column", gap:20, border:`1px solid ${C.borderLight}`, boxShadow:C.shadow}}>
+        <div style={cardStyle}>
            <div style={{color:C.sub, fontSize:12, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em"}}>Account</div>
            <Btn theme={C} v="ghost" full icon="logOut" onClick={onLogout}>Sign Out</Btn>
         </div>
 
         {/* Investment Tracker Card */}
         <div style={{
-          background: `linear-gradient(135deg, ${C.primary}20, ${(C.secondary || C.primary)}20)`,
+          background: C.isGlass 
+            ? "rgba(255,255,255,0.03)" 
+            : `linear-gradient(135deg, ${C.primary}20, ${(C.secondary || C.primary)}20)`,
           border: `1px solid ${C.primary}40`,
           borderRadius: 32, padding: 24,
           display: "flex", flexDirection: "column", gap: 16,
-          boxShadow: C.shadow
+          boxShadow: C.shadow,
+          backdropFilter: C.isGlass ? "blur(40px) saturate(180%)" : undefined,
+          WebkitBackdropFilter: C.isGlass ? "blur(40px) saturate(180%)" : undefined,
         }}>
           <div style={{display: "flex", alignItems: "center", gap: 12}}>
             <div style={{fontSize: 32}}>💎</div>
@@ -204,7 +301,7 @@ export default function SettingsPage({
           </Btn>
         </div>
 
-        <div style={{background:C.surface, borderRadius:32, padding:32, textAlign:"center", position:"relative", border:`1px solid ${C.borderLight}`, boxShadow:C.shadow}}>
+        <div style={{...cardStyle, padding:32, textAlign:"center", position:"relative"}}>
            <div style={{fontSize:48, marginBottom:16}}>💳</div>
            <div style={{color:C.text, fontSize:20, fontWeight:800, letterSpacing:"-.02em"}}>Expense Tracker</div>
            <div style={{color:C.sub, fontSize:13, fontWeight:600, marginTop:8, maxWidth:200, margin:"8px auto 0", lineHeight:1.4}}>Your personal financial companion.</div>
@@ -215,8 +312,11 @@ export default function SettingsPage({
                  <div style={{fontSize:13, color:C.income, fontWeight:700, display:"flex", alignItems:"center", gap:6, justifyContent:"center"}}><div style={{width:8, height:8, borderRadius:"50%", background:C.income}}/> Online</div>
               </div>
               <div style={{textAlign:"center", borderLeft:`1px solid ${C.borderLight}`, paddingLeft:32}}>
-                 <div style={{fontSize:11, color:C.sub, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em", marginBottom:4}}>Sync</div>
-                 <div style={{fontSize:13, color:C.text, fontWeight:700}}>Active</div>
+                 <div style={{fontSize:11, color:C.sub, fontWeight:700, textTransform:"uppercase", letterSpacing:".05em", marginBottom:4}}>Theme</div>
+                 <div style={{fontSize:13, color: glassMode ? C.primary : C.text, fontWeight:700, display:"flex", alignItems:"center", gap:6, justifyContent:"center"}}>
+                   {glassMode && <Ico n="diamond" sz={12} c={C.primary}/>}
+                   {glassMode ? "Glass" : (themeMode === "dark" ? "Dark" : "Light")}
+                 </div>
               </div>
            </div>
            

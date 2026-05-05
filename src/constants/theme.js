@@ -16,6 +16,7 @@ export const THEMES = {
     glow1: "transparent", 
     glow2: "transparent",
     cardGlow: "none",
+    isGlass: false,
     pastel: ["#E8DEFC", "#FFDFD6", "#D4F0E8", "#FFD6E8", "#D6EBFF", "#FFF0D6"] // lavender, peach, mint, rose, sky, amber
   },
   dark: {
@@ -34,7 +35,28 @@ export const THEMES = {
     headerBg: "rgba(15, 13, 35, 0.95)",
     glow1: "transparent", glow2: "transparent",
     cardGlow: "none",
+    isGlass: false,
     pastel: ["rgba(124, 92, 252, 0.2)", "rgba(255, 107, 107, 0.2)", "rgba(52, 199, 123, 0.2)", "rgba(255, 102, 178, 0.2)", "rgba(102, 178, 255, 0.2)", "rgba(255, 178, 102, 0.2)"]
+  },
+  glass: {
+    bg: "#050818",
+    surface: "rgba(15, 15, 40, 0.55)",
+    card: "rgba(15, 15, 40, 0.45)",
+    border: "rgba(140, 120, 255, 0.16)",
+    borderLight: "rgba(120, 100, 240, 0.10)",
+    text: "#FFFFFF",
+    sub: "#9a94c8",
+    muted: "rgba(100, 80, 200, 0.08)",
+    input: "rgba(20, 18, 50, 0.60)",
+    shadow: "0 8px 32px rgba(0, 0, 0, 0.40)",
+    glass: "backdrop-filter: blur(40px) saturate(180%);",
+    navBg: "rgba(10, 10, 35, 0.60)",
+    headerBg: "rgba(8, 8, 30, 0.55)",
+    glow1: "rgba(100, 80, 240, 0.25)",
+    glow2: "rgba(140, 60, 220, 0.18)",
+    cardGlow: "0 0 40px rgba(100, 80, 240, 0.08)",
+    isGlass: true,
+    pastel: ["rgba(120, 100, 255, 0.20)", "rgba(239, 68, 68, 0.20)", "rgba(34, 197, 94, 0.20)", "rgba(180, 100, 255, 0.20)", "rgba(59, 140, 246, 0.20)", "rgba(245, 158, 11, 0.20)"]
   }
 };
 
