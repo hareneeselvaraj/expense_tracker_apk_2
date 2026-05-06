@@ -1195,7 +1195,7 @@ export default function App() {
       {C.isGlass && (
         <>
           {/* Full-bleed background image */}
-          <div style={{ position: "fixed", inset: 0, backgroundImage: "url(/glass-bg.png)", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", pointerEvents: "none", zIndex: 0 }} />
+          <div style={{ position: "fixed", inset: 0, backgroundImage: "url(/newpng.png)", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", pointerEvents: "none", zIndex: 0 }} />
           {/* Subtle dark overlay for text readability */}
           <div style={{ position: "fixed", inset: 0, background: "rgba(5, 8, 24, 0.35)", pointerEvents: "none", zIndex: 0 }} />
         </>
