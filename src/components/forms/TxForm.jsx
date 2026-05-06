@@ -15,6 +15,7 @@ export const TxForm = ({init, initialDate, categories, tags, accounts, existingT
   const [isSplitting, setIsSplitting] = useState(false);
   const [splits, setSplits] = useState([{id:uid(), amount:"", category:init?.category||"c13"}]);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [duplicatePrompt, setDuplicatePrompt] = useState(null);
   const C = theme;
   
   const f = k => v => setTx(p=>({...p,[k]:v}));
@@ -23,6 +24,32 @@ export const TxForm = ({init, initialDate, categories, tags, accounts, existingT
   const toggleTag = tid => setTx(p=>({...p,tags:(p.tags||[]).includes(tid)?p.tags.filter(x=>x!==tid):[...(p.tags||[]),tid]}));
 
   const valid = tx.description.trim() && parseFloat(tx.amount) > 0;
+
+  const handleSave = (force = false) => {
+    if (!force && !init?.id) {
+      if (!existingTransactions) {
+        console.warn("TxForm: existingTransactions prop missing — duplicate check skipped");
+      } else {
+        const result = checkImportBatch([{ ...tx, id: "_temp_" }], existingTransactions);
+        if (result.duplicates.length > 0) {
+          setDuplicatePrompt(result.duplicates[0].existing);
+          return;
+        }
+      }
+    }
+    if(isSplitting) {
+      const splitTxs = splits.map(s => ({
+        ...tx, 
+        id: uid(), 
+        amount: parseFloat(s.amount), 
+        category: s.category, 
+        description: `${tx.description} (${categories.find(c=>c.id===s.category)?.name})`
+      }));
+      onSave(splitTxs);
+    } else {
+      onSave(init?.id ? { ...tx, amount: parseFloat(tx.amount) || 0 } : { ...tx, id: uid(), amount: parseFloat(tx.amount) || 0 });
+    }
+  };
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -146,6 +173,23 @@ export const TxForm = ({init, initialDate, categories, tags, accounts, existingT
         <FInput theme={C} value={tx.notes||""} onChange={fEv("notes")} placeholder="Optional…"/>
       </div>
 
+      {duplicatePrompt && (
+        <div style={{background:C.expense+"15", border:`1px solid ${C.expense}40`, padding:12, borderRadius:12, display:"flex", flexDirection:"column", gap:8, marginTop:8}}>
+          <div style={{display:"flex", gap:8, color:C.expense, alignItems:"center"}}>
+            <Ico n="info" sz={16} />
+            <span style={{fontSize:12, fontWeight:800}}>Possible Duplicate</span>
+          </div>
+          <div style={{fontSize:11, color:C.text, lineHeight:1.4}}>
+            This looks like a duplicate of: <br/>
+            <strong>{duplicatePrompt.description}</strong> • {new Date(duplicatePrompt.date).toLocaleDateString()} • {fmtAmt(duplicatePrompt.amount)}
+          </div>
+          <div style={{display:"flex", gap:8, marginTop:4}}>
+            <Btn theme={C} v="primary" sm style={{background:C.expense, color:"#fff", border:"none"}} onClick={() => handleSave(true)}>Save Anyway</Btn>
+            <Btn theme={C} v="ghost" sm onClick={() => setDuplicatePrompt(null)}>Cancel</Btn>
+          </div>
+        </div>
+      )}
+
       <div style={{display:"flex",gap:8,paddingTop:8, borderTop:`1px solid ${C.border}`}}>
         {onDelete && (
           confirmDelete ? (
@@ -160,36 +204,9 @@ export const TxForm = ({init, initialDate, categories, tags, accounts, existingT
         )}
         <div style={{flex:1}}/>
         <Btn theme={C} v="ghost" sm onClick={onClose}>Cancel</Btn>
-        <Btn theme={C} v="primary" sm disabled={!valid || (isSplitting && Math.abs(tx.amount - splits.reduce((a,c)=>a+(parseFloat(c.amount)||0), 0)) > 0.01)} onClick={()=>{
-          if (!init?.id) {
-            if (!existingTransactions) {
-              console.warn("TxForm: existingTransactions prop missing — duplicate check skipped");
-            }
-            const result = checkImportBatch([{ ...tx, id: "_temp_" }], existingTransactions || []);
-            if (result.duplicates.length > 0) {
-              const dup = result.duplicates[0];
-              const proceed = window.confirm(
-                `This looks like a duplicate of:\n\n` +
-                `"${dup.existing.description}"\n` +
-                `${new Date(dup.existing.date).toLocaleDateString()} • ${fmtAmt(dup.existing.amount)}\n\n` +
-                `Save anyway?`
-              );
-              if (!proceed) return;
-            }
-          }
-          if(isSplitting) {
-            const splitTxs = splits.map(s => ({
-              ...tx, 
-              id: uid(), 
-              amount: parseFloat(s.amount), 
-              category: s.category, 
-              description: `${tx.description} (${categories.find(c=>c.id===s.category)?.name})`
-            }));
-            onSave(splitTxs);
-          } else {
-            onSave(init?.id ? { ...tx, amount: parseFloat(tx.amount) || 0 } : { ...tx, id: uid(), amount: parseFloat(tx.amount) || 0 });
-          }
-        }}>{init?.id ? "Save" : isSplitting ? "Save Splits" : "Add"}</Btn>
+        <Btn theme={C} v="primary" sm disabled={!valid || (isSplitting && Math.abs(tx.amount - splits.reduce((a,c)=>a+(parseFloat(c.amount)||0), 0)) > 0.01)} onClick={() => handleSave(false)}>
+          {init?.id ? "Save" : isSplitting ? "Save Splits" : "Add"}
+        </Btn>
       </div>
     </div>
   );

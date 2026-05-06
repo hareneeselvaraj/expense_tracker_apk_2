@@ -1303,7 +1303,7 @@ export default function App() {
           onAddRecurring: () => setAddRecurring(true),
           onEditRecurring: (tmpl) => setEditRecurring(tmpl),
           onDeleteRecurring: (id) => {
-            setRecurring(p => p.filter(r => r.id !== id));
+            setRecurring(p => p.map(r => r.id === id ? { ...r, deleted: true, updatedAt: new Date().toISOString() } : r));
             notify("Recurring payment deleted", "error");
           },
           onTogglePauseRecurring: (id) => {
@@ -1532,7 +1532,7 @@ export default function App() {
           theme={C}
           onClose={() => { setAddRecurring(false); setEditRecurring(null); }}
           onDelete={(id) => {
-            setRecurring(p => p.filter(r => r.id !== id));
+            setRecurring(p => p.map(r => r.id === id ? { ...r, deleted: true, updatedAt: new Date().toISOString() } : r));
             setEditRecurring(null);
             notify("Recurring payment deleted", "error");
           }}
@@ -1679,6 +1679,13 @@ export default function App() {
 
         ${C.isGlass ? `
         /* ═══ PREMIUM GLASSMORPHISM — ALL ELEMENTS ═══ */
+        
+        body, #root {
+          background-image: url('/newpng.png') !important;
+          background-size: cover !important;
+          background-position: center !important;
+          background-attachment: fixed !important;
+        }
 
         /* Cards & Sections */
         .section-card, .net-hero {

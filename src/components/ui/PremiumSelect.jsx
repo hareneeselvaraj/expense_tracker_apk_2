@@ -79,7 +79,7 @@ export const PremiumSelect = ({ label, value, options, onChange, placeholder = "
       </div>
 
       {isOpen && (
-        <div className="page-enter" style={{
+        <div style={{
           position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, 
           boxShadow: "0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05)", zIndex: 1000, maxHeight: 260, overflow: "hidden", 
           backdropFilter: "blur(40px) saturate(200%)", animation: "scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)"

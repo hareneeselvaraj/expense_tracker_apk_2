@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en" class="dark" style="color-scheme: dark;">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Expense Tracker" />
+    <meta name="theme-color" content="#0d0f1e" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <title>Expense tracker 💰</title>
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
+      html, body, #root {
+        background-color: #0d0f1e;
+        color: #ffffff;
+        min-height: 100vh;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+        max-width: 100vw;
+      }
+
+      /* Fix Chrome autofill white flash in dark mode */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 1000px #0d0f1e inset !important;
+        -webkit-text-fill-color: white !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      /* ── Mobile Compact UI ── */
+      @media (max-width: 480px) {
+        /* Page-level padding & gap reduction */
+        .page-enter {
+          padding: 10px 10px 90px 10px !important;
+          gap: 12px !important;
+        }
+
+        /* Hero / summary cards */
+        .hero-card {
+          padding: 16px !important;
+          border-radius: 20px !important;
+        }
+        .hero-card .hero-amount {
+          font-size: 26px !important;
+        }
+        .hero-card .hero-label {
+          font-size: 11px !important;
+          margin-bottom: 4px !important;
+        }
+
+        /* Account cards */
+        .acc-card {
+          padding: 12px !important;
+          border-radius: 16px !important;
+          gap: 8px !important;
+        }
+        .acc-card .acc-icon {
+          width: 36px !important;
+          height: 36px !important;
+          border-radius: 10px !important;
+        }
+        .acc-card .acc-name {
+          font-size: 13px !important;
+        }
+        .acc-card .acc-type {
+          font-size: 10px !important;
+        }
+        .acc-card .acc-actions > div {
+          width: 30px !important;
+          height: 30px !important;
+          border-radius: 9px !important;
+        }
+        .acc-card .acc-footer {
+          padding-top: 10px !important;
+          margin-top: 2px !important;
+        }
+        .acc-card .acc-bal {
+          font-size: 18px !important;
+        }
+        .acc-card .acc-bal-label {
+          font-size: 9px !important;
+          margin-bottom: 2px !important;
+        }
+        .acc-card .acc-entries {
+          font-size: 10px !important;
+        }
+
+        /* Accounts list gap */
+        .acc-list {
+          gap: 10px !important;
+        }
+
+        /* Dashboard vitals grid */
+        .vitals-grid {
+          gap: 8px !important;
+        }
+        .vital-card {
+          padding: 12px !important;
+          border-radius: 16px !important;
+          gap: 8px !important;
+        }
+        .vital-card .vital-icon {
+          width: 28px !important;
+          height: 28px !important;
+          border-radius: 10px !important;
+        }
+        .vital-card .vital-amount {
+          font-size: 13px !important;
+        }
+
+        /* Top Expenses section */
+        .section-card {
+          padding: 16px !important;
+          border-radius: 24px !important;
+        }
+        .section-card h2 {
+          font-size: 16px !important;
+        }
+
+        /* Expense category grid */
+        .cat-grid {
+          gap: 8px !important;
+          margin-bottom: 16px !important;
+        }
+        .cat-tile {
+          padding: 12px !important;
+          border-radius: 16px !important;
+          gap: 6px !important;
+        }
+
+        /* Budget summary bar */
+        .budget-bar {
+          padding: 10px 12px !important;
+          border-radius: 14px !important;
+          margin-bottom: 14px !important;
+        }
+        .budget-bar .budget-amount {
+          font-size: 16px !important;
+        }
+
+        /* Net worth hero on dashboard */
+        .net-hero {
+          padding: 16px !important;
+          border-radius: 24px !important;
+        }
+        .net-hero .net-amount {
+          font-size: 28px !important;
+          margin: 4px 0 !important;
+        }
+      }
+
+      /* ── Scrollbar hiding for horizontal scrolls ── */
+      .premium-scroll {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .premium-scroll::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* ── Form row: side-by-side on wide, stacked on narrow ── */
+      .form-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      @media (max-width: 360px) {
+        .form-row {
+          flex-direction: column !important;
+          gap: 8px !important;
+        }
+        .form-row > div {
+          min-width: 0 !important;
+        }
+      }
+      .form-row > div {
+        overflow: hidden;
+      }
+
+      /* ── Select consistency ── */
+      .form-select {
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23888'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 32px !important;
+      }
+
+
+
+      /* ── Date input mobile compact ── */
+      input[type="date"] {
+        min-height: 36px;
+        max-width: 100%;
+        box-sizing: border-box;
+        font-size: 13px !important;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      @media (max-width: 480px) {
+        input[type="date"] {
+          font-size: 12px !important;
+          padding: 6px 8px !important;
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-CiHQJ62p.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -38,8 +38,8 @@ export function processRecurring(templates = []) {
   templates.forEach(tmpl => {
     let current = { ...tmpl };
     
-    // Skip if no nextDue or if it's ended or paused
-    if (!current.nextDue || current.paused) {
+    // Skip if no nextDue or if it's ended or paused or deleted
+    if (!current.nextDue || current.paused || current.deleted) {
       updatedTemplates.push(current);
       return;
     }
@@ -90,7 +90,7 @@ export function getUpcoming(templates = [], days = 7) {
   const futureISO = futureDate.toISOString().split("T")[0];
 
   return templates
-    .filter(t => t.nextDue && t.nextDue <= futureISO)
+    .filter(t => !t.deleted && t.nextDue && t.nextDue <= futureISO)
     .sort((a, b) => a.nextDue.localeCompare(b.nextDue));
 }
 

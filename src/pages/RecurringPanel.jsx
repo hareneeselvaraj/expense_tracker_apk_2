@@ -29,8 +29,9 @@ function getStatus(tmpl) {
 export default function RecurringPanel({ recurring, categories, accounts, onAdd, onEdit, onTogglePause, onDelete, theme }) {
   const C = theme;
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const activeRecurring = (recurring || []).filter(r => !r.deleted);
 
-  if (!recurring || recurring.length === 0) {
+  if (activeRecurring.length === 0) {
     return (
       <div style={{
         background: C.surface, border: `1px solid ${C.borderLight}`,
@@ -57,7 +58,7 @@ export default function RecurringPanel({ recurring, categories, accounts, onAdd,
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
         <p style={{ margin: 0, color: C.sub, fontSize: 13, fontWeight: 600 }}>
-          {recurring.length} recurring payment{recurring.length !== 1 ? "s" : ""}
+          {activeRecurring.length} recurring payment{activeRecurring.length !== 1 ? "s" : ""}
         </p>
         <Btn theme={C} icon="plus" sm onClick={onAdd}>Add</Btn>
       </div>
@@ -73,7 +74,7 @@ export default function RecurringPanel({ recurring, categories, accounts, onAdd,
         </div>
         <div className="hero-amount" style={{ color: C.text, fontSize: 24, fontWeight: 800, letterSpacing: "-.02em" }}>
           {fmtAmt(
-            recurring
+            activeRecurring
               .filter(r => !r.paused && getStatus(r) === "active")
               .reduce((sum, r) => {
                 const amt = r.templateTx?.amount || 0;
@@ -92,7 +93,7 @@ export default function RecurringPanel({ recurring, categories, accounts, onAdd,
       </div>
 
       {/* Recurring Cards */}
-      {recurring.map((tmpl, i) => {
+      {activeRecurring.map((tmpl, i) => {
         const status = getStatus(tmpl);
         const cat = categories.find(c => c.id === tmpl.templateTx?.category);
         const acc = accounts.find(a => a.id === tmpl.templateTx?.accountId);

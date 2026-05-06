@@ -30,8 +30,40 @@ export default function OrganizePage({
     return transactions.filter(t => t.date >= from && t.date <= to);
   }, [transactions, orgPeriodTab, orgDate]);
 
+  /* ── Swipe navigation ─────────────────────────────── */
+  const swipeRef = React.useRef(null);
+  const touchStartX = React.useRef(null);
+  const touchStartY = React.useRef(null);
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const onTouchEnd = (e) => {
+    if (!touchStartX.current || !touchStartY.current) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const distanceX = touchStartX.current - touchEndX;
+    const distanceY = touchStartY.current - touchEndY;
+    const isHorizontalSwipe = Math.abs(distanceX) > Math.abs(distanceY);
+
+    if (isHorizontalSwipe) {
+      const tabs = ["categories", "tags", "budgets", "rules"];
+      const currIdx = tabs.indexOf(organizeTab);
+      if (distanceX > minSwipeDistance && currIdx < tabs.length - 1) {
+        setOrganizeTab(tabs[currIdx + 1]);
+      } else if (distanceX < -minSwipeDistance && currIdx > 0) {
+        setOrganizeTab(tabs[currIdx - 1]);
+      }
+    }
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
   return (
-    <div className="page-enter" style={{padding:"8px 10px 100px",display:"flex",flexDirection:"column",gap:10}}>
+    <div ref={swipeRef} className="page-enter" style={{padding:"8px 10px 100px",display:"flex",flexDirection:"column",gap:10}} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       
       {/* Period Navigator */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10, marginTop:4}}>
