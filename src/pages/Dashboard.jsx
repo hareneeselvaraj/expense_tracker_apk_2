@@ -126,13 +126,14 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
             onClick={onSmartSync}
             disabled={isSyncing || isOffline}
             style={{
-              background: (isSyncing || isOffline) ? C.muted : C.primaryDim,
-              border: `1px solid ${(isSyncing || isOffline) ? C.border : C.primary + "33"}`,
+              background: (isSyncing || isOffline) ? C.muted : (C.isGlass ? "rgba(255,255,255,0.12)" : C.primaryDim),
+              border: `1px solid ${(isSyncing || isOffline) ? C.border : (C.isGlass ? "rgba(255,255,255,0.2)" : C.primary + "33")}`,
               borderRadius: 14, padding: "8px 12px",
-              color: (isSyncing || isOffline) ? C.sub : C.primary,
+              color: (isSyncing || isOffline) ? C.sub : (C.isGlass ? "rgba(255,255,255,0.9)" : C.primary),
               display: "flex", alignItems: "center", gap: 6,
               cursor: isSyncing ? "wait" : isOffline ? "not-allowed" : "pointer",
-              fontWeight: 800, fontSize: 13, transition: "all .2s"
+              fontWeight: 800, fontSize: 13, transition: "all .2s",
+              backdropFilter: C.isGlass ? "blur(12px)" : undefined,
             }}
           >
             <Ico n={isOffline ? "cloudOff" : "sync"} sz={16} />
@@ -293,15 +294,15 @@ export default function Dashboard({ user, transactions, categories, tags, accoun
                   onClick={() => { setTopTab(t.key); setExpandedCat(null); }}
                   style={{
                     flex: 1,
-                    background: active ? t.color : "transparent",
-                    color: active ? "#fff" : C.sub,
-                    border: "none",
+                    background: active ? `${t.color}22` : "transparent",
+                    color: active ? t.color : C.sub,
+                    border: active ? `1px solid ${t.color}40` : "1px solid transparent",
                     borderRadius: 25, padding: "8px 0", fontSize: 10, fontWeight: 800,
                     cursor: "pointer", transition: "all .2s", display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
                     fontFamily: "inherit"
                   }}
                 >
-                  <Icon name={t.icon} size={11} color={active ? "#fff" : C.sub} />
+                  <Icon name={t.icon} size={11} color={active ? t.color : C.sub} />
                   {t.label}
                   <span style={{ fontSize: 9, opacity: 0.8 }}>({count})</span>
                 </button>

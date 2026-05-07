@@ -123,7 +123,7 @@ export default function OrganizePage({
               fontWeight: 800,
               fontFamily: "inherit",
               background: organizeTab === t.id ? C.primary : "transparent",
-              color: organizeTab === t.id ? "#fff" : C.sub,
+              color: organizeTab === t.id ? "#fff" : (C.isGlass ? "rgba(255,255,255,0.75)" : C.sub),
               transition: "all .2s ease"
             }}
           >

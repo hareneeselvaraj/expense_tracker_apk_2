@@ -329,11 +329,18 @@ export default function TransactionsPage({
     );
   };
 
+  const glassCardStyle = {
+    background: C.surface,
+    border: `1px solid ${C.borderLight}`,
+    borderRadius: 12,
+    overflow: "hidden"
+  };
+
   /* ═══════════════════════════════════════════════════ */
   /* ── DAILY VIEW ─────────────────────────────────── */
   /* ═══════════════════════════════════════════════════ */
   const renderDailyView = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {/* C/F & Balance row */}
       <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 10px", borderBottom: `1px solid ${C.borderLight}`, background: C.surface }}>
         <div style={{ display: "flex", gap: 6, alignItems: "baseline" }}>
@@ -349,7 +356,7 @@ export default function TransactionsPage({
       {timeTx.length === 0 ? (
         <div style={{ padding: 40, textAlign: "center", color: C.sub, fontSize: 13 }}>No transactions for this day.</div>
       ) : (
-        <>
+        <div style={{ ...glassCardStyle }}>
           {/* Income (Credit) Section */}
           {credits.length > 0 && (
             <>
@@ -371,7 +378,7 @@ export default function TransactionsPage({
               {debits.map(t => renderCompactRow(t, true))}
             </>
           )}
-        </>
+        </div>
       )}
     </div>
   );
@@ -381,11 +388,10 @@ export default function TransactionsPage({
   /* ═══════════════════════════════════════════════════ */
   const renderMonthlyView = () => {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Summary card */}
         <div style={{
-          background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12,
-          padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6,
+          ...glassCardStyle, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6, overflow: "visible",
         }}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div>
@@ -424,8 +430,7 @@ export default function TransactionsPage({
 
           return (
             <div key={date} style={{
-              background: C.surface, border: `1px solid ${C.borderLight}`, borderRadius: 12,
-              padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6,
+              ...glassCardStyle, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 6, overflow: "visible",
             }}>
               {/* Date header */}
               <div style={{ textAlign: "center", fontSize: 13, fontWeight: 800, color: C.text, paddingBottom: 6, borderBottom: `1px solid ${C.borderLight}` }}>
@@ -484,22 +489,23 @@ export default function TransactionsPage({
   const renderYearlyView = () => {
     let runningBalance = cfBalance;
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-        {/* Table header */}
-        <div style={{ display: "flex", padding: "8px 10px", borderBottom: `2px solid ${C.borderLight}` }}>
-          <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: C.sub }}></span>
-          <span style={{ width: 90, fontSize: 11, fontWeight: 700, color: C.sub, textAlign: "right" }}>Income (Credit)</span>
-          <span style={{ width: 90, fontSize: 11, fontWeight: 700, color: C.sub, textAlign: "right" }}>Expense (Debit)</span>
-          <span style={{ width: 90, fontSize: 11, fontWeight: 700, color: C.sub, textAlign: "right" }}>Balance</span>
-        </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ ...glassCardStyle, padding: 0 }}>
+          {/* Table header */}
+          <div style={{ display: "flex", padding: "12px 10px", borderBottom: `2px solid ${C.borderLight}` }}>
+            <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: C.sub }}></span>
+            <span style={{ width: 90, fontSize: 11, fontWeight: 700, color: C.sub, textAlign: "right" }}>Income (Credit)</span>
+            <span style={{ width: 90, fontSize: 11, fontWeight: 700, color: C.sub, textAlign: "right" }}>Expense (Debit)</span>
+            <span style={{ width: 90, fontSize: 11, fontWeight: 700, color: C.sub, textAlign: "right" }}>Balance</span>
+          </div>
 
-        {/* C/F row */}
-        <div style={{ display: "flex", padding: "6px 10px", borderBottom: `1px solid ${C.borderLight}`, background: C.muted }}>
-          <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: C.sub }}>C/F</span>
-          <span style={{ width: 90, fontSize: 12, fontWeight: 700, color: C.text, textAlign: "right" }}></span>
-          <span style={{ width: 90, fontSize: 12, fontWeight: 700, color: C.text, textAlign: "right" }}></span>
-          <span style={{ width: 90, fontSize: 12, fontWeight: 700, color: C.text, textAlign: "right" }}>{fmtAmt(cfBalance)}</span>
-        </div>
+          {/* C/F row */}
+          <div style={{ display: "flex", padding: "10px", borderBottom: `1px solid ${C.borderLight}`, background: C.isGlass ? "rgba(255,255,255,0.03)" : C.muted }}>
+            <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: C.sub }}>C/F</span>
+            <span style={{ width: 90, fontSize: 12, fontWeight: 700, color: C.text, textAlign: "right" }}></span>
+            <span style={{ width: 90, fontSize: 12, fontWeight: 700, color: C.text, textAlign: "right" }}></span>
+            <span style={{ width: 90, fontSize: 12, fontWeight: 700, color: C.text, textAlign: "right" }}>{fmtAmt(cfBalance)}</span>
+          </div>
 
         {/* Month rows */}
         {monthlyGroups.map((mg, i) => {
@@ -536,6 +542,7 @@ export default function TransactionsPage({
             </div>
           );
         })}
+        </div>
       </div>
     );
   };
@@ -544,7 +551,7 @@ export default function TransactionsPage({
   /* ── MAIN RENDER ────────────────────────────────── */
   /* ═══════════════════════════════════════════════════ */
   return (
-    <div ref={swipeRef} className="page-enter" style={{ padding: "0 0 100px 0", display: "flex", flexDirection: "column", gap: 0 }}>
+    <div ref={swipeRef} className="page-enter" style={{ padding: "0 0 100px 0", display: "flex", flexDirection: "column", gap: 0, minHeight: "100dvh" }}>
 
       {/* ── Search & Actions ─────────────────────────── */}
       <div style={{ display: "flex", gap: 5, alignItems: "center", padding: "6px 12px 4px" }}>
@@ -602,12 +609,13 @@ export default function TransactionsPage({
       </div>
 
       {/* ── Tabs (Pill style) ───────────────────────── */}
-      <div style={{ padding: "4px 12px 8px", background: C.bg }}>
+      <div style={{ padding: "4px 12px 8px", background: C.isGlass ? "rgba(255, 255, 255, 0)" : C.bg }}>
         <div style={{
-          display: "flex", 
-          background: C.input, 
-          borderRadius: 30, 
-          padding: 4, 
+          display: "flex",
+          background: C.isGlass ? "rgba(255, 255, 255, 0)" : C.input,
+          border: C.isGlass ? "1px solid rgba(255, 255, 255, 0)" : "none",
+          borderRadius: 30,
+          padding: 4,
           gap: 2,
           alignItems: "center"
         }}>
@@ -616,7 +624,7 @@ export default function TransactionsPage({
               flex: 1, border: "none", padding: "8px 0", cursor: "pointer",
               fontSize: 10, fontWeight: 800, fontFamily: "inherit",
               textTransform: "uppercase", letterSpacing: "0.05em",
-              color: activeTab === tab ? "#fff" : C.sub,
+              color: activeTab === tab ? "#fff" : (C.isGlass ? "rgba(255,255,255,0.75)" : C.sub),
               background: activeTab === tab ? C.primary : "transparent",
               borderRadius: 25, transition: "all .2s",
             }}>

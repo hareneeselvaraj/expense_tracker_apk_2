@@ -141,8 +141,8 @@ export default function App() {
   // ── STATE ──────────────────────────────────────────────────────────────────
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState(null);
-  const [themeMode, setThemeMode] = useState(localStorage.getItem("theme") || "light");
-  const [glassMode, setGlassMode] = useState(localStorage.getItem("glassMode") === "true");
+  const [themeMode, setThemeMode] = useState(localStorage.getItem("theme") || "dark");
+  const [glassMode, setGlassMode] = useState(localStorage.getItem("glassMode") !== "false");
   const [page, setPage] = useState("dashboard");
   const [toast, setToast] = useState(null);
 

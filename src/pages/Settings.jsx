@@ -52,16 +52,14 @@ export default function SettingsPage({
 
   // Glass-aware card style helper
   const cardStyle = {
-    background: C.isGlass ? "rgba(255,255,255,0.03)" : C.surface, 
-    borderRadius: 32, 
+    background: C.surface, 
+    borderRadius: 20, 
     padding: 24, 
     display: "flex", 
     flexDirection: "column", 
     gap: 20, 
-    border: `1px solid ${C.isGlass ? "rgba(255,255,255,0.15)" : C.borderLight}`, 
-    boxShadow: C.isGlass ? "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12)" : C.shadow,
-    backdropFilter: C.isGlass ? "blur(24px) saturate(160%)" : undefined,
-    WebkitBackdropFilter: C.isGlass ? "blur(24px) saturate(160%)" : undefined,
+    border: `1px solid ${C.borderLight}`, 
+    boxShadow: C.shadow,
   };
 
   return (
@@ -274,14 +272,12 @@ export default function SettingsPage({
         {/* Investment Tracker Card */}
         <div style={{
           background: C.isGlass 
-            ? "rgba(255,255,255,0.03)" 
+            ? C.surface 
             : `linear-gradient(135deg, ${C.primary}20, ${(C.secondary || C.primary)}20)`,
           border: `1px solid ${C.primary}40`,
-          borderRadius: 32, padding: 24,
+          borderRadius: 20, padding: 24,
           display: "flex", flexDirection: "column", gap: 16,
           boxShadow: C.shadow,
-          backdropFilter: C.isGlass ? "blur(40px) saturate(180%)" : undefined,
-          WebkitBackdropFilter: C.isGlass ? "blur(40px) saturate(180%)" : undefined,
         }}>
           <div style={{display: "flex", alignItems: "center", gap: 12}}>
             <div style={{fontSize: 32}}>💎</div>

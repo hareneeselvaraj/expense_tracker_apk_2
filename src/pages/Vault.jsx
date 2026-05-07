@@ -34,8 +34,57 @@ export default function VaultPage({
 
   const overallNetWorth = netWorth + investedValue;
 
+  const VAULT_TABS = ["accounts", "notes", "recurring", "reports"];
+
+  /* ── Swipe navigation ─────────────────────────── */
+  const swipeRef = React.useRef(null);
+  const touchDataRef = React.useRef({ startX: 0, startY: 0, endX: 0, endY: 0 });
+  const minSwipeDistance = 50;
+  const vaultTabRef = React.useRef(vaultTab);
+  React.useEffect(() => { vaultTabRef.current = vaultTab; }, [vaultTab]);
+
+  React.useEffect(() => {
+    const el = swipeRef.current;
+    if (!el) return;
+
+    const handleStart = (e) => {
+      touchDataRef.current = {
+        startX: e.touches[0].clientX, startY: e.touches[0].clientY,
+        endX: e.touches[0].clientX, endY: e.touches[0].clientY,
+      };
+    };
+    const handleMove = (e) => {
+      touchDataRef.current.endX = e.touches[0].clientX;
+      touchDataRef.current.endY = e.touches[0].clientY;
+      const dx = Math.abs(touchDataRef.current.startX - touchDataRef.current.endX);
+      const dy = Math.abs(touchDataRef.current.startY - touchDataRef.current.endY);
+      if (dx > dy && dx > 10) e.preventDefault();
+    };
+    const handleEnd = () => {
+      const { startX, startY, endX, endY } = touchDataRef.current;
+      const distanceX = startX - endX;
+      const distanceY = startY - endY;
+      if (Math.abs(distanceY) > Math.abs(distanceX)) return;
+      const currIdx = VAULT_TABS.indexOf(vaultTabRef.current);
+      if (distanceX > minSwipeDistance && currIdx < VAULT_TABS.length - 1) {
+        setVaultTab(VAULT_TABS[currIdx + 1]);
+      } else if (distanceX < -minSwipeDistance && currIdx > 0) {
+        setVaultTab(VAULT_TABS[currIdx - 1]);
+      }
+    };
+
+    el.addEventListener("touchstart", handleStart, { passive: true });
+    el.addEventListener("touchmove", handleMove, { passive: false });
+    el.addEventListener("touchend", handleEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", handleStart);
+      el.removeEventListener("touchmove", handleMove);
+      el.removeEventListener("touchend", handleEnd);
+    };
+  }, []);
+
   return (
-    <div className="page-enter" style={{padding:"16px 10px 100px",display:"flex",flexDirection:"column",gap:20}}>
+    <div ref={swipeRef} className="page-enter" style={{padding:"16px 10px 100px",display:"flex",flexDirection:"column",gap:20}}>
       
       {/* Sub-tab switcher (Pill style) */}
       <div 
@@ -60,10 +109,10 @@ export default function VaultPage({
             display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
             whiteSpace: "nowrap", fontFamily: "inherit",
             background: vaultTab === t.id ? C.primary : "transparent",
-            color: vaultTab === t.id ? "#fff" : C.sub,
+            color: vaultTab === t.id ? "#fff" : (C.isGlass ? "rgba(255,255,255,0.75)" : C.sub),
             transition: "all .2s ease"
           }}>
-            <Ico n={t.icon} sz={14} c={vaultTab === t.id ? "#fff" : C.sub} />
+            <Ico n={t.icon} sz={14} c={vaultTab === t.id ? "#fff" : (C.isGlass ? "rgba(255,255,255,0.75)" : C.sub)} />
             {t.label}
           </button>
         ))}
